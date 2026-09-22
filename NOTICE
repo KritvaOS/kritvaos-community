@@ -1,0 +1,47 @@
+# KritvaOS Community — NOTICE
+
+**Status:** Project notice  
+**Project:** KritvaOS Community  
+**License:** Apache License 2.0
+
+## Copyright and Licensing
+
+KritvaOS Community is an open-source project distributed under the Apache License, Version 2.0.
+
+Unless a file or component states otherwise, original KritvaOS Community source code and documentation are provided under the Apache-2.0 license.
+
+The Apache-2.0 license text is provided in the repository as `LICENSE`.
+
+Copyright and license notices contained in individual source files, third-party components, or generated materials must be preserved.
+
+## Third-Party Software
+
+KritvaOS Community may include, depend on, or interoperate with third-party software.
+
+Third-party software remains subject to its own applicable copyright notices and license terms. Nothing in this NOTICE changes the license of third-party software.
+
+Before redistributing KritvaOS Community together with third-party software, users and distributors are responsible for complying with the applicable third-party license terms.
+
+Where practical, third-party components and their applicable licenses should be identified in the relevant repository documentation or component directory.
+
+## Trademarks
+
+“Kritva”, “KritvaOS”, and associated project names, logos, and marks may be trademarks or project identifiers of their respective owners.
+
+The Apache-2.0 license does not grant trademark rights.
+
+Use of project names or logos should not imply endorsement, sponsorship, or affiliation unless expressly authorized.
+
+## Community and Enterprise
+
+KritvaOS Community is intended to remain an Apache-2.0 open-source foundation.
+
+KritvaOS Enterprise may contain or use KritvaOS Community components together with separately licensed commercial, proprietary, integration, support, deployment, security, or other enterprise components.
+
+Use of KritvaOS Community code in a commercial or enterprise product does not change the license of the underlying Community code.
+
+## Disclaimer
+
+This NOTICE is informational and does not replace the applicable license terms.
+
+For the authoritative licensing terms, refer to `LICENSE` and the applicable third-party license notices.
