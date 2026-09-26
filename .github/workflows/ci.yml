@@ -1,3 +1,20 @@
+#==============================================================================
+# Copyright (c) 2026 KritvaOS
+# SPDX-License-Identifier: Apache-2.0
+#
+# File        : ci.yml
+# Description : Continuous integration workflow for KritvaOS
+#
+# Component   : Infrastructure
+# Module      : CI
+# Layer       : Development Infrastructure
+#
+# Requirements: CI-001
+# API         : GitHub Actions workflow
+#
+# Author      : KritvaOS
+# Created     : 26-09-2026
+#==============================================================================
 name: KritvaOS CI
 
 on:

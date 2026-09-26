@@ -1,0 +1,81 @@
+#==============================================================================
+# Copyright (c) 2026 KritvaOS
+# SPDX-License-Identifier: Apache-2.0
+#
+# File        : source_header_check.yaml
+# Description : Source header checker configuration
+#
+# Component   : Infrastructure
+# Module      : Source Header Checker
+# Layer       : Development
+#
+# Requirements: Python 3
+# API         : Command-line interface
+#
+# Author      : KritvaOS
+# Created     : 26-09-2026
+#==============================================================================
+
+version: "0.3.3"
+
+required_fields:
+  - File
+  - Description
+  - Component
+  - Module
+  - Layer
+  - Requirements
+  - API
+  - Author
+  - Created
+
+date_format: "DD-MM-YYYY"
+
+source_extensions:
+  - .c
+  - .cc
+  - .cpp
+  - .cxx
+  - .h
+  - .hh
+  - .hpp
+  - .hxx
+  - .py
+  - .sh
+  - .bash
+  - .v
+  - .sv
+  - .svh
+  - .vh
+  - .dts
+  - .dtsi
+
+source_special_files:
+  - .githooks/pre-commit
+
+source_config_files:
+  - .github/workflows/*.yml
+  - .github/workflows/*.yaml
+
+header_exempt_files:
+  - requirements.txt
+  - source_header_check.version
+
+header_exempt_patterns:
+  - "*.template"
+  - "*.instructions.md"
+
+header_exempt_directories:
+  - .github/agents
+  - .github/instructions
+  - docs/development/templates
+  - tests/source_header_check
+
+excluded_directories:
+  - .git
+  - build
+  - out
+  - third_party
+  - vendor
+  - generated
+  - external

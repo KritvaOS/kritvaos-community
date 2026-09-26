@@ -1,4 +1,21 @@
 #!/usr/bin/env python3
+#==============================================================================
+# Copyright (c) 2026 KritvaOS
+# SPDX-License-Identifier: Apache-2.0
+#
+# File        : check_toolchain.py
+# Description : Validates the KritvaOS development toolchain configuration
+#
+# Component   : Infrastructure
+# Module      : Toolchain Validation
+# Layer       : Development Infrastructure
+#
+# Requirements: TOOLCHAIN-001
+# API         : Command-line toolchain validation
+#
+# Author      : KritvaOS
+# Created     : 26-09-2026
+#==============================================================================
 """
 Kritva Toolchain Validator
 

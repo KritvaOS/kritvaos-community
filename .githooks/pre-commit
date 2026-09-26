@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#==============================================================================
+# Copyright (c) 2026 KritvaOS
+# SPDX-License-Identifier: Apache-2.0
+#
+# File        : pre-commit
+# Description : Run the KritvaOS source header checker before commit
+#
+# Component   : Infrastructure
+# Module      : Source Header Checker
+# Layer       : Development
+#
+# Requirements: Git, Python 3
+# API         : Git pre-commit hook
+#
+# Author      : KritvaOS
+# Created     : 26-09-2026
+#==============================================================================
+
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+cd "${ROOT}"
+python3 scripts/lint/check_source_headers.py --mode tracked --strict
