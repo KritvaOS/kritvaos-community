@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+#==============================================================================
+# Copyright (c) 2026 KritvaOS
+# SPDX-License-Identifier: Apache-2.0
+#
+# File        : pre-commit
+# Description : Git pre-commit hook for KritvaOS source header validation
+#
+# Component   : Infrastructure
+# Module      : Source Header Checker
+# Layer       : Development Infrastructure
+#
+# Requirements: HEADER-001
+# API         : Git pre-commit hook
+#
+# Author      : KritvaOS
+# Created     : 26-09-2026
+#==============================================================================
+
+set -e
+
+echo "pre-commit test fixture"
