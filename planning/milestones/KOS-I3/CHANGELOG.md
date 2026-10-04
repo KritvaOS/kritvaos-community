@@ -6,6 +6,8 @@
 
 - I3-002: DeviceRegistry (non-owning, registration-order enumeration, id and name lookup, endpoint lookup, duplicate rejection, close) and tests.
 
+- I3-003: DeviceManager (one Core Component; deterministic fan-out, scoped configuration, endpoint fault reported once, controlled shutdown after failure), plus additive Endpoint setting_names() and fault listener.
+
 ## Planned
 
 - Define Device and Endpoint hardware abstraction contracts.

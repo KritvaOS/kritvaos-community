@@ -3,7 +3,7 @@
 | Milestone | Status |
 |---|---|
 | KOS-I2 | IMPLEMENTED / predecessor baseline |
-| KOS-I3 | IN PROGRESS (I3-001, I3-002 done) |
+| KOS-I3 | IN PROGRESS (I3-001..I3-003 done) |
 
 ## KOS-I2 Task Commits
 

@@ -1,37 +1,47 @@
 # I3-003 Acceptance Criteria
 
 ## Functional
-- [ ] Device/Endpoint lifecycle integration implemented.
-- [ ] Initialization ordering is deterministic.
-- [ ] Start ordering is deterministic.
-- [ ] Stop ordering is deterministic.
-- [ ] Invalid lifecycle operations fail deterministically.
-- [ ] Endpoint failure is visible to runtime observation.
-- [ ] Runtime remains able to perform controlled shutdown after endpoint failure.
-- [ ] No second global lifecycle state machine exists.
+- [x] Device/Endpoint lifecycle integration implemented.
+- [x] Initialization ordering is deterministic.
+- [x] Start ordering is deterministic.
+- [x] Stop ordering is deterministic.
+- [x] Invalid lifecycle operations fail deterministically.
+- [x] Endpoint failure is visible to runtime observation.
+- [x] Runtime remains able to perform controlled shutdown after endpoint failure.
+- [x] No second global lifecycle state machine exists.
 
 ## Unit
-- [ ] Lifecycle unit tests PASS.
-- [ ] Invalid transition tests PASS.
-- [ ] Failure-path tests PASS.
+- [x] Lifecycle unit tests PASS.
+- [x] Invalid transition tests PASS.
+- [x] Failure-path tests PASS.
 
 ## Integration
-- [ ] Runtime + registry + endpoint lifecycle test PASS.
-- [ ] Shutdown-after-failure test PASS.
+- [x] Runtime + registry + endpoint lifecycle test PASS.
+- [x] Shutdown-after-failure test PASS.
 
 ## Sanity
-- [ ] Clean build PASS.
-- [ ] Lifecycle sequence executes end-to-end.
+- [x] Clean build PASS.
+- [x] Lifecycle sequence executes end-to-end.
 
 ## Regression
-- [ ] Complete KOS-I2 suite PASS.
+- [x] Complete KOS-I2 suite PASS.
 
 ## Review
-- [ ] Core lifecycle/status contracts reused.
-- [ ] Runtime ownership is clear.
-- [ ] No Core source/API changes.
+- [x] Core lifecycle/status contracts reused.
+- [x] Runtime ownership is clear.
+- [x] No Core source/API changes.
 
 ## Git
-- [ ] Diff reviewed.
-- [ ] Atomic commit.
+- [x] Diff reviewed.
+- [x] Atomic commit.
 - [ ] Commit hash recorded after commit.
+
+## Evidence (I3-003)
+
+- Build: Debug, 0 warnings from KOS-I3 code; the unit test also ran clean under ASan+UBSan (it found and fixed a dangling temporary in `DeviceManager::capabilities()`).
+- Unit: `kritva_hardware_manager_unit` PASS (identity, exact stop/shutdown reversal, registry closing, invalid operations with source, config keys and scoped settings, configuration errors, disabled device, failing initialize/start/stop hooks, endpoint fault while RUNNING with exactly one ERROR event, no silent recovery, stop skips faulted, shutdown releases, explicit restart, statistics, capabilities, listener cleanup on destruction). The Endpoint conformance suite gained setting-name and fault-listener checks.
+- Integration: `kritva_hardware_manager_integration` PASS (DeviceManager as one Component in the unchanged RuntimeHost with a dependency; allow-list rejects typos; endpoint failure visible in observe()/failure_report(); initialize failure through run(); explicit restart).
+- Sanity: `kritva_hardware_manager_sanity` PASS (READY, RUNNING, endpoint FAULT while runtime stays RUNNING, failure_report, controlled shutdown).
+- Regression: `ctest` 104/104 PASS (76 Core + 18 I2 + 10 I3). `make check` PASS.
+- Mutation checks (event during lifecycle, shutdown without stop, order, no fault listener) each fail the tests.
+- Core and RuntimeHost: unchanged. Additive Endpoint contract amendments: `setting_names()` and a fault listener (called once per fault).

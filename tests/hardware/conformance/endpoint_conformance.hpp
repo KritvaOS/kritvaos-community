@@ -22,6 +22,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <kritva/hardware/actuator_endpoint.hpp>
 #include <kritva/hardware/sensor_endpoint.hpp>
@@ -141,6 +142,29 @@ std::string check_endpoint_contract(const Fixture<E>& f, EndpointDirection direc
         if (e->health().state() != core::HealthState::UNKNOWN) return "a STOPPED endpoint health is not UNKNOWN";
         if (!e->initialize() || !e->start() || e->lifecycle_state() != LS::RUNNING) return "an endpoint cannot be restarted explicitly after shutdown";
         if (e->health().state() != core::HealthState::HEALTHY) return "a restarted endpoint is not HEALTHY";
+    }
+    {   // setting names are valid and unique
+        auto e = f.make();
+        std::vector<std::string> seen;
+        for (const auto& n : e->setting_names()) {
+            if (!valid_name(n)) return "a setting name is not a valid name";
+            for (const auto& other : seen) if (other == n) return "setting names are not unique";
+            seen.push_back(n);
+        }
+    }
+    {   // the fault listener fires exactly once per fault, with the faulting endpoint
+        auto e = f.make();
+        int calls = 0;
+        const Endpoint* seen = nullptr;
+        e->set_fault_listener([&](const Endpoint& ep) { ++calls; seen = &ep; });
+        if (auto err = reach(*e, LS::RUNNING, f); !err.empty()) return err;
+        if (calls != 0) return "the fault listener fired without a fault";
+        if (!f.induce_fault(*e) || calls != 1 || seen != e.get()) return "the fault listener must fire once, with the endpoint";
+        if (!f.induce_fault(*e) || calls != 1) return "the fault listener must not fire again while faulted";
+        if (!e->shutdown() || calls != 1) return "shutdown must not fire the fault listener";
+        if (!e->initialize() || !e->start() || !f.induce_fault(*e) || calls != 2) return "a new fault after restart must fire the listener again";
+        e->set_fault_listener({});
+        if (!e->shutdown()) return "shutdown failed";
     }
     {   // a fault is only possible on a live endpoint
         auto e = f.make();

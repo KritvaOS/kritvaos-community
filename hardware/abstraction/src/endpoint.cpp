@@ -47,6 +47,7 @@ Result<void> Endpoint::fail_into_fault(Result<void> failed) {
     last_error_ = failed.error();
     fault_detail_ = failed.error().message;
     transition(LifecycleState::FAULT);
+    notify_fault();
     return failed;
 }
 
@@ -126,7 +127,12 @@ Result<void> Endpoint::enter_fault(const core::Error& cause) {
     last_error_ = cause;
     fault_detail_ = cause.message;
     transition(LifecycleState::FAULT);
+    notify_fault();
     return Result<void>::success();
+}
+
+void Endpoint::notify_fault() {
+    if (fault_listener_) fault_listener_(*this);
 }
 
 void Endpoint::set_degraded(std::string detail) { degraded_detail_ = std::move(detail); }

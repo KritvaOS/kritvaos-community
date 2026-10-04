@@ -18,8 +18,10 @@
 
 #pragma once
 
+#include <functional>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include <kritva/core/core.hpp>
 #include <kritva/hardware/identity.hpp>
@@ -81,6 +83,19 @@ public:
     [[nodiscard]] const core::CapabilitySet& capabilities() const noexcept { return capabilities_; }
     /// sample_count = successful data operations, error_count = failed ones.
     [[nodiscard]] const core::Statistics& statistics() const noexcept { return statistics_; }
+    /// The configuration settings this endpoint reads, as bare names (for example
+    /// `limit`). The DeviceManager looks up `<device>.<endpoint>.<setting>` for each
+    /// and hands the endpoint only these, under their bare names, in configure().
+    [[nodiscard]] virtual std::vector<std::string> setting_names() const { return {}; }
+
+    /// Called once each time this endpoint enters FAULT, whether through a failing
+    /// hook or through enter_fault() (never again while it stays faulted). The
+    /// DeviceManager uses it to report a fault that happens on its own, outside a
+    /// lifecycle call. Pass an empty function to clear it. The listener must outlive
+    /// its registration or be cleared first.
+    using FaultListener = std::function<void(const Endpoint&)>;
+    void set_fault_listener(FaultListener listener) { fault_listener_ = std::move(listener); }
+
     /// The most recent failure of any operation; kept until replaced.
     [[nodiscard]] const std::optional<core::Error>& last_error() const noexcept { return last_error_; }
 
@@ -115,6 +130,7 @@ protected:
     [[nodiscard]] static core::Error make_error(core::ErrorCode code, std::string message);
 
 private:
+    void notify_fault();
     core::Result<void> invalid_state(const char* operation);
     core::Result<void> fail_into_fault(core::Result<void> failed);
     void transition(core::LifecycleState target);
@@ -126,6 +142,7 @@ private:
     std::optional<core::Error> last_error_;
     std::optional<std::string> degraded_detail_;
     std::string fault_detail_;
+    FaultListener fault_listener_;
     bool live_{false};
 };
 

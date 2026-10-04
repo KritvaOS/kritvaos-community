@@ -21,6 +21,8 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <variant>
+#include <vector>
 
 #include <kritva/hardware/actuator_endpoint.hpp>
 #include <kritva/hardware/device.hpp>
@@ -54,20 +56,28 @@ public:
     using Base::Base;
     FailAt fail_at{FailAt::NONE};
     int configure_calls{0}, initialize_calls{0}, start_calls{0}, stop_calls{0}, shutdown_calls{0};
+    std::vector<std::string>* log{nullptr};         // shared call log: "<endpoint>.<operation>"
+    std::optional<std::int64_t> limit;              // the one setting this double reads: `limit`
+    std::vector<std::string> setting_names() const override { return {"limit"}; }
 
     core::Result<void> inject_fault(const char* message = "injected fault") { return this->enter_fault(injected(message)); }
     void degrade(const char* detail) { this->set_degraded(detail); }
     void recover_degradation() { this->clear_degraded(); }
 
 protected:
-    core::Result<void> on_configure(const core::Configuration&) override { ++configure_calls; return hook(FailAt::CONFIGURE); }
-    core::Result<void> on_initialize() override { ++initialize_calls; return hook(FailAt::INITIALIZE); }
-    core::Result<void> on_start() override { ++start_calls; return hook(FailAt::START); }
-    core::Result<void> on_stop() override { ++stop_calls; return hook(FailAt::STOP); }
-    core::Result<void> on_shutdown() override { ++shutdown_calls; return hook(FailAt::SHUTDOWN); }
+    core::Result<void> on_configure(const core::Configuration& cfg) override {
+        ++configure_calls;
+        if (const core::Parameter* p = cfg.get("limit")) limit = std::get<std::int64_t>(p->value);
+        return hook(FailAt::CONFIGURE, "configure");
+    }
+    core::Result<void> on_initialize() override { ++initialize_calls; return hook(FailAt::INITIALIZE, "initialize"); }
+    core::Result<void> on_start() override { ++start_calls; return hook(FailAt::START, "start"); }
+    core::Result<void> on_stop() override { ++stop_calls; return hook(FailAt::STOP, "stop"); }
+    core::Result<void> on_shutdown() override { ++shutdown_calls; return hook(FailAt::SHUTDOWN, "shutdown"); }
 
 private:
-    core::Result<void> hook(FailAt which) {
+    core::Result<void> hook(FailAt which, const char* operation) {
+        if (log != nullptr) log->push_back(this->info().name() + "." + operation);
         return fail_at == which ? core::Result<void>::failure(injected("hook failure")) : core::Result<void>::success();
     }
 };
@@ -103,11 +113,11 @@ public:
     explicit TestActuator(std::uint64_t id = 1, const char* name = "actuator")
         : Instrumented<ActuatorEndpoint<TestCommand>>(make_info(id, name, EndpointDirection::ACTUATOR), one_capability(id, name)) {}
     std::optional<TestCommand> applied;
-    int limit{100};
+    int range{100};
 
 protected:
     core::Result<void> do_write(const TestCommand& command) override {
-        if (command.value > limit || command.value < -limit) {       // validate before acting
+        if (command.value > range || command.value < -range) {       // validate before acting
             return core::Result<void>::failure(make_error(core::ErrorCode::INVALID_ARGUMENT, "command out of range"));
         }
         applied = command;

@@ -118,12 +118,26 @@ if(TARGET kritva_hardware)
     target_link_libraries(kritva_hardware_registry_integration_test PRIVATE kritva::hardware)
     add_test(NAME kritva_hardware_registry_integration COMMAND kritva_hardware_registry_integration_test)
 
+    add_executable(kritva_hardware_manager_test hardware/unit/device_manager_test.cpp)
+    target_link_libraries(kritva_hardware_manager_test PRIVATE kritva::hardware)
+    add_test(NAME kritva_hardware_manager_unit COMMAND kritva_hardware_manager_test)
+
+    add_executable(kritva_hardware_manager_integration_test hardware/integration/device_manager_runtime_integration_test.cpp)
+    target_link_libraries(kritva_hardware_manager_integration_test PRIVATE kritva::hardware kritva::runtime)
+    add_test(NAME kritva_hardware_manager_integration COMMAND kritva_hardware_manager_integration_test)
+
+    add_executable(kritva_hardware_manager_sanity_exe hardware/sanity/device_manager_sanity.cpp)
+    target_link_libraries(kritva_hardware_manager_sanity_exe PRIVATE kritva::hardware kritva::runtime)
+    add_test(NAME kritva_hardware_manager_sanity
+        COMMAND ${CMAKE_COMMAND} -DSANITY_EXE=$<TARGET_FILE:kritva_hardware_manager_sanity_exe>
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/hardware/sanity/run_device_manager_sanity.cmake)
+
     add_executable(kritva_hardware_runtime_integration_test hardware/integration/contract_runtime_integration_test.cpp)
     target_link_libraries(kritva_hardware_runtime_integration_test PRIVATE kritva::hardware kritva::runtime)
     add_test(NAME kritva_hardware_runtime_integration COMMAND kritva_hardware_runtime_integration_test)
 
     # Sanity: every public header compiles on its own (no hidden include dependencies).
-    set(KRITVA_HARDWARE_HEADERS identity.hpp endpoint.hpp sensor_endpoint.hpp actuator_endpoint.hpp device.hpp device_registry.hpp)
+    set(KRITVA_HARDWARE_HEADERS identity.hpp endpoint.hpp sensor_endpoint.hpp actuator_endpoint.hpp device.hpp device_registry.hpp device_manager.hpp)
     set(KRITVA_HARDWARE_HEADER_CHECKS "")
     foreach(header IN LISTS KRITVA_HARDWARE_HEADERS)
         string(REPLACE "." "_" stem "${header}")
