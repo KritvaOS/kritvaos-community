@@ -63,8 +63,8 @@ struct DeviceDiagnostics {
 /// Deterministic multi-line text for a snapshot: one line per device and per endpoint, the
 /// same input always giving the same text. It contains identities, states, counters, error
 /// codes and error messages only. All device- or error-supplied text (messages, health details,
-/// capability names) has control characters and double quotes replaced by '?' (and commas in
-/// capability lists), so it can neither forge a line nor close a quoted field; no configuration
+/// capability names) has control characters and double quotes replaced by '?' (and, in the
+/// unquoted capability lists, commas and spaces), so it can neither forge a line nor close a quoted field; no configuration
 /// value is ever included (DER-608).
 [[nodiscard]] std::string describe(const std::vector<DeviceDiagnostics>& devices);
 

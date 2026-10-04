@@ -165,7 +165,21 @@ static void test_capability_names_are_sanitised() {                    // m4
     std::size_t lines = 0;
     for (char c : text) if (c == '\n') ++lines;
     KRITVA_CHECK(lines == 2);                                                    // one device line, one endpoint line
-    KRITVA_CHECK(text.find("capabilities=ok?device evil (id=9) health=HEALTHY,a?b?c") != std::string::npos);
+    KRITVA_CHECK(text.find("capabilities=ok?device?evil?(id=9)?health=HEALTHY,a?b?c") != std::string::npos);   // no spaces: no forged tokens
+    KRITVA_CHECK(text.find("health=HEALTHY,a") != std::string::npos && text.find(" health=HEALTHY,") == std::string::npos);
+}
+
+static void test_diagnostics_never_contain_configuration_values() {   // DER-608: regression guard
+    Rig r;
+    kritva::core::Configuration cfg;
+    KRITVA_CHECK(cfg.set(kritva::core::Parameter{"imu.gyro.limit", std::int64_t{424242}, {}}).has_value());
+    KRITVA_CHECK(cfg.set(kritva::core::Parameter{"imu.enabled", true, {}}).has_value());
+    KRITVA_CHECK(cfg.set(kritva::core::Parameter{"imu.gyro.note", std::string("s3cr3t-token"), {}}).has_value());
+    KRITVA_CHECK(r.manager.configure(cfg).has_value());
+    KRITVA_CHECK(r.manager.initialize().has_value() && r.manager.start().has_value());
+    KRITVA_CHECK(r.gyro->inject_fault().has_value());                              // a fault adds health detail and last_error too
+    const std::string text = describe(r.manager.diagnostics());
+    KRITVA_CHECK(text.find("424242") == std::string::npos && text.find("s3cr3t") == std::string::npos);
 }
 
 int main() {
@@ -177,6 +191,7 @@ int main() {
     test_messages_cannot_forge_lines();
     test_quotes_cannot_forge_fields();
     test_capability_names_are_sanitised();
+    test_diagnostics_never_contain_configuration_values();
     std::printf("diagnostics_test: PASS\n");
     return 0;
 }

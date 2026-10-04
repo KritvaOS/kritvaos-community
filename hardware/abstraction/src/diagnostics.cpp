@@ -76,7 +76,7 @@ std::string join(const std::vector<std::string>& items) {
     std::string out;
     for (const auto& i : items) {
         std::string item = clean(i);
-        for (char& c : item) if (c == ',') c = '?';
+        for (char& c : item) if (c == ',' || c == ' ') c = '?';     // an unquoted token: no separator, no space
         out += (out.empty() ? "" : ",") + item;
     }
     return out.empty() ? "none" : out;

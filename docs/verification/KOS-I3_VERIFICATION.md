@@ -46,6 +46,19 @@ An independent read-only audit of `d8cd315` found one blocker, three major and s
 
 Every fix was also checked by reverting it (mutation): each reversal fails at least one test.
 
+### Targeted re-audit of 40a6940
+
+No blockers or majors; the 12 findings were confirmed fixed (19 mutations of the fixes, each caught). Its minor items were fixed in a second small commit:
+
+| Item | Fix | Test |
+|---|---|---|
+| N1 DER-608 guard test deleted | restored as a regression guard (integer and string parameters, plus a fault) | `test_diagnostics_never_contain_configuration_values` |
+| N2 spaces in capability names could forge tokens | spaces replaced in the unquoted capability lists | `test_capability_names_are_sanitised` |
+| N3 `shutdown()` skipped devices switched off after the run | shutdown covers every registered device (never-initialized ones are a no-op) | `test_shutdown_releases_devices_switched_off_after_the_run` |
+| N5 recovery wording | the sequence is shutdown, initialize | documentation |
+
+Accepted as documented: a Device destroyed before its DeviceManager is a use-after-free (devices must outlive the manager); a hook cannot fault the endpoint from INITIALIZING or STOPPING (unchanged from I2).
+
 ## Requirement coverage
 
 | Requirements | Implementation | Tests |

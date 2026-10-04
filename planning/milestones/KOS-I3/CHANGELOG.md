@@ -26,6 +26,10 @@
 - Diagnostics sanitise quotes and capability names.
 - Tests added for each finding; honesty fixes to the I3-007 acceptance and the verification report.
 
+## Re-audit follow-up
+
+- `DeviceManager::shutdown()` releases the endpoints of devices that were switched off after the live period; capability names in diagnostics cannot forge tokens; the DER-608 guard test is restored; recovery wording corrected.
+
 ## Planned
 
 - Define Device and Endpoint hardware abstraction contracts.

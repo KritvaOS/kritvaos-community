@@ -3,7 +3,7 @@
 | Milestone | Status |
 |---|---|
 | KOS-I2 | IMPLEMENTED / predecessor baseline |
-| KOS-I3 | IMPLEMENTED; audit remediation applied; **HUMAN SAFETY REVIEW REQUIRED — OPEN** |
+| KOS-I3 | IMPLEMENTED; audit and re-audit remediation complete; **HUMAN SAFETY REVIEW REQUIRED — OPEN** |
 
 ## KOS-I2 Task Commits
 
@@ -27,14 +27,15 @@
 | I3-005 | cd1a35c |
 | I3-006 | 46b91fa |
 | I3-007 | d8cd315 |
-| Audit remediation (one follow-up commit; the historical task commits are not rewritten) | recorded in the next commit |
+| Audit remediation (one follow-up commit; the historical task commits are not rewritten) | 40a6940 |
+| Re-audit follow-up (minor items N1, N2, N3, N5) | commit `KOS-I3: address re-audit findings` |
 
 ## KOS-I3 closure gates
 
 | Gate | Status |
 |---|---|
 | Technical acceptance (7 tasks) | PASS |
-| Independent audit and remediation | Remediation applied; targeted re-audit of the changed areas pending |
+| Independent audit and remediation | PASS: all findings fixed; targeted re-audit found no blockers or majors; its minor items are fixed |
 | Human safety review: `MotorCommand`, motor limits, fault-to-zero behavior, velocity command semantics, mock safety behavior, any future mapping to physical actuator control | **OPEN: not reviewed by a human** |
 
 KOS-I3 is not fully closed until the owner signs off the safety review.

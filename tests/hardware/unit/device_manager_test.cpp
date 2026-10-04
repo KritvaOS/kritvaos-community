@@ -252,6 +252,24 @@ static void test_failed_configure_does_not_commit_device_switches() { // M3
     KRITVA_CHECK(ok.manager.diagnostics()[0].enabled && !ok.manager.diagnostics()[1].enabled);
 }
 
+static void test_shutdown_releases_devices_switched_off_after_the_run() {   // re-audit N3
+    Rig r;
+    r.run_up();
+    KRITVA_CHECK(r.manager.stop().has_value());
+    KRITVA_CHECK(r.manager.configure(cfg({{"imu.enabled", false, {}}})).has_value());     // reconfigured while STOPPED: imu is now off
+    KRITVA_CHECK(r.manager.shutdown().has_value());
+    for (auto* e : {static_cast<TestSensor*>(r.accel), r.gyro}) {
+        KRITVA_CHECK(e->shutdown_calls == 1 && e->lifecycle_state() == LifecycleState::STOPPED);       // its live period was released
+    }
+    KRITVA_CHECK(r.command->shutdown_calls == 1 && r.position->shutdown_calls == 1);
+    // A device that was never initialized is not touched.
+    Rig q;
+    KRITVA_CHECK(q.manager.configure(cfg({{"motor.enabled", false, {}}})).has_value());
+    q.run_up();
+    KRITVA_CHECK(q.manager.stop().has_value() && q.manager.shutdown().has_value());
+    KRITVA_CHECK(q.command->shutdown_calls == 0 && q.command->initialize_calls == 0);
+}
+
 static void test_devices_are_sealed_at_initialize() {                  // m7
     Device empty(DeviceInfo::create(DeviceId{7}, "empty").value());
     Device off(DeviceInfo::create(DeviceId{8}, "off").value());
@@ -382,6 +400,7 @@ int main() {
     test_shutdown_returns_the_first_stop_error();
     test_failing_shutdown_hook_is_reported_and_retried();
     test_failed_configure_does_not_commit_device_switches();
+    test_shutdown_releases_devices_switched_off_after_the_run();
     test_devices_are_sealed_at_initialize();
     test_a_destroyed_manager_does_not_remove_anothers_listener();
     test_endpoint_fault_while_running();

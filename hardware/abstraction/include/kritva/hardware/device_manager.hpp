@@ -60,7 +60,7 @@ namespace kritva::hardware {
 ///    sink, with the manager as source. The faulted endpoint is never restarted.
 ///  - stop() attempts to stop EVERY running endpoint (reverse order) even if one fails, then
 ///    returns the first error (the manager is FAULT); it skips faulted endpoints. shutdown()
-///    is best effort over all endpoints too: it stops any still-running one, releases
+///    is best effort over all registered endpoints too (devices switched off after the live period included): it stops any still-running one, releases
 ///    everything including faulted endpoints, and returns the FIRST error it met (state
 ///    unchanged, a retry resumes). Controlled shutdown therefore works after any failure.
 ///    A restart is an explicit new lifecycle: shutdown, then initialize again.
@@ -106,7 +106,7 @@ public:
 
 private:
     [[nodiscard]] bool enabled(const Device& device) const noexcept;
-    template <class F> core::Result<void> each_endpoint(bool reverse, F op);
+    template <class F> core::Result<void> each_endpoint(bool reverse, F op, bool include_disabled = false);
     core::Result<void> with_source(core::Result<void> result) const;
     core::Result<void> invalid_state(const char* operation) const;
     core::Result<void> fail(core::Result<void> failed);

@@ -73,10 +73,10 @@ std::vector<std::string> DeviceManager::config_keys() const {
 
 // Visits the endpoints of the enabled devices: registration order, or exactly the reverse.
 template <class F>
-Result<void> DeviceManager::each_endpoint(bool reverse, F op) {
+Result<void> DeviceManager::each_endpoint(bool reverse, F op, bool include_disabled) {
     std::vector<Endpoint*> order;
     for (Device* d : registry_.devices()) {
-        if (!enabled(*d)) continue;
+        if (!include_disabled && !enabled(*d)) continue;
         for (Endpoint* e : d->endpoints()) order.push_back(e);
     }
     if (reverse) std::reverse(order.begin(), order.end());
@@ -199,7 +199,9 @@ Result<void> DeviceManager::shutdown() {
     if (live_) {
         in_lifecycle_ = true;
         Result<void> first = Result<void>::success();
-        // Best effort over all endpoints so one failure cannot strand the others; the first error is returned.
+        // Best effort over ALL registered endpoints, including those of devices that were switched off by a
+        // configure() after the live period (a device that was never initialized is a no-op), so no live
+        // period is left unreleased; one failure cannot strand the others, and the first error is returned.
         (void)each_endpoint(true, [&](Endpoint& e) {
             const auto st = e.lifecycle_state();
             if (st == LifecycleState::READY || st == LifecycleState::RUNNING) {
@@ -207,7 +209,7 @@ Result<void> DeviceManager::shutdown() {
             }
             if (auto r = e.shutdown(); !r && first) first = std::move(r);
             return Result<void>::success();
-        });
+        }, /*include_disabled=*/true);
         in_lifecycle_ = false;
         if (!first) return with_source(std::move(first));       // state unchanged; a retry resumes
         live_ = false;
