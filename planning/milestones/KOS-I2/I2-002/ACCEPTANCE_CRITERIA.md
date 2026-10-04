@@ -1,38 +1,47 @@
 # I2-002 Acceptance Criteria
 
 ## Functional
-- [ ] Functional requirements for I2-002 implemented.
-- [ ] Error paths are deterministic.
-- [ ] Scope remains limited to I2-002.
+- [x] Functional requirements for I2-002 implemented.
+- [x] Error paths are deterministic.
+- [x] Scope remains limited to I2-002.
 
 ## Unit Test
-- [ ] Unit tests added/updated for new logic.
-- [ ] Unit tests PASS.
+- [x] Unit tests added/updated for new logic.
+- [x] Unit tests PASS.
 
 ## Integration Test
-- [ ] Applicable integration tests added/updated.
-- [ ] Integration tests PASS.
+- [x] Applicable integration tests added/updated.
+- [x] Integration tests PASS.
 
 ## Sanity Test
-- [ ] Clean build PASS.
-- [ ] Feature launches/executes as intended.
-- [ ] Expected observable behavior verified.
-- [ ] Clean exit/shutdown verified where applicable.
+- [x] Clean build PASS.
+- [x] Feature launches/executes as intended.
+- [x] Expected observable behavior verified.
+- [x] Clean exit/shutdown verified where applicable.
 
 ## Regression Test
-- [ ] Previous KOS-I2 tests PASS.
-- [ ] Applicable repository tests PASS.
-- [ ] No unexpected regression.
+- [x] Previous KOS-I2 tests PASS.
+- [x] Applicable repository tests PASS.
+- [x] No unexpected regression.
 
 ## Code Review
-- [ ] Architecture compliance verified.
-- [ ] Core R1.0 boundary respected.
-- [ ] No unrelated changes.
-- [ ] No speculative abstraction.
+- [x] Architecture compliance verified.
+- [x] Core R1.0 boundary respected.
+- [x] No unrelated changes.
+- [x] No speculative abstraction.
 
 ## Git
-- [ ] Working tree reviewed.
-- [ ]  PASS.
-- [ ] Diff reviewed.
-- [ ] Commit message follows .
-- [ ] Commit hash recorded.
+- [x] Working tree reviewed.
+- [x] Tests PASS at commit point.
+- [x] Diff reviewed.
+- [x] Commit message follows GIT_COMMIT_STEP.md.
+- [ ] Commit hash recorded (in planning/MILESTONE_STATUS.md).
+
+## Evidence (I2-002)
+
+- Build: PASS, 0 warnings.
+- Unit: `kritva_component_composition_unit` PASS (registration, duplicate identity, dependency order, missing dependency, cycle, invalid deps, topology fixed, component state).
+- Integration: `kritva_component_composition_integration` PASS (mid-sequence start failure, controlled cleanup).
+- Sanity: `kritva_component_composition_sanity` PASS (three components start in dependency order, stop in reverse).
+- Regression: `ctest --test-dir build/debug` 82/82 PASS (76 Core + 6 runtime). `make check` PASS. `git diff --check` clean.
+- Core: unchanged (kritva-core-r1.0). Only new API: `RuntimeHost::add_component`; ordering, duplicate and cycle detection are Core's.

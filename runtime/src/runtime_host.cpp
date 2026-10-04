@@ -9,7 +9,7 @@
 // Module      : Runtime Host
 // Layer       : Application Runtime
 //
-// Requirements: RR-LIF-001..008; RR-FLT-006
+// Requirements: RR-LIF-001..008; RR-CMP-002; RR-DEP-001; RR-FLT-006
 // API         : kritva::runtime::RuntimeHost
 //
 // Author      : KritvaOS
@@ -35,6 +35,15 @@ std::string_view to_string(LifecycleState state) noexcept {
         case LifecycleState::RECOVERING:   return "RECOVERING";
     }
     return "INVALID";
+}
+
+Result<void> RuntimeHost::add_component(core::runtime::Component& component,
+                                        std::initializer_list<core::runtime::ComponentId> depends_on) {
+    if (auto r = manager_.register_component(component); !r) return r;
+    for (const auto dependency : depends_on) {
+        if (auto r = manager_.add_dependency(component.info().id(), dependency); !r) return r;
+    }
+    return Result<void>::success();
 }
 
 Result<void> RuntimeHost::run(const StateObserver& observer) {

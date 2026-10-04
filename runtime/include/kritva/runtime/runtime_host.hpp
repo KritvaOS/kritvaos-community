@@ -9,7 +9,7 @@
 // Module      : Runtime Host
 // Layer       : Application Runtime
 //
-// Requirements: RR-LIF-001..008; RR-APP-001..004
+// Requirements: RR-LIF-001..008; RR-CMP-002; RR-DEP-001; RR-APP-001..004
 // API         : kritva::runtime::RuntimeHost
 //
 // Author      : KritvaOS
@@ -19,6 +19,7 @@
 #pragma once
 
 #include <functional>
+#include <initializer_list>
 #include <string_view>
 
 #include <kritva/core/core.hpp>
@@ -49,6 +50,19 @@ public:
     /// The owned Core runtime, for registering components before initialize().
     [[nodiscard]] core::runtime::RuntimeManager& runtime() noexcept { return manager_; }
     [[nodiscard]] const core::runtime::RuntimeManager& runtime() const noexcept { return manager_; }
+
+    /// Registers `component` and records that it depends on each id in
+    /// `depends_on` (those components start before it and stop after it).
+    /// The host does not own the component; it must outlive the host.
+    ///
+    /// Setup only: Core fixes the topology at the first successful
+    /// initialize(). Registration and dependency errors are Core's, returned
+    /// unchanged (duplicate identity, self/duplicate/cyclic dependency). On a
+    /// dependency error the component stays registered with the dependencies
+    /// added so far; a dependency on an unregistered id is reported by
+    /// initialize() (CONFIGURATION_ERROR, runtime stays UNKNOWN).
+    core::Result<void> add_component(core::runtime::Component& component,
+                                     std::initializer_list<core::runtime::ComponentId> depends_on = {});
 
     /// Each operation forwards to Core and returns its Result unchanged;
     /// an operation invalid for the current state fails with INVALID_STATE.

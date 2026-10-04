@@ -13,3 +13,18 @@ if(TARGET kritva_demo)
         COMMAND ${CMAKE_COMMAND} -DDEMO_EXE=$<TARGET_FILE:kritva_demo>
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sanity/run_demo_sanity.cmake)
 endif()
+
+# I2-002 component composition
+add_executable(kritva_component_composition_test runtime/unit/component_composition_test.cpp)
+target_link_libraries(kritva_component_composition_test PRIVATE kritva::runtime)
+add_test(NAME kritva_component_composition_unit COMMAND kritva_component_composition_test)
+
+add_executable(kritva_component_composition_integration_test runtime/integration/component_composition_integration_test.cpp)
+target_link_libraries(kritva_component_composition_integration_test PRIVATE kritva::runtime)
+add_test(NAME kritva_component_composition_integration COMMAND kritva_component_composition_integration_test)
+
+add_executable(kritva_composition_sanity runtime/sanity/composition_sanity.cpp)
+target_link_libraries(kritva_composition_sanity PRIVATE kritva::runtime)
+add_test(NAME kritva_component_composition_sanity
+    COMMAND ${CMAKE_COMMAND} -DSANITY_EXE=$<TARGET_FILE:kritva_composition_sanity>
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sanity/run_composition_sanity.cmake)
