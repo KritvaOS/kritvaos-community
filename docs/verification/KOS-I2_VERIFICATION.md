@@ -33,9 +33,15 @@
 - `controlled_shutdown()` no longer emits a second ERROR event for a component that already failed; an independent stop failure is still reported.
 - Stronger RR-FLT-007 test and an exact shutdown-hook assertion.
 
+## CI
+
+`.github/workflows/ci.yml` job `build-and-test` checks out with submodules, builds the `kritvaos-dev:0.1` container, then runs `cmake --preset debug`, the build, `ctest --output-on-failure` (Core and KOS-I2 tests) and the source header check. The same commands were run locally in that container: 94/94 PASS. The job itself has not yet run on GitHub.
+
 ## Known limitations (audit INFO / MINOR, accepted for I2)
 
 - Core `Event` has no payload or timestamp. Decision (ChatGPT, KOS-I2 review): Core R1.0 stays unchanged; an `Event` payload/timestamp is a future Core feature request, not part of KOS-I2.
 - RR-OBS-006: no DEGRADED-health test.
 - RR-REL-002: demo components hold no resources, so release is not meaningfully exercised.
+- GCC 13 (container toolchain) reports one `-Wpessimizing-move` warning in Core's own test `component_context_test.cpp`; Core is out of scope for KOS-I2 and is unchanged.
+- No sanitizer, clang-tidy or Clang matrix stage in CI yet (deferred).
 - `docs/api/` does not exist yet; AGENTS.md section 23 submodule table still has its placeholder row.

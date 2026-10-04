@@ -13,4 +13,5 @@
 - Audit follow-up: demo tests guarded for KRITVA_BUILD_EXAMPLES=OFF, tightened test ordering checks, documented application-level configuration rule, added docs/verification/KOS-I2_VERIFICATION.md.
 - RuntimeHost::initialize()/run() now require a prior successful configure() (RR-CFG-003); tests updated (ProbeComponent no longer logs configure by default).
 - Hardening: unknown-key rejection, 64 KiB configuration limit, runtime.name validation, no duplicate shutdown ERROR event, stronger no-recovery test.
+- CI: added a build-and-test job (configure, build, ctest in the kritvaos-dev:0.1 container, plus the source header check).
 - Added mandatory unit, integration, sanity, regression, review, and commit gates.

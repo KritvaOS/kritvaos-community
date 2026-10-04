@@ -71,3 +71,47 @@ jobs:
             python3 scripts/check_toolchain.py \
               --profile ci \
               --json
+
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository (with kritva-core submodule)
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Build KritvaOS development container
+        run: |
+          docker build \
+            -f .devcontainer/Dockerfile \
+            -t kritvaos-dev:0.1 \
+            .
+
+      - name: Configure (Debug)
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}:/workspaces/KritvaOS" \
+            -w /workspaces/KritvaOS \
+            kritvaos-dev:0.1 \
+            cmake --preset debug
+
+      - name: Build
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}:/workspaces/KritvaOS" \
+            -w /workspaces/KritvaOS \
+            kritvaos-dev:0.1 \
+            cmake --build build/debug
+
+      - name: Test (Core and KOS-I2 runtime, unit/integration/sanity)
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}:/workspaces/KritvaOS" \
+            -w /workspaces/KritvaOS \
+            kritvaos-dev:0.1 \
+            ctest --test-dir build/debug --output-on-failure
+
+      - name: Source header check
+        run: python3 scripts/lint/check_source_headers.py --mode tracked --strict
