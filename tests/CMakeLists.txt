@@ -212,3 +212,18 @@ if(TARGET kritva_hardware)
         message(FATAL_ERROR "kritva_hardware must depend only on kritva_core (found: ${KRITVA_HARDWARE_LINKS})")
     endif()
 endif()
+
+# ------------------------------------------------------------------------------
+# KOS-I3 reference device demo
+# ------------------------------------------------------------------------------
+if(TARGET kritva_device_demo_lib)
+    add_executable(kritva_device_demo_test hardware/integration/device_demo_test.cpp)
+    target_link_libraries(kritva_device_demo_test PRIVATE kritva_device_demo_lib)
+    add_test(NAME kritva_device_demo_system COMMAND kritva_device_demo_test)
+
+    add_test(NAME kritva_device_demo_sanity
+        COMMAND ${CMAKE_COMMAND} -DDEMO_EXE=$<TARGET_FILE:kritva_device_demo>
+                -DDEMO_CONFIG=${CMAKE_SOURCE_DIR}/examples/device_demo/device_demo.conf
+                -DDEMO_CLEAN_CONFIG=${CMAKE_SOURCE_DIR}/examples/device_demo/device_demo_clean.conf
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/hardware/sanity/run_device_demo_sanity.cmake)
+endif()

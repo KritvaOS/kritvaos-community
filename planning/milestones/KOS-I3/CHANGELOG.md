@@ -14,6 +14,8 @@
 
 - I3-006: DeviceManager::diagnostics() (device and endpoint snapshots with status, health, capabilities, statistics, last error and failure reason) and a deterministic, line-safe describe() text; fault evidence tests.
 
+- I3-007: reference device demo (examples/device_demo, kritva_device_demo): configure, register, discover, initialize, start, read IMU, write motor command, observe, inject endpoint fault, verify no silent recovery, controlled shutdown; in-process and end-to-end tests.
+
 ## Planned
 
 - Define Device and Endpoint hardware abstraction contracts.

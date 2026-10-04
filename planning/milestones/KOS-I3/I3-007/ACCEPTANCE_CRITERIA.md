@@ -1,40 +1,50 @@
 # I3-007 Acceptance Criteria
 
 ## Functional
-- [ ] Reference device demo exists.
-- [ ] IMU device and endpoints are registered.
-- [ ] Motor device and endpoints are registered.
-- [ ] Endpoint discovery is demonstrated.
-- [ ] IMU read is demonstrated.
-- [ ] Motor command write is demonstrated.
-- [ ] Status/health/statistics are demonstrated.
-- [ ] Endpoint fault is injected.
-- [ ] Failure is observed.
-- [ ] Controlled shutdown completes.
-- [ ] Demo exits deterministically.
+- [x] Reference device demo exists.
+- [x] IMU device and endpoints are registered.
+- [x] Motor device and endpoints are registered.
+- [x] Endpoint discovery is demonstrated.
+- [x] IMU read is demonstrated.
+- [x] Motor command write is demonstrated.
+- [x] Status/health/statistics are demonstrated.
+- [x] Endpoint fault is injected.
+- [x] Failure is observed.
+- [x] Controlled shutdown completes.
+- [x] Demo exits deterministically.
 
 ## Unit
-- [ ] Demo support code unit tests PASS.
+- [x] Demo support code unit tests PASS.
 
 ## Integration
-- [ ] Full runtime + registry + mock devices + endpoints test PASS.
+- [x] Full runtime + registry + mock devices + endpoints test PASS.
 
 ## Sanity
-- [ ] Clean checkout build PASS.
-- [ ] Demo launch PASS.
-- [ ] Expected output/flow PASS.
-- [ ] Clean exit PASS.
+- [x] Clean checkout build PASS.
+- [x] Demo launch PASS.
+- [x] Expected output/flow PASS.
+- [x] Clean exit PASS.
 
 ## Regression
-- [ ] Complete KOS-I2 suite PASS.
-- [ ] Complete I3 suite PASS.
+- [x] Complete KOS-I2 suite PASS.
+- [x] Complete I3 suite PASS.
 
 ## Review
-- [ ] Demo uses only approved I3 contracts.
-- [ ] No hardware/transport dependency.
-- [ ] Documentation matches implementation.
+- [x] Demo uses only approved I3 contracts.
+- [x] No hardware/transport dependency.
+- [x] Documentation matches implementation.
 
 ## Git
-- [ ] Diff reviewed.
-- [ ] Atomic commit.
+- [x] Diff reviewed.
+- [x] Atomic commit.
 - [ ] Commit hash recorded after commit.
+
+## Evidence (I3-007)
+
+- Build: clean `rm -rf build`, Debug and Release presets: 0 warnings from KOS-I3/KOS-I2 code (Core's own `component_context_test` has one GCC 13 `-Wpessimizing-move` warning; Core is unchanged).
+- System (in-process): `kritva_device_demo_system` PASS (fault scenario in the demo-plan order; clean scenario; invalid configurations never reach READY; unusable command and disabled device end in a controlled error; configured device settings active; a scheduled mock fault ends in a controlled error; allow-list rejects typos; identical output on repeated runs and no state leaks).
+- Sanity / end-to-end: `kritva_device_demo_sanity` PASS (executable: fault scenario exit 0, clean scenario exit 0, invalid configuration exit 1, misspelled key exit 1 and reported, default run exit 0).
+- Regression: `ctest` 115/115 PASS in Debug and Release (76 Core + 18 I2 + 21 I3). `make check` PASS. The new I3 tests also ran clean under ASan+UBSan.
+- Mutation checks: removing the fault injection fails the tests. The demo's own defensive checks (no-recovery, error-event count) are runtime assertions that only fire if the library misbehaves; removing them is not detectable by demo tests (the library behavior is covered by the I3-003/005/006 tests).
+- Core: unchanged.
+- Demo outcome: exit code 0 when the scenario behaves as expected (fault or clean), 1 on any error or unexpected result (the demo plan expects a successful exit after the controlled fault and shutdown).
