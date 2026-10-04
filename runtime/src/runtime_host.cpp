@@ -9,7 +9,7 @@
 // Module      : Runtime Host
 // Layer       : Application Runtime
 //
-// Requirements: RR-LIF-001..008; RR-CMP-002; RR-DEP-001; RR-CFG-001..005; RR-OBS-001..007; RR-FLT-006
+// Requirements: RR-LIF-001..008; RR-CMP-002; RR-DEP-001; RR-CFG-001..005; RR-OBS-001..007; RR-FLT-001..007
 // API         : kritva::runtime::RuntimeHost
 //
 // Author      : KritvaOS
@@ -17,6 +17,8 @@
 //==============================================================================
 
 #include <kritva/runtime/runtime_host.hpp>
+
+#include <set>
 
 namespace kritva::runtime {
 
@@ -94,14 +96,46 @@ Result<RuntimeObservation> RuntimeHost::observe(const StatisticsProviders& provi
     return Result<RuntimeObservation>::success(std::move(snapshot));
 }
 
+Result<FailureReport> RuntimeHost::failure_report() const {
+    const auto observation = observe();
+    if (!observation) return Result<FailureReport>::failure(observation.error());
+
+    FailureReport report;
+    std::set<core::runtime::ComponentId> bad;   // failed or affected: used to propagate down the order
+    for (const auto& c : observation.value().components) {
+        const auto& o = c.observation;
+        if (o.lifecycle == LifecycleState::FAULT || o.health.state() == core::HealthState::UNHEALTHY) {
+            report.failed.push_back(o.id);
+            bad.insert(o.id);
+            continue;
+        }
+        // Dependencies come first in the order, so one pass reaches every transitive dependent.
+        for (const auto dependency : manager_.dependencies().dependencies_of(o.id)) {
+            if (bad.count(dependency) != 0) {
+                report.affected.push_back(o.id);
+                bad.insert(o.id);
+                break;
+            }
+        }
+    }
+    return Result<FailureReport>::success(std::move(report));
+}
+
+Result<void> RuntimeHost::controlled_shutdown() {
+    const LifecycleState s = manager_.state();
+    if (s == LifecycleState::READY || s == LifecycleState::RUNNING) {
+        (void)stop();   // a failed component rejects stop(); the failure is already an ERROR event
+    }
+    if (manager_.state() == LifecycleState::FAULT) {
+        if (auto r = report(core::EventType::LIFECYCLE, manager_.reset()); !r) return r;
+    }
+    return shutdown();
+}
+
 Result<void> RuntimeHost::run(const StateObserver& observer) {
     const auto notify = [&] { if (observer) observer(manager_.state()); };
-
-    // A failed step leaves the runtime in FAULT; reset() (FAULT -> STOPPED)
-    // stops and shuts down the components. The original error is returned.
     const auto fail = [&](Result<void> failed) {
-        if (manager_.state() == LifecycleState::FAULT) (void)report(core::EventType::LIFECYCLE, manager_.reset());
-        (void)shutdown();
+        (void)controlled_shutdown();
         return failed;
     };
 

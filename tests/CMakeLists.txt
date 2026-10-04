@@ -59,3 +59,18 @@ target_link_libraries(kritva_observation_sanity PRIVATE kritva::runtime)
 add_test(NAME kritva_observation_sanity
     COMMAND ${CMAKE_COMMAND} -DSANITY_EXE=$<TARGET_FILE:kritva_observation_sanity>
             -P ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sanity/run_observation_sanity.cmake)
+
+# I2-005 failure handling
+add_executable(kritva_failure_handling_test runtime/unit/failure_handling_test.cpp)
+target_link_libraries(kritva_failure_handling_test PRIVATE kritva::runtime)
+add_test(NAME kritva_failure_handling_unit COMMAND kritva_failure_handling_test)
+
+add_executable(kritva_failure_handling_integration_test runtime/integration/failure_handling_integration_test.cpp)
+target_link_libraries(kritva_failure_handling_integration_test PRIVATE kritva::runtime)
+add_test(NAME kritva_failure_handling_integration COMMAND kritva_failure_handling_integration_test)
+
+add_executable(kritva_failure_sanity runtime/sanity/failure_sanity.cpp)
+target_link_libraries(kritva_failure_sanity PRIVATE kritva::runtime)
+add_test(NAME kritva_failure_handling_sanity
+    COMMAND ${CMAKE_COMMAND} -DSANITY_EXE=$<TARGET_FILE:kritva_failure_sanity>
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sanity/run_failure_sanity.cmake)

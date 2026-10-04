@@ -96,6 +96,20 @@ public:
     /// read-only accessors.
     [[nodiscard]] core::Result<RuntimeObservation> observe(const StatisticsProviders& providers = {}) const;
 
+    /// Components that are failed (lifecycle FAULT or health UNHEALTHY) and the
+    /// components that depend on them. Deterministic; changes nothing. Fails
+    /// like observe() if the topology is invalid.
+    [[nodiscard]] core::Result<FailureReport> failure_report() const;
+
+    /// Controlled shutdown, valid from any state, including after a failure
+    /// (RR-FLT-006): stops the components if the runtime is READY/RUNNING
+    /// (a failed component rejects stop(), which is reported as an ERROR event
+    /// and is expected), performs Core's reset() if the runtime is in FAULT
+    /// (FAULT -> STOPPED), then shuts every component down. Succeeds when the
+    /// runtime is STOPPED and all components are released; there is no retry
+    /// and no recovery: a failed component is never restarted.
+    core::Result<void> controlled_shutdown();
+
     /// Each operation forwards to Core and returns its Result unchanged;
     /// an operation invalid for the current state fails with INVALID_STATE.
     core::Result<void> initialize();   ///< -> READY
@@ -111,9 +125,8 @@ public:
     /// (RUNNING) and stop (STOPPED). INITIALIZING and STOPPING are transient
     /// inside Core and are not observable once an operation returns.
     ///
-    /// If a step fails, the host performs controlled cleanup (Core reset(),
-    /// FAULT -> STOPPED, then shutdown) and returns the original error; there
-    /// is no retry or recovery. On success the host is left STOPPED and shut down.
+    /// If a step fails, the host performs controlled_shutdown() and returns the
+    /// original error; there is no retry or recovery. On success the host is left STOPPED and shut down.
     core::Result<void> run(const StateObserver& observer = {});
 
 private:

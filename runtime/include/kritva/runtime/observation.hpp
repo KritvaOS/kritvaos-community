@@ -46,6 +46,15 @@ struct RuntimeObservation {
     std::vector<ComponentRecord> components;     ///< In dependency order (dependencies first).
 };
 
+/// Which components are failed and which depend on a failed one (RR-FLT-001..003, RR-DEP-004).
+/// Read from the live components, not stored; informational only: reporting a
+/// failure never changes any component or runtime state (no silent recovery).
+struct FailureReport {
+    std::vector<core::runtime::ComponentId> failed;    ///< lifecycle FAULT or health UNHEALTHY, dependency order.
+    std::vector<core::runtime::ComponentId> affected;  ///< transitive dependents of a failed component (not failed themselves).
+    [[nodiscard]] bool any() const noexcept { return !failed.empty(); }
+};
+
 /// Bounded in-memory log of Core Events (RR-PERF-002: no uncontrolled growth).
 ///
 /// Implements Core's IEventSink: components report through Core's

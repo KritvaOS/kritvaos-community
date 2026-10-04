@@ -42,7 +42,26 @@ public:
     core::Result<void> initialize() override { return step("initialize", Hook::INITIALIZE, core::LifecycleState::READY); }
     core::Result<void> start() override { return step("start", Hook::START, core::LifecycleState::RUNNING); }
     core::Result<void> stop() override { return step("stop", Hook::STOP, core::LifecycleState::STOPPED); }
-    core::Result<void> shutdown() override { record("shutdown"); return core::Result<void>::success(); }
+    core::Result<void> shutdown() override {
+        record("shutdown");
+        state_ = core::LifecycleState::STOPPED;                      // Component contract: shutdown() leaves FAULT
+        return core::Result<void>::success();
+    }
+
+    /// Sink for events the component reports about itself (via Core's ComponentEventReporter).
+    void set_event_sink(core::runtime::IEventSink* sink) { sink_ = sink; }
+
+    /// Simulates a failure while RUNNING: the component enters FAULT / UNHEALTHY
+    /// by itself and reports an ERROR event. The Runtime is not told directly.
+    void inject_failure() {
+        state_ = core::LifecycleState::FAULT;
+        if (sink_ != nullptr) {
+            core::Event event;
+            event.type = core::EventType::ERROR;
+            event.severity = core::ErrorSeverity::ERROR;
+            (void)core::runtime::ComponentEventReporter(*this, *sink_).report(event);
+        }
+    }
 
     core::LifecycleState lifecycle_state() const noexcept override { return state_; }
     core::Status status() const override {
@@ -64,6 +83,10 @@ private:
 
     core::Result<void> step(const char* hook, Hook which, core::LifecycleState on_success) {
         record(hook);
+        if (state_ == core::LifecycleState::FAULT) {                 // Component contract: FAULT is left only by shutdown()
+            return core::Result<void>::failure(core::Error{
+                core::ErrorCode::INVALID_STATE, core::ErrorSeverity::ERROR, info().id(), {}, "component is in FAULT"});
+        }
         if (fail_at_ == which) {
             state_ = core::LifecycleState::FAULT;
             return core::Result<void>::failure(core::Error{
@@ -76,6 +99,7 @@ private:
     const core::runtime::RuntimeManager& rt_;
     std::vector<std::string>& log_;
     Hook fail_at_;
+    core::runtime::IEventSink* sink_{nullptr};
     core::LifecycleState state_{core::LifecycleState::UNKNOWN};
 };
 

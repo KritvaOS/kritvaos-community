@@ -6,5 +6,5 @@
 | I2-002 | Component Composition | Required | Required | Required | Required | Done |
 | I2-003 | Configuration | Required | Required | Required | Required | Done |
 | I2-004 | Runtime Observation | Required | Required | Required | Required | Done |
-| I2-005 | Failure Handling | Required | Required | Required | Required | Planned |
+| I2-005 | Failure Handling | Required | Required | Required | Required | Done |
 | I2-006 | Reference Demo | Required | Required | Required | Required | Planned |
