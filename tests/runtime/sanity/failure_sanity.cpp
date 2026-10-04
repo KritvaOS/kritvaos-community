@@ -37,6 +37,7 @@ int main() {
     KRITVA_CHECK(host.add_component(sensor).has_value());
     KRITVA_CHECK(host.add_component(monitor, {sensor.info().id()}).has_value());
 
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.initialize().has_value() && host.start().has_value());
     std::printf("[failure] RUNNING\n");
     sensor.inject_failure();

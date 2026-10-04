@@ -59,5 +59,5 @@ Behaviors to know:
 - Core `INITIALIZING` and `STOPPING` are transient: they are visible to components during their hooks but not once an operation returns. The demo prints `READY`, `RUNNING` and `STOPPED`.
 - A component that fails itself while the runtime is `RUNNING` does not change Core's runtime state; the runtime stays `RUNNING`. The failure is detected from component observation (`failure_report()`), and the application responds with `controlled_shutdown()`.
 - There is no recovery in KOS-I2. A failed component stays `FAULT` / `UNHEALTHY` until shutdown.
-- Requiring valid configuration before operation (RR-CFG-003) is enforced by the application (`DemoApplication`), not by `RuntimeHost`.
+- Valid configuration is a precondition of operation (RR-CFG-003): `RuntimeHost::initialize()` (and `run()`) fail with `CONFIGURATION_ERROR` until `configure()` has succeeded once. The requirement is sticky across restarts from `STOPPED`.
 - Core `Event` carries no state payload or timestamp; a `LIFECYCLE` event does not say which state was reached. Read the state with `observe()`.

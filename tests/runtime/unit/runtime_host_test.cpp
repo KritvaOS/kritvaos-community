@@ -40,6 +40,7 @@ static void test_valid_lifecycle_with_transient_states() {           // UT-002..
     ProbeComponent probe(1, "probe", host.runtime(), log);
     KRITVA_CHECK(host.runtime().register_component(probe).has_value());
 
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.initialize().has_value());
     KRITVA_CHECK(host.state() == LifecycleState::READY);
     KRITVA_CHECK(host.start().has_value());
@@ -63,6 +64,7 @@ static void test_invalid_transitions_rejected() {                    // UT-007
     KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INVALID_STATE);
     KRITVA_CHECK(host.state() == LifecycleState::UNKNOWN);
 
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.initialize().has_value());
     r = host.initialize();                                           // double initialize
     KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INVALID_STATE);
@@ -81,9 +83,31 @@ static void test_invalid_transitions_rejected() {                    // UT-007
     KRITVA_CHECK(host.state() == LifecycleState::STOPPED);
 }
 
+static void test_initialize_without_configuration_fails() {         // RR-CFG-003
+    RuntimeHost host;
+    std::vector<std::string> log;
+    ProbeComponent probe(1, "probe", host.runtime(), log);
+    KRITVA_CHECK(host.runtime().register_component(probe).has_value());
+    const auto r = host.initialize();
+    KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::CONFIGURATION_ERROR);
+    KRITVA_CHECK(host.state() == LifecycleState::UNKNOWN && log.empty());      // nothing invoked
+    KRITVA_CHECK(!host.run().has_value() && host.state() == LifecycleState::UNKNOWN && log.empty());
+
+    // An invalid configuration does not satisfy the requirement either.
+    KRITVA_CHECK(!host.configure(kritva::runtime::parse_configuration("runtime.tick_ms=5\n").value()).has_value());
+    KRITVA_CHECK(!host.initialize().has_value());
+
+    // A valid one does, and the requirement is sticky across restarts.
+    kritva::runtime::test::configure_host(host);
+    KRITVA_CHECK(host.initialize().has_value() && host.state() == LifecycleState::READY);
+    KRITVA_CHECK(host.stop().has_value());
+    KRITVA_CHECK(host.initialize().has_value());
+}
+
 static void test_run_reports_observable_states() {
     RuntimeHost host;
     std::vector<LifecycleState> seen;
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.run([&](LifecycleState s) { seen.push_back(s); }).has_value());
     const std::vector<LifecycleState> expected{LifecycleState::READY, LifecycleState::RUNNING, LifecycleState::STOPPED};
     KRITVA_CHECK(seen == expected);
@@ -97,6 +121,7 @@ static void test_repeated_lifecycle() {                              // RR-REL-0
     ProbeComponent probe(1, "probe", host.runtime(), log);
     KRITVA_CHECK(host.runtime().register_component(probe).has_value());
     for (int i = 0; i < 3; ++i) {
+        kritva::runtime::test::configure_host(host);
         KRITVA_CHECK(host.run().has_value());
         KRITVA_CHECK(host.state() == LifecycleState::STOPPED);
     }
@@ -109,6 +134,7 @@ static void test_failed_run_cleans_up() {                            // RR-FLT-0
         std::vector<std::string> log;
         ProbeComponent probe(1, "probe", host.runtime(), log, hook);
         KRITVA_CHECK(host.runtime().register_component(probe).has_value());
+        kritva::runtime::test::configure_host(host);
         const auto r = host.run();
         KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INTERNAL_ERROR);   // original error kept
         KRITVA_CHECK(host.state() == LifecycleState::STOPPED);       // controlled cleanup, not stuck in FAULT
@@ -126,6 +152,7 @@ int main() {
     test_initial_state();
     test_valid_lifecycle_with_transient_states();
     test_invalid_transitions_rejected();
+    test_initialize_without_configuration_fails();
     test_run_reports_observable_states();
     test_repeated_lifecycle();
     test_failed_run_cleans_up();

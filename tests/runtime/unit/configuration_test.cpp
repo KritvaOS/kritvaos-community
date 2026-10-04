@@ -114,6 +114,8 @@ static void test_host_configure() {
     Log log;
     runtime::test::ProbeComponent a(1, "a", host.runtime(), log);
     runtime::test::ProbeComponent b(2, "b", host.runtime(), log);
+    a.log_configure(true);
+    b.log_configure(true);
     KRITVA_CHECK(host.add_component(a, {b.info().id()}).has_value());
     KRITVA_CHECK(host.add_component(b).has_value());
 

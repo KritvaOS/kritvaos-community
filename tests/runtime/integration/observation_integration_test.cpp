@@ -44,6 +44,8 @@ int main() {
     KRITVA_CHECK(host.add_component(b).has_value());
 
     std::size_t steps = 0;
+    kritva::runtime::test::configure_host(host);
+    events.clear();                                                  // count only the lifecycle steps
     const auto r = host.run([&](LifecycleState state) {
         ++steps;
         const auto o = host.observe();

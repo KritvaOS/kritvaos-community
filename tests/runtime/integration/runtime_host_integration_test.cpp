@@ -38,6 +38,7 @@ int main() {
     KRITVA_CHECK(host.runtime().register_component(b).has_value());
     KRITVA_CHECK(host.runtime().add_dependency(a.info().id(), b.info().id()).has_value());
 
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.run().has_value());
     KRITVA_CHECK(host.state() == LifecycleState::STOPPED);
 

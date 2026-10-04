@@ -35,6 +35,7 @@ int main() {
     KRITVA_CHECK(host.add_component(a, {b.info().id()}).has_value());
     KRITVA_CHECK(host.add_component(b, {c.info().id()}).has_value());
     KRITVA_CHECK(host.add_component(c).has_value());
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.run().has_value());
     for (const auto& entry : log) std::printf("[composition] %s\n", entry.c_str());
     return 0;

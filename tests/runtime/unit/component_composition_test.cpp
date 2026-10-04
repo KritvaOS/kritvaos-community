@@ -26,6 +26,7 @@ using namespace kritva;
 using kritva::core::ErrorCode;
 using kritva::core::LifecycleState;
 using kritva::runtime::RuntimeHost;
+using kritva::runtime::parse_configuration;
 using kritva::runtime::test::ProbeComponent;
 using Log = std::vector<std::string>;
 
@@ -55,6 +56,7 @@ static void test_dependency_order() {                                // RR-CMP-0
     KRITVA_CHECK(order.has_value() && order.value().size() == 3);
     KRITVA_CHECK(order.value()[0] == c.info().id() && order.value()[1] == b.info().id() && order.value()[2] == a.info().id());
 
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.run().has_value());
     const Log expected{"c.initialize:INITIALIZING", "b.initialize:INITIALIZING", "a.initialize:INITIALIZING",
                        "c.start:READY", "b.start:READY", "a.start:READY",
@@ -68,11 +70,15 @@ static void test_missing_dependency() {                              // RR-DEP-0
     Log log;
     ProbeComponent a(1, "a", host.runtime(), log);
     KRITVA_CHECK(host.add_component(a, {core::runtime::ComponentId{99}}).has_value());   // not registered
-    const auto r = host.initialize();
+    // Core validates the topology when configuration is applied and again at initialize().
+    const auto cfg = parse_configuration("runtime.name=test\n").value();
+    auto r = host.configure(cfg);
+    KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::CONFIGURATION_ERROR);
+    r = host.initialize();                                           // never configured: refused as well
     KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::CONFIGURATION_ERROR);
     KRITVA_CHECK(host.state() == LifecycleState::UNKNOWN);           // never READY
     KRITVA_CHECK(log.empty());                                       // no component invoked
-    KRITVA_CHECK(!host.run().has_value());                           // run reports the same failure, cleanly
+    KRITVA_CHECK(!host.run().has_value());                           // run reports a failure, cleanly
     KRITVA_CHECK(log.empty());
 }
 
@@ -85,6 +91,7 @@ static void test_cyclic_dependency_rejected() {                      // RR-DEP-0
     const auto r = host.add_component(b, {a.info().id()});           // closes a -> b -> a
     KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INVALID_ARGUMENT);
     KRITVA_CHECK(host.runtime().registry().find(b.info().id()) == &b);   // documented: registered, dependency refused
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.run().has_value());                            // graph stayed acyclic and runnable
 }
 
@@ -103,6 +110,7 @@ static void test_topology_fixed_after_initialize() {
     ProbeComponent a(1, "a", host.runtime(), log);
     ProbeComponent late(2, "late", host.runtime(), log);
     KRITVA_CHECK(host.add_component(a).has_value());
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.initialize().has_value());
     const auto r = host.add_component(late);
     KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INVALID_STATE);
@@ -114,6 +122,7 @@ static void test_component_lifecycle_state() {                       // RR-CMP-0
     ProbeComponent a(1, "a", host.runtime(), log);
     KRITVA_CHECK(host.add_component(a).has_value());
     KRITVA_CHECK(a.lifecycle_state() == LifecycleState::UNKNOWN);
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.initialize().has_value() && a.lifecycle_state() == LifecycleState::READY);
     KRITVA_CHECK(host.start().has_value() && a.lifecycle_state() == LifecycleState::RUNNING);
     KRITVA_CHECK(host.stop().has_value() && a.lifecycle_state() == LifecycleState::STOPPED);

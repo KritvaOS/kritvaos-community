@@ -70,10 +70,18 @@ Result<void> RuntimeHost::configure(const core::Configuration& configuration) {
     if (!settings) return report(core::EventType::CONFIGURATION, Result<void>::failure(settings.error()));
     if (auto r = manager_.configure(configuration); !r) return report(core::EventType::CONFIGURATION, r);
     settings_ = std::move(settings).value();
+    configured_ = true;
     return report(core::EventType::CONFIGURATION, Result<void>::success());
 }
 
-Result<void> RuntimeHost::initialize() { return report(core::EventType::LIFECYCLE, manager_.initialize()); }
+Result<void> RuntimeHost::initialize() {
+    if (!configured_) {
+        return report(core::EventType::CONFIGURATION, Result<void>::failure(core::Error{
+            core::ErrorCode::CONFIGURATION_ERROR, core::ErrorSeverity::ERROR, {}, {},
+            "initialize requires a successful configure()"}));
+    }
+    return report(core::EventType::LIFECYCLE, manager_.initialize());
+}
 Result<void> RuntimeHost::start() { return report(core::EventType::LIFECYCLE, manager_.start()); }
 Result<void> RuntimeHost::stop() { return report(core::EventType::LIFECYCLE, manager_.stop()); }
 Result<void> RuntimeHost::shutdown() { return report(core::EventType::LIFECYCLE, manager_.shutdown()); }

@@ -47,6 +47,7 @@ int main() {
         RuntimeHost host;
         std::vector<std::string> log;
         ProbeComponent a(1, "a", host.runtime(), log);
+        a.log_configure(true);
         KRITVA_CHECK(host.add_component(a).has_value());
         KRITVA_CHECK(host.configure(cfg.value()).has_value());
         KRITVA_CHECK(host.settings().name == "itest" && host.settings().tick_ms == 10);

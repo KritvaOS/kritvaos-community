@@ -36,6 +36,7 @@ int main() {
     KRITVA_CHECK(host.add_component(a, {b.info().id()}).has_value());
     KRITVA_CHECK(host.add_component(b).has_value());
 
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.run([&](core::LifecycleState) {
         std::printf("[observe] %s", runtime::describe(host.observe().value()).c_str());
         std::printf("[observe] events=%zu\n", events.size());

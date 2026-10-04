@@ -74,11 +74,11 @@ public:
     core::Result<void> configure(const core::Configuration& configuration);
 
     /// Settings of the last successful configure(); defaults before that
-    /// (empty name, tick_ms 100). Requiring a valid configuration before
-    /// operation (RR-CFG-003) is an application-level rule: the host does not
-    /// refuse initialize() on an unconfigured host (the host is usable without
-    /// configuration); DemoApplication enforces it by configuring first and
-    /// never initializing after a configuration error.
+    /// (empty name, tick_ms 100). A valid configuration is a precondition of
+    /// operation (RR-CFG-003): initialize() (and therefore run()) fails with
+    /// CONFIGURATION_ERROR until configure() has succeeded once. The
+    /// requirement is sticky: once configured, the host can be initialized
+    /// again after STOPPED without configuring again.
     [[nodiscard]] const RuntimeSettings& settings() const noexcept { return settings_; }
 
     /// Optional event sink (not owned; must outlive the host or be cleared with
@@ -116,7 +116,7 @@ public:
 
     /// Each operation forwards to Core and returns its Result unchanged;
     /// an operation invalid for the current state fails with INVALID_STATE.
-    core::Result<void> initialize();   ///< -> READY
+    core::Result<void> initialize();   ///< -> READY; requires a prior successful configure()
     core::Result<void> start();        ///< READY -> RUNNING
     core::Result<void> stop();         ///< -> STOPPED
     core::Result<void> shutdown();     ///< releases components
@@ -139,6 +139,7 @@ private:
 
     core::runtime::RuntimeManager manager_;
     RuntimeSettings settings_;
+    bool configured_{false};
     core::runtime::IEventSink* sink_{nullptr};
 };
 

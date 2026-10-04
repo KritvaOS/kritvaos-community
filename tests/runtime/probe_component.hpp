@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <utility>
 #include <vector>
@@ -38,7 +40,13 @@ public:
         : Component(core::runtime::ComponentInfo::create(core::runtime::ComponentId{id}, std::move(name)).value()),
           rt_(rt), log_(log), fail_at_(fail_at) {}
 
-    core::Result<void> configure(const core::Configuration&) override { record("configure"); return core::Result<void>::success(); }
+    core::Result<void> configure(const core::Configuration&) override {
+        if (log_configure_) record("configure");
+        return core::Result<void>::success();
+    }
+
+    /// Include configure() calls in the log (off by default so lifecycle logs stay focused).
+    void log_configure(bool on) { log_configure_ = on; }
     core::Result<void> initialize() override { return step("initialize", Hook::INITIALIZE, core::LifecycleState::READY); }
     core::Result<void> start() override { return step("start", Hook::START, core::LifecycleState::RUNNING); }
     core::Result<void> stop() override { return step("stop", Hook::STOP, core::LifecycleState::STOPPED); }
@@ -99,6 +107,7 @@ private:
     const core::runtime::RuntimeManager& rt_;
     std::vector<std::string>& log_;
     Hook fail_at_;
+    bool log_configure_{false};
     core::runtime::IEventSink* sink_{nullptr};
     core::LifecycleState state_{core::LifecycleState::UNKNOWN};
 };
@@ -116,5 +125,11 @@ public:
 private:
     std::uint64_t samples_, errors_;
 };
+
+/// Applies a minimal valid configuration so the host may be initialized.
+inline void configure_host(RuntimeHost& host) {
+    const auto cfg = parse_configuration("runtime.name=test\n");
+    if (!cfg || !host.configure(cfg.value())) { std::fprintf(stderr, "configure_host failed\n"); std::exit(1); }
+}
 
 } // namespace kritva::runtime::test

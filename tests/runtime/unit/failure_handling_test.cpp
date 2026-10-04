@@ -54,6 +54,7 @@ struct Fixture {
         KRITVA_CHECK(host.add_component(b, {c.info().id()}).has_value());
         KRITVA_CHECK(host.add_component(c).has_value());
         KRITVA_CHECK(host.add_component(d).has_value());
+        kritva::runtime::test::configure_host(host);
         KRITVA_CHECK(host.initialize().has_value() && host.start().has_value());
         events.clear();
     }
@@ -144,6 +145,7 @@ static void test_failure_in_each_step_then_controlled_shutdown() {   // RR-REL-0
         ProbeComponent a(1, "a", host.runtime(), log, hook);
         ProbeComponent b(2, "b", host.runtime(), log);
         KRITVA_CHECK(host.add_component(a, {b.info().id()}).has_value() && host.add_component(b).has_value());
+        kritva::runtime::test::configure_host(host);
         auto r = host.initialize();
         if (r.has_value()) r = host.start();
         if (r.has_value()) r = host.stop();
@@ -161,6 +163,7 @@ static void test_controlled_shutdown_from_any_quiet_state() {
     ProbeComponent a(1, "a", host.runtime(), log);
     KRITVA_CHECK(host.add_component(a).has_value());
     KRITVA_CHECK(host.controlled_shutdown().has_value());            // UNKNOWN
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.initialize().has_value());
     KRITVA_CHECK(host.controlled_shutdown().has_value());            // READY
     KRITVA_CHECK(host.state() == LifecycleState::STOPPED);
@@ -172,6 +175,7 @@ static void test_restart_after_failure_is_a_new_explicit_lifecycle() {   // RR-R
     Fixture f;
     f.c.inject_failure();
     KRITVA_CHECK(f.host.controlled_shutdown().has_value());
+    kritva::runtime::test::configure_host(f.host);
     KRITVA_CHECK(f.host.initialize().has_value() && f.host.start().has_value());   // explicit operator action
     KRITVA_CHECK(!f.host.failure_report().value().any());
     KRITVA_CHECK(f.host.controlled_shutdown().has_value());

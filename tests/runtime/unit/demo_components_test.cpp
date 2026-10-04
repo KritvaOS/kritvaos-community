@@ -17,6 +17,7 @@
 //==============================================================================
 
 #include "../check.hpp"
+#include "../probe_component.hpp"
 
 #include <kritva/runtime/runtime_host.hpp>
 
@@ -91,6 +92,7 @@ static void test_monitor_observes_failure() {
     Sensor s;
     Monitor m(host);
     KRITVA_CHECK(host.add_component(s).has_value() && host.add_component(m, {s.info().id()}).has_value());
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.initialize().has_value() && host.start().has_value());
     m.tick();
     KRITVA_CHECK(!m.failure_observed() && m.statistics().sample_count.value() == 1);

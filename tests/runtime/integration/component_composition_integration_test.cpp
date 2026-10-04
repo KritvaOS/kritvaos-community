@@ -42,6 +42,7 @@ int main() {
     KRITVA_CHECK(host.add_component(b, {c.info().id()}).has_value());
     KRITVA_CHECK(host.add_component(c).has_value());
 
+    kritva::runtime::test::configure_host(host);
     const auto r = host.run();
     KRITVA_CHECK(!r.has_value());
     KRITVA_CHECK(r.error().code == ErrorCode::INTERNAL_ERROR && r.error().source == b.info().id());

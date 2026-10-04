@@ -45,6 +45,7 @@ int main() {
     KRITVA_CHECK(host.add_component(controller, {sensor.info().id()}).has_value());
     KRITVA_CHECK(host.add_component(monitor, {sensor.info().id(), controller.info().id()}).has_value());
 
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.initialize().has_value() && host.start().has_value());
     KRITVA_CHECK(host.state() == LifecycleState::RUNNING && !host.failure_report().value().any());
 

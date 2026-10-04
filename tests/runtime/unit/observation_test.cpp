@@ -47,6 +47,7 @@ static void test_snapshot_states_and_order() {                       // RR-OBS-0
     KRITVA_CHECK(o.value().components[0].name == "b" && o.value().components[1].name == "a");   // dependencies first
     KRITVA_CHECK(o.value().components[0].observation.lifecycle == LifecycleState::UNKNOWN);
 
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.initialize().has_value() && host.start().has_value());
     o = host.observe();
     KRITVA_CHECK(o.value().state == LifecycleState::RUNNING);
@@ -55,7 +56,7 @@ static void test_snapshot_states_and_order() {                       // RR-OBS-0
         KRITVA_CHECK(c.observation.health.state() == HealthState::HEALTHY);
         KRITVA_CHECK(c.observation.status.code() == core::StatusCode::OK);
     }
-    KRITVA_CHECK(o.value().statistics.sample_count.value() == 4);    // 2 components x (initialize, start)
+    KRITVA_CHECK(o.value().statistics.sample_count.value() == 6);    // 2 components x (configure, initialize, start)
     KRITVA_CHECK(o.value().statistics.error_count.value() == 0);
 }
 
@@ -64,6 +65,7 @@ static void test_fault_observation() {                               // RR-OBS-0
     Log log;
     ProbeComponent a(1, "a", host.runtime(), log, ProbeComponent::Hook::START);
     KRITVA_CHECK(host.add_component(a).has_value());
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.initialize().has_value());
     KRITVA_CHECK(!host.start().has_value());
 
@@ -154,6 +156,8 @@ static void test_component_failure_event_source() {
     Log log;
     ProbeComponent a(5, "a", host.runtime(), log, ProbeComponent::Hook::INITIALIZE);
     KRITVA_CHECK(host.add_component(a).has_value());
+    kritva::runtime::test::configure_host(host);
+    events.clear();                                                  // drop the configuration event
     KRITVA_CHECK(!host.initialize().has_value());
     const auto e = events.snapshot();
     KRITVA_CHECK(e.size() == 1 && e[0].type == EventType::ERROR && e[0].source_id == a.info().id());
@@ -175,6 +179,7 @@ static void test_components_report_through_core_reporter() {
 static void test_no_sink_is_behavior_neutral() {
     RuntimeHost host;
     KRITVA_CHECK(host.event_sink() == nullptr);
+    kritva::runtime::test::configure_host(host);
     KRITVA_CHECK(host.run().has_value());
 }
 
