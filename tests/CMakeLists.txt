@@ -93,3 +93,46 @@ if(TARGET kritva_demo)
                 -DDEMO_FAILURE_CONFIG=${CMAKE_SOURCE_DIR}/examples/kritva_demo/kritva_demo_failure.conf
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sanity/run_demo_reference_sanity.cmake)
 endif()
+
+# ------------------------------------------------------------------------------
+# KOS-I3 hardware abstraction (Device / Endpoint contracts)
+# ------------------------------------------------------------------------------
+if(TARGET kritva_hardware)
+    add_executable(kritva_hardware_identity_test hardware/unit/identity_test.cpp)
+    target_link_libraries(kritva_hardware_identity_test PRIVATE kritva::hardware)
+    add_test(NAME kritva_hardware_identity_unit COMMAND kritva_hardware_identity_test)
+
+    add_executable(kritva_hardware_endpoint_test hardware/unit/endpoint_test.cpp)
+    target_link_libraries(kritva_hardware_endpoint_test PRIVATE kritva::hardware)
+    add_test(NAME kritva_hardware_endpoint_unit COMMAND kritva_hardware_endpoint_test)
+
+    add_executable(kritva_hardware_device_test hardware/unit/device_test.cpp)
+    target_link_libraries(kritva_hardware_device_test PRIVATE kritva::hardware)
+    add_test(NAME kritva_hardware_device_unit COMMAND kritva_hardware_device_test)
+
+    add_executable(kritva_hardware_runtime_integration_test hardware/integration/contract_runtime_integration_test.cpp)
+    target_link_libraries(kritva_hardware_runtime_integration_test PRIVATE kritva::hardware kritva::runtime)
+    add_test(NAME kritva_hardware_runtime_integration COMMAND kritva_hardware_runtime_integration_test)
+
+    # Sanity: every public header compiles on its own (no hidden include dependencies).
+    set(KRITVA_HARDWARE_HEADERS identity.hpp endpoint.hpp sensor_endpoint.hpp actuator_endpoint.hpp device.hpp)
+    set(KRITVA_HARDWARE_HEADER_CHECKS "")
+    foreach(header IN LISTS KRITVA_HARDWARE_HEADERS)
+        string(REPLACE "." "_" stem "${header}")
+        set(HEADER "${header}")
+        set(generated "${CMAKE_CURRENT_BINARY_DIR}/hardware_header_checks/${stem}.cpp")
+        configure_file(hardware/sanity/header_self_containment.cmake.in "${generated}" @ONLY)
+        list(APPEND KRITVA_HARDWARE_HEADER_CHECKS "${generated}")
+    endforeach()
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/hardware_header_checks/main.cpp" "int main() { return 0; }\n")
+    add_executable(kritva_hardware_header_check ${KRITVA_HARDWARE_HEADER_CHECKS}
+        "${CMAKE_CURRENT_BINARY_DIR}/hardware_header_checks/main.cpp")
+    target_link_libraries(kritva_hardware_header_check PRIVATE kritva::hardware)
+    add_test(NAME kritva_hardware_header_sanity COMMAND kritva_hardware_header_check)
+
+    # Sanity: the abstraction depends only on kritva-core (no driver, bus or transport library).
+    get_target_property(KRITVA_HARDWARE_LINKS kritva_hardware INTERFACE_LINK_LIBRARIES)
+    if(NOT KRITVA_HARDWARE_LINKS STREQUAL "kritva_core::kritva_core")
+        message(FATAL_ERROR "kritva_hardware must depend only on kritva_core (found: ${KRITVA_HARDWARE_LINKS})")
+    endif()
+endif()

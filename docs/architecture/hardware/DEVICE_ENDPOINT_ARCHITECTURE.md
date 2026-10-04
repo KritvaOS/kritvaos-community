@@ -140,3 +140,27 @@ examples/
 ```
 
 Physical drivers remain under `drivers/` and platform-specific implementation remains under `soc/edge/` or the appropriate hardware area.
+
+## 10. Contracts as built (I3-001)
+
+Library `kritva_hardware` (`hardware/abstraction/`, namespace `kritva::hardware`); it depends only on `kritva-core`.
+
+| Type | Role |
+|---|---|
+| `DeviceId`, `EndpointId` | Distinct strong ids over Core `Id` semantics; valid iff non-zero. |
+| `DeviceInfo`, `EndpointInfo` | Immutable identity: valid id and a unique name of 1..64 characters of `[a-z0-9_]` (the dot is reserved for `<device>.<endpoint>.<setting>` configuration keys). `EndpointInfo` also records the direction (sensor or actuator). |
+| `Endpoint` | One capability of a Device. Implements the Core Component lifecycle table once, on a released Core `Lifecycle` (no new state machine); implementations supply hooks. Exposes status, health, capabilities, statistics (successful and failed data operations) and `last_error()`. |
+| `SensorEndpoint<Sample>` | Adds `read(Sample&)`. |
+| `ActuatorEndpoint<Command>` | Adds `write(const Command&)`. |
+| `Device` | Identity plus the Endpoints it owns (insertion order = enumeration order). No lifecycle of its own; status, health and capabilities are aggregated from its endpoints. |
+
+Rules:
+
+- **Lifecycle.** `configure` and `initialize` from UNKNOWN or STOPPED; `start` from READY; `stop` from READY or RUNNING; `shutdown` from UNKNOWN or STOPPED (releases a live period once) and from FAULT (to STOPPED). Anything else fails with `INVALID_STATE` and changes nothing. A failing `initialize`, `start` or `stop` hook leaves the endpoint in FAULT and its error is returned unchanged. FAULT is left only by `shutdown()`; nothing recovers an endpoint by itself.
+- **Errors** use released Core codes: data operation while not RUNNING `NOT_READY`; on a FAULT endpoint `RESOURCE_UNAVAILABLE`; injected hardware failure `INTERNAL_ERROR`; invalid argument or out-of-range command `INVALID_ARGUMENT`; invalid lifecycle call `INVALID_STATE`. Endpoints leave `Error::source` unset; the owning DeviceManager sets its component id.
+- **Data operations** are refused without calling the implementation unless RUNNING. A failing `do_read`/`do_write` is counted and recorded but does not by itself fault the endpoint; an implementation calls `enter_fault()` for that.
+- **Data types** must be trivially copyable value types; there is no universal sample type.
+- **Ownership.** The integrator owns the Device; the Device owns its Endpoints; the endpoint set is fixed once any endpoint has left UNKNOWN. A Device is not a Core Component.
+- **Timing.** Control plane only: operations may allocate and block, and no real-time guarantee is made.
+
+Verification support: `tests/hardware/conformance/endpoint_conformance.hpp` is a reusable suite (exhaustive lifecycle table, observation, no recovery, data-operation errors) that every Endpoint implementation, including the I3-005 mocks, must pass unchanged.

@@ -1,5 +1,9 @@
 # KOS-I3 Changelog
 
+## Implemented
+
+- I3-001: Device/Endpoint contracts (`hardware/abstraction/`, library `kritva_hardware`): identity, `Endpoint` lifecycle over Core `Lifecycle`, `SensorEndpoint<T>`, `ActuatorEndpoint<T>`, `Device`, reusable conformance suite and tests.
+
 ## Planned
 
 - Define Device and Endpoint hardware abstraction contracts.
