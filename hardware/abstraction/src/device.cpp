@@ -30,6 +30,7 @@ core::Result<Endpoint*> Device::add_endpoint(std::unique_ptr<Endpoint> endpoint)
         return Result<Endpoint*>::failure(core::Error{code, core::ErrorSeverity::ERROR, {}, {}, message});
     };
     if (!endpoint) return fail(ErrorCode::INVALID_ARGUMENT, "endpoint must not be null");
+    if (sealed_) return fail(ErrorCode::INVALID_STATE, "the device is sealed");
     for (const Endpoint* existing : view_) {
         if (existing->lifecycle_state() != LifecycleState::UNKNOWN) {
             return fail(ErrorCode::INVALID_STATE, "the endpoint set is fixed once an endpoint has been used");

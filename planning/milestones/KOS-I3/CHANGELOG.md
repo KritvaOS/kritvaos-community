@@ -16,6 +16,16 @@
 
 - I3-007: reference device demo (examples/device_demo, kritva_device_demo): configure, register, discover, initialize, start, read IMU, write motor command, observe, inject endpoint fault, verify no silent recovery, controlled shutdown; in-process and end-to-end tests.
 
+## Audit remediation (one follow-up commit)
+
+- Restored `DEVICE_ENDPOINT_ARCHITECTURE.md` (truncated in 97ab518) and re-added the I3-003..I3-006 sections.
+- `DeviceManager::stop()` stops every running endpoint (best effort) and returns the first error; `shutdown()` returns the first stop/shutdown error; `configure()` validates switches first and commits them only on success (no rollback of endpoint settings, as in Core).
+- `Device::seal()` at initialize; owner-scoped fault listeners; `Endpoint::on_fault()` hook; hook-induced faults no longer double-notify.
+- `SensorEndpoint::read()` enforces sample validity and leaves the caller's sample unchanged on failure.
+- Motor mock: lossless limits, ceiling, frozen once operational, model velocity zeroed on FAULT.
+- Diagnostics sanitise quotes and capability names.
+- Tests added for each finding; honesty fixes to the I3-007 acceptance and the verification report.
+
 ## Planned
 
 - Define Device and Endpoint hardware abstraction contracts.

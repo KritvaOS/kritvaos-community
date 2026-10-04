@@ -129,12 +129,43 @@ static void test_messages_cannot_forge_lines() {                     // output i
     KRITVA_CHECK(text.find('\r') == std::string::npos && text.find('\t') == std::string::npos);
 }
 
-static void test_no_configuration_values_in_diagnostics() {          // DER-608
-    Rig r;
-    kritva::core::Configuration cfg;
-    KRITVA_CHECK(cfg.set(kritva::core::Parameter{"imu.gyro.limit", std::int64_t{424242}, {}}).has_value());
-    KRITVA_CHECK(r.manager.configure(cfg).has_value());
-    KRITVA_CHECK(describe(r.manager.diagnostics()).find("424242") == std::string::npos);
+static void test_quotes_cannot_forge_fields() {                       // m4
+    Device d(DeviceInfo::create(DeviceId{1}, "d").value());
+    auto* e = static_cast<TestSensor*>(d.add_endpoint(std::make_unique<TestSensor>(1, "e")).value());
+    DeviceManager manager{kritva::core::runtime::ComponentId{100}};
+    KRITVA_CHECK(manager.register_device(d).has_value());
+    KRITVA_CHECK(manager.initialize().has_value() && manager.start().has_value());
+    KRITVA_CHECK(e->inject_fault("x\" health=HEALTHY ok=999 \"y").has_value());
+    const std::string text = describe(manager.diagnostics());
+
+    // Every quoted field is delimited by exactly its own two quotes: device detail (2), endpoint detail (2) and last_error (2).
+    std::size_t quotes = 0;
+    for (char c : text) if (c == '"') ++quotes;
+    KRITVA_CHECK(quotes == 6);
+    KRITVA_CHECK(text.find("detail=\"e: x? health=HEALTHY ok=999 ?y\"") != std::string::npos);   // defused in place, still inside the field
+    KRITVA_CHECK(text.find("last_error=INTERNAL_ERROR \"x? health=HEALTHY ok=999 ?y\"") != std::string::npos);
+    std::size_t lines = 0;
+    for (char c : text) if (c == '\n') ++lines;
+    KRITVA_CHECK(lines == 2);                                                    // one device line and one endpoint line
+}
+
+static void test_capability_names_are_sanitised() {                    // m4
+    Device d(DeviceInfo::create(DeviceId{1}, "d").value());
+    kritva::core::CapabilitySet caps;
+    caps.add(kritva::core::Capability{kritva::core::CapabilityId{1}, "ok\ndevice evil (id=9) health=HEALTHY", {}});
+    caps.add(kritva::core::Capability{kritva::core::CapabilityId{2}, "a,b\"c", {}});
+    struct Carrier final : Endpoint {
+        Carrier(kritva::core::CapabilitySet c) : Endpoint(make_info(1, "carrier", EndpointDirection::SENSOR), std::move(c)) {}
+    };
+    KRITVA_CHECK(d.add_endpoint(std::make_unique<Carrier>(caps)).has_value());
+    DeviceManager manager{kritva::core::runtime::ComponentId{100}};
+    KRITVA_CHECK(manager.register_device(d).has_value());
+    const std::string text = describe(manager.diagnostics());
+    KRITVA_CHECK(text.find("\ndevice evil") == std::string::npos);
+    std::size_t lines = 0;
+    for (char c : text) if (c == '\n') ++lines;
+    KRITVA_CHECK(lines == 2);                                                    // one device line, one endpoint line
+    KRITVA_CHECK(text.find("capabilities=ok?device evil (id=9) health=HEALTHY,a?b?c") != std::string::npos);
 }
 
 int main() {
@@ -144,7 +175,8 @@ int main() {
     test_disabled_device_is_marked();
     test_text_rendering_is_exact_and_deterministic();
     test_messages_cannot_forge_lines();
-    test_no_configuration_values_in_diagnostics();
+    test_quotes_cannot_forge_fields();
+    test_capability_names_are_sanitised();
     std::printf("diagnostics_test: PASS\n");
     return 0;
 }

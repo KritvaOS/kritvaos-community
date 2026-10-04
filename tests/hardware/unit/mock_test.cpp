@@ -160,7 +160,7 @@ static void test_fault_injection() {                                 // DER-803:
     MockAccelerationEndpoint a;
     KRITVA_CHECK(a.configure(cfg({{"fault_after_ops", 3}})).has_value());
     int faults = 0;
-    a.set_fault_listener([&](const Endpoint&) { ++faults; });
+    a.set_fault_listener(&faults, [&](const Endpoint&) { ++faults; });
     up(a);
     AccelerationSample s;
     for (int i = 0; i < 3; ++i) KRITVA_CHECK(a.read(s).has_value());               // the third still succeeds ...
@@ -213,6 +213,58 @@ static void test_motor_limit_configuration() {
     KRITVA_CHECK(m.set_limits(MotorLimits{-0.5, 0.25}).has_value() && m.limits().max_rad_s == 0.25);   // fractional limits
     KRITVA_CHECK(!m.set_limits(MotorLimits{1.0, -1.0}).has_value() && !m.set_limits(MotorLimits{kNaN, 1.0}).has_value());
     KRITVA_CHECK(m.limits().min_rad_s == -0.5);
+}
+
+static void test_fractional_limits_survive_configuration() {          // m1: no lossy integer round trip
+    auto model = std::make_shared<MotorModel>();
+    MockMotorCommandEndpoint m(model);
+    KRITVA_CHECK(m.set_limits(MotorLimits{-0.5, 0.25}).has_value());
+    KRITVA_CHECK(m.configure(cfg({})).has_value());                                // no limit settings: the limits stay exactly as they are
+    KRITVA_CHECK(m.limits().min_rad_s == -0.5 && m.limits().max_rad_s == 0.25);
+    KRITVA_CHECK(m.configure(cfg({{"max_rad_s", 7}})).has_value());                // only the setting given changes
+    KRITVA_CHECK(m.limits().min_rad_s == -0.5 && m.limits().max_rad_s == 7.0);
+    KRITVA_CHECK(m.configure(cfg({{"fail_after_writes", 3}})).has_value());        // unrelated settings leave the limits alone
+    KRITVA_CHECK(m.limits().min_rad_s == -0.5 && m.limits().max_rad_s == 7.0);
+}
+
+static void test_set_limits_ceiling_and_lifecycle() {                  // m1
+    auto model = std::make_shared<MotorModel>();
+    MockMotorCommandEndpoint m(model);
+    for (const MotorLimits& bad : {MotorLimits{-1e300, 1e300}, MotorLimits{-1000.5, 1}, MotorLimits{-1, 1000.5}}) {
+        const auto r = m.set_limits(bad);
+        KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INVALID_ARGUMENT);
+    }
+    KRITVA_CHECK(m.set_limits(MotorLimits{-1000.0, 1000.0}).has_value());          // the ceiling itself is allowed
+    KRITVA_CHECK(m.configure(cfg({})).has_value() && m.limits().min_rad_s == -1000.0);   // and survives configuration (no UB cast)
+    KRITVA_CHECK(m.initialize().has_value());
+    for (int phase = 0; phase < 3; ++phase) {                                      // READY, RUNNING, FAULT: limits are frozen
+        const auto r = m.set_limits(MotorLimits{-1.0, 1.0});
+        KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INVALID_STATE && m.limits().max_rad_s == 1000.0);
+        if (phase == 0) KRITVA_CHECK(m.start().has_value());
+        if (phase == 1) KRITVA_CHECK(m.inject_fault().has_value());
+    }
+    KRITVA_CHECK(m.shutdown().has_value() && m.set_limits(MotorLimits{-2.0, 2.0}).has_value());   // allowed again once stopped
+}
+
+static void test_faulted_motor_model_is_zero() {                       // m2: the model itself, not only the accessor
+    auto model = std::make_shared<MotorModel>();
+    MockMotorCommandEndpoint m(model);
+    KRITVA_CHECK(m.configure(cfg({{"max_rad_s", 1000}})).has_value());
+    up(m);
+    KRITVA_CHECK(m.write(MotorCommand{999.0}).has_value() && model->velocity_rad_s == 999.0);
+    KRITVA_CHECK(m.inject_fault().has_value());
+    KRITVA_CHECK(model->velocity_rad_s == 0.0 && m.effective_velocity() == 0.0);
+    // The same through a scheduled fault and through a failing hook.
+    auto model2 = std::make_shared<MotorModel>();
+    MockMotorCommandEndpoint s(model2);
+    KRITVA_CHECK(s.configure(cfg({{"fault_after_writes", 1}})).has_value());
+    up(s);
+    KRITVA_CHECK(s.write(MotorCommand{0.75}).has_value() && s.lifecycle_state() == LifecycleState::FAULT && model2->velocity_rad_s == 0.0);
+    // And through the device: the paired position endpoint stops moving, the model reads zero.
+    MockMotorDevice dev(DeviceInfo::create(DeviceId{2}, "motor").value());
+    up(dev.command()); up(dev.position());
+    KRITVA_CHECK(dev.command().write(MotorCommand{1.0}).has_value() && dev.model().velocity_rad_s == 1.0);
+    KRITVA_CHECK(dev.command().inject_fault().has_value() && dev.model().velocity_rad_s == 0.0);
 }
 
 static void test_motor_write_failure_and_fault() {                   // DER-803: write failure, fault
@@ -301,6 +353,9 @@ int main() {
     test_degradation();
     test_motor_nominal_and_validation();
     test_motor_limit_configuration();
+    test_fractional_limits_survive_configuration();
+    test_set_limits_ceiling_and_lifecycle();
+    test_faulted_motor_model_is_zero();
     test_motor_write_failure_and_fault();
     test_motor_is_fail_safe();
     test_position_follows_command();

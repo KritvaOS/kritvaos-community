@@ -43,7 +43,11 @@ namespace kritva::hardware {
 /// initialized, started or counted in health. Endpoint settings are
 /// `<device>.<endpoint>.<setting>` for each name in Endpoint::setting_names(); the
 /// endpoint receives only its own settings, under their bare names. config_keys()
-/// lists every key, for the loader's allow-list so that typos are rejected.
+/// lists every key, for the loader's allow-list so that typos are rejected. configure()
+/// validates all `<device>.enabled` switches first, then applies the endpoint settings in
+/// order WITHOUT rollback (as Core's RuntimeManager does): if an endpoint rejects its settings,
+/// earlier endpoints keep theirs and later ones are not configured, and the device switches
+/// are committed only if the whole call succeeds.
 ///
 /// FAILURE (DER-607, DER-704, DER-703).
 ///  - A failing endpoint during initialize/start/stop faults the endpoint, and the
@@ -54,13 +58,17 @@ namespace kritva::hardware {
 ///    UNHEALTHY and its status FAILED (visible through the runtime's observation
 ///    and failure_report()), and exactly ONE ERROR event is reported to the event
 ///    sink, with the manager as source. The faulted endpoint is never restarted.
-///  - stop() stops the healthy endpoints and skips faulted ones; shutdown()
-///    releases everything, including faulted endpoints, so controlled shutdown
-///    works after any failure. A restart is an explicit new lifecycle:
-///    shutdown, then initialize again.
+///  - stop() attempts to stop EVERY running endpoint (reverse order) even if one fails, then
+///    returns the first error (the manager is FAULT); it skips faulted endpoints. shutdown()
+///    is best effort over all endpoints too: it stops any still-running one, releases
+///    everything including faulted endpoints, and returns the FIRST error it met (state
+///    unchanged, a retry resumes). Controlled shutdown therefore works after any failure.
+///    A restart is an explicit new lifecycle: shutdown, then initialize again.
 ///
 /// LIFETIMES. The manager owns neither Devices nor Endpoints; every registered
-/// Device must outlive the manager (declare devices before it).
+/// Device must outlive the manager (declare devices before it). initialize() seals every
+/// registered Device (no endpoint can be added afterwards). The manager's fault listeners are
+/// owner-scoped, so several managers can watch the same endpoint and each removes only its own.
 ///
 /// Thread-safety: none. Control plane only.
 class DeviceManager final : public core::runtime::Component, public core::runtime::IComponentStatistics {

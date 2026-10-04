@@ -17,6 +17,8 @@
 //==============================================================================
 
 #include <string>
+#include <type_traits>
+#include <vector>
 
 #include "../../runtime/check.hpp"
 #include "../conformance/endpoint_conformance.hpp"
@@ -141,6 +143,85 @@ static void test_typed_actuator_operations() {                        // DER-502
     KRITVA_CHECK(!f.has_value() && f.error().code == ErrorCode::RESOURCE_UNAVAILABLE && a.applied->value == 5);
 }
 
+static void test_hook_that_faults_the_endpoint_fails_the_operation() {   // no double transition or notification
+    for (bool hook_fails : {false, true}) {
+        TestEndpoint e;
+        int notified = 0;
+        e.set_fault_listener(&notified, [&](const Endpoint&) { ++notified; });
+        KRITVA_CHECK(e.initialize().has_value());
+        e.fault_inside = FailAt::START;
+        if (hook_fails) e.fail_at = FailAt::START;
+        const auto r = e.start();
+        KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INTERNAL_ERROR);
+        KRITVA_CHECK(e.lifecycle_state() == LifecycleState::FAULT);
+        KRITVA_CHECK(notified == 1 && e.on_fault_calls == 1);                                     // exactly once
+        KRITVA_CHECK(r.error().message == (hook_fails ? "hook failure" : "fault inside the hook"));
+        KRITVA_CHECK(e.health().state() == HealthState::UNHEALTHY && e.last_error().has_value());
+        KRITVA_CHECK(e.shutdown().has_value() && e.lifecycle_state() == LifecycleState::STOPPED);
+    }
+    TestEndpoint s;                                                                                // the same in stop()
+    KRITVA_CHECK(s.initialize().has_value());
+    s.fault_inside = FailAt::STOP;
+    KRITVA_CHECK(!s.stop().has_value() && s.lifecycle_state() == LifecycleState::FAULT && s.on_fault_calls == 1);
+}
+
+static void test_on_fault_hook_runs_before_the_listeners() {          // fail-safe ordering
+    TestEndpoint e;
+    std::vector<std::string> order;
+    e.set_fault_listener(&order, [&](const Endpoint& ep) {
+        order.push_back(std::string("listener:") + (static_cast<const TestEndpoint&>(ep).on_fault_calls == 1 ? "after-on_fault" : "before-on_fault"));
+    });
+    KRITVA_CHECK(e.initialize().has_value() && e.start().has_value() && e.inject_fault().has_value());
+    KRITVA_CHECK(order == std::vector<std::string>{"listener:after-on_fault"});
+    KRITVA_CHECK(e.state_in_on_fault == LifecycleState::FAULT);                                    // the state has already changed
+    KRITVA_CHECK(e.inject_fault().has_value() && e.on_fault_calls == 1);                           // not again while faulted
+    KRITVA_CHECK(e.shutdown().has_value() && e.initialize().has_value() && e.start().has_value() && e.inject_fault().has_value());
+    KRITVA_CHECK(e.on_fault_calls == 2);                                                           // once per fault
+}
+
+static void test_fault_listeners_are_owner_scoped() {
+    TestEndpoint e;
+    int a = 0, b = 0;
+    int owner_a = 0, owner_b = 0;
+    e.set_fault_listener(&owner_a, [&](const Endpoint&) { ++a; });
+    e.set_fault_listener(&owner_b, [&](const Endpoint&) { ++b; });
+    e.set_fault_listener(&owner_a, [&](const Endpoint&) { a += 10; });                              // replaces owner A's listener
+    KRITVA_CHECK(e.initialize().has_value() && e.start().has_value() && e.inject_fault().has_value());
+    KRITVA_CHECK(a == 10 && b == 1);                                                               // both called, A once
+    KRITVA_CHECK(e.shutdown().has_value());
+    e.clear_fault_listener(&owner_a);                                                              // A goes away ...
+    KRITVA_CHECK(e.initialize().has_value() && e.start().has_value() && e.inject_fault().has_value());
+    KRITVA_CHECK(a == 10 && b == 2);                                                               // ... B still hears the fault
+    e.clear_fault_listener(&owner_a);                                                              // clearing twice is harmless
+    int unknown_owner = 0;
+    e.clear_fault_listener(&unknown_owner);
+}
+
+static void test_invalid_samples_are_never_reported_as_success() {     // DER-505
+    TestSensor s;
+    KRITVA_CHECK(s.initialize().has_value() && s.start().has_value());
+    TestSample out;
+    out.value = 77;
+    KRITVA_CHECK(s.read(out).has_value() && out.value == 1);
+    s.invalid_next_read = true;
+    const auto r = s.read(out);
+    KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INTERNAL_ERROR && r.error().message == "the sensor produced an invalid sample");
+    KRITVA_CHECK(out.value == 1 && out.valid);                                                    // the caller's sample is untouched
+    KRITVA_CHECK(s.lifecycle_state() == LifecycleState::RUNNING);                                  // not a fault
+    KRITVA_CHECK(s.statistics().sample_count.value() == 1 && s.statistics().error_count.value() == 1);
+    KRITVA_CHECK(s.last_error() && s.last_error()->message == "the sensor produced an invalid sample");
+    s.fail_next_read = true;                                                                       // a failing do_read leaves it untouched too
+    TestSample before = out;
+    KRITVA_CHECK(!s.read(out).has_value() && out.value == before.value);
+    KRITVA_CHECK(s.read(out).has_value() && out.value == 4);                                       // the endpoint keeps working
+}
+
+static void test_device_and_endpoint_are_not_core_components() {      // DER-003, machine-checked
+    static_assert(!std::is_base_of_v<kritva::core::runtime::Component, Endpoint>, "an Endpoint is not a Core Component");
+    static_assert(!std::is_base_of_v<kritva::core::runtime::Component, Device>, "a Device is not a Core Component");
+    static_assert(!std::is_base_of_v<Endpoint, Device> && !std::is_base_of_v<Device, Endpoint>);
+}
+
 static void test_capabilities_are_stable() {                          // DER-303, DER-605
     TestSensor s(9, "accel");
     KRITVA_CHECK(s.capabilities().size() == 1 && s.capabilities().contains(kritva::core::CapabilityId{9}));
@@ -157,6 +238,11 @@ int main() {
     test_degraded_health();
     test_typed_sensor_operations();
     test_typed_actuator_operations();
+    test_hook_that_faults_the_endpoint_fails_the_operation();
+    test_on_fault_hook_runs_before_the_listeners();
+    test_fault_listeners_are_owner_scoped();
+    test_invalid_samples_are_never_reported_as_success();
+    test_device_and_endpoint_are_not_core_components();
     test_capabilities_are_stable();
     std::printf("endpoint_test: PASS\n");
     return 0;

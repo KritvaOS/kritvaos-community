@@ -18,6 +18,7 @@
 
 #include <kritva/hardware/mock/mock_motor.hpp>
 
+#include <cmath>
 #include <variant>
 
 namespace kritva::hardware::mock {
@@ -50,17 +51,31 @@ std::vector<std::string> MockMotorCommandEndpoint::setting_names() const {
 }
 
 core::Result<void> MockMotorCommandEndpoint::set_limits(const MotorLimits& limits) {
+    const auto state = lifecycle_state();
+    if (state != core::LifecycleState::UNKNOWN && state != core::LifecycleState::STOPPED) {
+        return core::Result<void>::failure(make_error(core::ErrorCode::INVALID_STATE, "limits cannot change once the endpoint is operational"));
+    }
     if (auto r = validate_limits(limits); !r) return r;
+    if (std::fabs(limits.min_rad_s) > kMaxLimitRadS || std::fabs(limits.max_rad_s) > kMaxLimitRadS) {
+        return core::Result<void>::failure(make_error(core::ErrorCode::INVALID_ARGUMENT, "motor limits exceed the allowed ceiling"));
+    }
     limits_ = limits;
     return core::Result<void>::success();
 }
 
 core::Result<void> MockMotorCommandEndpoint::on_configure(const core::Configuration& scoped) {
-    const auto lo = read_int(scoped, "min_rad_s", static_cast<std::int64_t>(limits_.min_rad_s), -1000, 1000);
-    if (!lo) return core::Result<void>::failure(lo.error());
-    const auto hi = read_int(scoped, "max_rad_s", static_cast<std::int64_t>(limits_.max_rad_s), -1000, 1000);
-    if (!hi) return core::Result<void>::failure(hi.error());
-    const MotorLimits wanted{static_cast<double>(lo.value()), static_cast<double>(hi.value())};
+    // A setting that is absent keeps the current limit exactly (no integer round trip).
+    MotorLimits wanted = limits_;
+    if (scoped.contains("min_rad_s")) {
+        const auto lo = read_int(scoped, "min_rad_s", 0, -1000, 1000);
+        if (!lo) return core::Result<void>::failure(lo.error());
+        wanted.min_rad_s = static_cast<double>(lo.value());
+    }
+    if (scoped.contains("max_rad_s")) {
+        const auto hi = read_int(scoped, "max_rad_s", 0, -1000, 1000);
+        if (!hi) return core::Result<void>::failure(hi.error());
+        wanted.max_rad_s = static_cast<double>(hi.value());
+    }
     if (auto r = validate_limits(wanted); !r) {
         return core::Result<void>::failure(core::Error{core::ErrorCode::CONFIGURATION_ERROR, core::ErrorSeverity::ERROR, {}, {}, r.error().message});
     }
@@ -72,6 +87,10 @@ core::Result<void> MockMotorCommandEndpoint::on_configure(const core::Configurat
 core::Result<void> MockMotorCommandEndpoint::on_initialize() {
     model_->velocity_rad_s = 0.0;                            // never starts moving
     return MockEndpoint<MotorCommandEndpoint>::on_initialize();
+}
+
+void MockMotorCommandEndpoint::on_fault() {
+    model_->velocity_rad_s = 0.0;                            // a faulted motor is commanded to zero, in the model itself
 }
 
 core::Result<void> MockMotorCommandEndpoint::on_stop() {

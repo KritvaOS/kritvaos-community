@@ -30,6 +30,9 @@ struct MotorModel {
     double position_rad{0.0};
 };
 
+/// Largest magnitude, in rad/s, accepted for a motor limit (configuration and set_limits()).
+inline constexpr double kMaxLimitRadS = 1000.0;
+
 /// Duration, in seconds, that one position read advances the simulated joint.
 inline constexpr double kPositionStepSeconds = 0.01;
 
@@ -40,11 +43,15 @@ inline constexpr double kPositionStepSeconds = 0.01;
 /// A write is validated BEFORE it is applied (NaN, Inf and out-of-range commands are rejected
 /// with INVALID_ARGUMENT and change nothing). A scheduled failure fails the write without
 /// applying it. FAIL-SAFE: the simulated joint velocity is zero whenever this endpoint is not
-/// RUNNING, and is reset to zero by initialize(), stop() and shutdown().
+/// RUNNING, and the model itself is set to zero on initialize(), stop(), shutdown() and when the
+/// endpoint enters FAULT.
 class MockMotorCommandEndpoint : public MockEndpoint<MotorCommandEndpoint> {
 public:
     MockMotorCommandEndpoint(std::shared_ptr<MotorModel> model, EndpointId id = EndpointId{1}, const char* name = "command");
     [[nodiscard]] std::vector<std::string> setting_names() const override;
+    /// Sets fractional limits. Limits are configuration-time properties: rejected with INVALID_STATE
+    /// once the endpoint is operational (READY, RUNNING or FAULT), and with INVALID_ARGUMENT unless
+    /// both are finite, min <= max and |limit| <= kMaxLimitRadS.
     core::Result<void> set_limits(const MotorLimits& limits);
     [[nodiscard]] const MotorLimits& limits() const noexcept { return limits_; }
     /// Velocity the joint currently has (0 unless a command is applied and the endpoint is RUNNING).
@@ -55,6 +62,7 @@ public:
 protected:
     core::Result<void> on_configure(const core::Configuration& scoped) override;
     core::Result<void> on_initialize() override;
+    void on_fault() override;
     core::Result<void> on_stop() override;
     core::Result<void> on_shutdown() override;
     core::Result<void> do_write(const MotorCommand& command) override;

@@ -90,7 +90,7 @@ Result<void> DeviceManager::configure(const core::Configuration& configuration) 
     const auto s = lifecycle_.state();
     if (s != LifecycleState::UNKNOWN && s != LifecycleState::STOPPED) return invalid_state("configure");
 
-    // Validate every device switch before touching anything.
+    // Phase 1: validate every device switch before anything is touched.
     std::vector<const Device*> disabled;
     for (const Device* d : registry_.devices()) {
         const core::Parameter* p = configuration.get(d->info().name() + ".enabled");
@@ -102,10 +102,12 @@ Result<void> DeviceManager::configure(const core::Configuration& configuration) 
         }
         if (!*flag) disabled.push_back(d);
     }
-    disabled_ = std::move(disabled);
 
+    // Phase 2: apply the endpoint settings in deterministic order (registration order, then
+    // insertion order). Like Core's RuntimeManager there is no rollback: if one endpoint rejects
+    // its settings, the endpoints before it keep theirs and the later ones are not configured.
     for (Device* d : registry_.devices()) {
-        if (!enabled(*d)) continue;
+        if (std::find(disabled.begin(), disabled.end(), d) != disabled.end()) continue;
         for (Endpoint* e : d->endpoints()) {
             core::Configuration scoped;            // only this endpoint's settings, under their bare names
             for (const auto& setting : e->setting_names()) {
@@ -113,21 +115,24 @@ Result<void> DeviceManager::configure(const core::Configuration& configuration) 
                     (void)scoped.set(core::Parameter{setting, p->value, {}});
                 }
             }
-            if (auto r = e->configure(scoped); !r) return with_source(std::move(r));   // state unchanged
+            if (auto r = e->configure(scoped); !r) return with_source(std::move(r));   // nothing is committed
         }
     }
+
+    // Phase 3: commit the device switches only now, so a failed configure() leaves them unchanged.
+    disabled_ = std::move(disabled);
     return Result<void>::success();
 }
 
 void DeviceManager::install_listeners() {
     for (Device* d : registry_.devices()) {
-        for (Endpoint* e : d->endpoints()) e->set_fault_listener([this](const Endpoint& ep) { on_endpoint_fault(ep); });
+        for (Endpoint* e : d->endpoints()) e->set_fault_listener(this, [this](const Endpoint& ep) { on_endpoint_fault(ep); });
     }
 }
 
 void DeviceManager::clear_listeners() {
     for (Device* d : registry_.devices()) {
-        for (Endpoint* e : d->endpoints()) e->set_fault_listener({});
+        for (Endpoint* e : d->endpoints()) e->clear_fault_listener(this);
     }
 }
 
@@ -144,6 +149,7 @@ Result<void> DeviceManager::initialize() {
     const auto s = lifecycle_.state();
     if (s != LifecycleState::UNKNOWN && s != LifecycleState::STOPPED) return invalid_state("initialize");
     registry_.close();
+    for (Device* d : registry_.devices()) d->seal();      // the endpoint set is now fixed
     install_listeners();
     (void)lifecycle_.transition_to(LifecycleState::INITIALIZING);
     live_ = true;
@@ -171,13 +177,18 @@ Result<void> DeviceManager::stop() {
     if (s != LifecycleState::READY && s != LifecycleState::RUNNING) return invalid_state("stop");
     if (s == LifecycleState::RUNNING) (void)lifecycle_.transition_to(LifecycleState::STOPPING);
     in_lifecycle_ = true;
-    // Faulted endpoints are not stopped: shutdown() releases them.
-    auto r = each_endpoint(true, [](Endpoint& e) {
+    // Fail-safe: EVERY running endpoint is stopped, in reverse order, even if one of them fails; the
+    // first error is returned afterwards. Faulted endpoints are skipped: shutdown() releases them.
+    Result<void> first = Result<void>::success();
+    (void)each_endpoint(true, [&](Endpoint& e) {
         const auto st = e.lifecycle_state();
-        return (st == LifecycleState::READY || st == LifecycleState::RUNNING) ? e.stop() : Result<void>::success();
+        if (st == LifecycleState::READY || st == LifecycleState::RUNNING) {
+            if (auto r = e.stop(); !r && first) first = std::move(r);
+        }
+        return Result<void>::success();
     });
     in_lifecycle_ = false;
-    if (!r) return fail(std::move(r));
+    if (!first) return fail(std::move(first));
     (void)lifecycle_.transition_to(LifecycleState::STOPPED);
     return Result<void>::success();
 }
@@ -191,7 +202,9 @@ Result<void> DeviceManager::shutdown() {
         // Best effort over all endpoints so one failure cannot strand the others; the first error is returned.
         (void)each_endpoint(true, [&](Endpoint& e) {
             const auto st = e.lifecycle_state();
-            if (st == LifecycleState::READY || st == LifecycleState::RUNNING) (void)e.stop();
+            if (st == LifecycleState::READY || st == LifecycleState::RUNNING) {
+                if (auto r = e.stop(); !r && first) first = std::move(r);            // a failed stop is not swallowed
+            }
             if (auto r = e.shutdown(); !r && first) first = std::move(r);
             return Result<void>::success();
         });

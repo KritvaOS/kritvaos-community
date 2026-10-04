@@ -89,7 +89,7 @@ The I3 implementation uses mock hardware only.
 
 ### Runtime ownership
 
-The RuntimeHost/Device Manager coordinates Device/Endpoint lifecycle. Device/Endpoint are not registered as Core runtime Components solely to obtain lifecycle behavior.
+As built, a single `DeviceManager` (`hardware/abstraction/`) is the one Core Component through which the runtime reaches Devices and Endpoints; it is registered with the unchanged `RuntimeHost::add_component()`. Devices and Endpoints are not Core Components and there is no `RuntimeHost::add_device()`. The manager runs the Core Component lifecycle and fans each operation out to the endpoints in deterministic order (see `docs/architecture/hardware/DEVICE_ENDPOINT_ARCHITECTURE.md`). An endpoint fault is visible at component level through `RuntimeHost::observe()` and `failure_report()` (manager health UNHEALTHY while its state stays RUNNING) and reported as exactly one ERROR event; `controlled_shutdown()` works after any endpoint failure.
 
 ### Registry distinction
 

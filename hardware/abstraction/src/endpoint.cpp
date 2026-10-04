@@ -51,6 +51,18 @@ Result<void> Endpoint::fail_into_fault(Result<void> failed) {
     return failed;
 }
 
+// Finishes initialize/start/stop after its hook ran. A hook that already faulted the endpoint
+// (enter_fault) must not cause a second transition or notification.
+Result<void> Endpoint::complete(Result<void> hook_result, LifecycleState on_success) {
+    if (lifecycle_.state() == LifecycleState::FAULT) {
+        if (!hook_result) return hook_result;
+        return Result<void>::failure(last_error_ ? *last_error_ : make_error(ErrorCode::INTERNAL_ERROR, "the endpoint faulted during the operation"));
+    }
+    if (!hook_result) return fail_into_fault(std::move(hook_result));
+    transition(on_success);
+    return Result<void>::success();
+}
+
 Result<void> Endpoint::configure(const core::Configuration& configuration) {
     const auto s = lifecycle_.state();
     if (s != LifecycleState::UNKNOWN && s != LifecycleState::STOPPED) return invalid_state("configure");
@@ -66,26 +78,21 @@ Result<void> Endpoint::initialize() {
     live_ = true;
     degraded_detail_.reset();
     fault_detail_.clear();
-    if (auto r = on_initialize(); !r) return fail_into_fault(std::move(r));
-    transition(LifecycleState::READY);
-    return Result<void>::success();
+    return complete(on_initialize(), LifecycleState::READY);
 }
 
 Result<void> Endpoint::start() {
     if (lifecycle_.state() != LifecycleState::READY) return invalid_state("start");
-    if (auto r = on_start(); !r) return fail_into_fault(std::move(r));
-    transition(LifecycleState::RUNNING);
-    return Result<void>::success();
+    return complete(on_start(), LifecycleState::RUNNING);
 }
 
 Result<void> Endpoint::stop() {
     const auto s = lifecycle_.state();
     if (s != LifecycleState::READY && s != LifecycleState::RUNNING) return invalid_state("stop");
     if (s == LifecycleState::RUNNING) transition(LifecycleState::STOPPING);
-    if (auto r = on_stop(); !r) return fail_into_fault(std::move(r));
-    transition(LifecycleState::STOPPED);
-    degraded_detail_.reset();
-    return Result<void>::success();
+    auto r = complete(on_stop(), LifecycleState::STOPPED);
+    if (r) degraded_detail_.reset();
+    return r;
 }
 
 Result<void> Endpoint::shutdown() {
@@ -132,7 +139,23 @@ Result<void> Endpoint::enter_fault(const core::Error& cause) {
 }
 
 void Endpoint::notify_fault() {
-    if (fault_listener_) fault_listener_(*this);
+    on_fault();                                           // make the hardware safe first
+    for (const auto& entry : fault_listeners_) {
+        if (entry.second) entry.second(*this);
+    }
+}
+
+void Endpoint::set_fault_listener(const void* owner, FaultListener listener) {
+    for (auto& entry : fault_listeners_) {
+        if (entry.first == owner) { entry.second = std::move(listener); return; }
+    }
+    fault_listeners_.emplace_back(owner, std::move(listener));
+}
+
+void Endpoint::clear_fault_listener(const void* owner) noexcept {
+    for (auto it = fault_listeners_.begin(); it != fault_listeners_.end(); ++it) {
+        if (it->first == owner) { fault_listeners_.erase(it); return; }
+    }
 }
 
 void Endpoint::set_degraded(std::string detail) { degraded_detail_ = std::move(detail); }

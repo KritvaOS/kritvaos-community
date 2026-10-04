@@ -21,6 +21,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <kritva/core/core.hpp>
@@ -44,7 +45,9 @@ namespace kritva::hardware {
 ///   shutdown     UNKNOWN, STOPPED (no-op, releases a live period once), FAULT -> STOPPED
 ///
 /// An operation invalid for the current state fails with INVALID_STATE and
-/// changes nothing. FAULT is left only by shutdown(): a faulted endpoint never
+/// changes nothing. If a hook faults the endpoint itself (enter_fault()) the operation
+/// fails: the hook's error is returned if it failed, else the fault's cause; the endpoint is
+/// already FAULT and no second transition or notification happens. FAULT is left only by shutdown(): a faulted endpoint never
 /// recovers by itself and no operation restarts it. initialize() may be called
 /// again from STOPPED (a new live period).
 ///
@@ -88,13 +91,19 @@ public:
     /// and hands the endpoint only these, under their bare names, in configure().
     [[nodiscard]] virtual std::vector<std::string> setting_names() const { return {}; }
 
-    /// Called once each time this endpoint enters FAULT, whether through a failing
-    /// hook or through enter_fault() (never again while it stays faulted). The
-    /// DeviceManager uses it to report a fault that happens on its own, outside a
-    /// lifecycle call. Pass an empty function to clear it. The listener must outlive
-    /// its registration or be cleared first.
+    /// Fault listeners: called once each time this endpoint enters FAULT, whether through
+    /// a failing hook or through enter_fault() (never again while it stays faulted), after
+    /// the on_fault() hook. The DeviceManager uses one to report a fault that happens on
+    /// its own, outside a lifecycle call.
+    ///
+    /// Listeners are owner-scoped: `owner` is any stable address that identifies the
+    /// registrant (typically `this`). Registering again with the same owner replaces that
+    /// owner's listener; different owners coexist and are called in registration order;
+    /// clear_fault_listener(owner) removes only that owner's listener. A registrant must
+    /// clear its listener before it is destroyed.
     using FaultListener = std::function<void(const Endpoint&)>;
-    void set_fault_listener(FaultListener listener) { fault_listener_ = std::move(listener); }
+    void set_fault_listener(const void* owner, FaultListener listener);
+    void clear_fault_listener(const void* owner) noexcept;
 
     /// The most recent failure of any operation; kept until replaced.
     [[nodiscard]] const std::optional<core::Error>& last_error() const noexcept { return last_error_; }
@@ -114,10 +123,17 @@ protected:
     /// Ok while RUNNING; NOT_READY before/after the live period; RESOURCE_UNAVAILABLE in FAULT.
     [[nodiscard]] core::Result<void> check_operational(const char* operation) const;
 
-    /// Moves a live endpoint (initializing, READY, RUNNING, stopping) to FAULT with
-    /// `cause` as its last error and fault detail. Idempotent while faulted;
-    /// INVALID_STATE if the endpoint is not live. Never recovers by itself.
+    /// Moves a READY or RUNNING endpoint to FAULT with `cause` as its last error and fault
+    /// detail, calls on_fault(), then the fault listeners. Idempotent while faulted;
+    /// INVALID_STATE in any other state (the endpoint is not yet live, is being initialized
+    /// or stopped, or has been stopped). Never recovers by itself. A lifecycle hook may call
+    /// it; the operation then fails (see the lifecycle table) without a second transition.
     core::Result<void> enter_fault(const core::Error& cause);
+
+    /// Called exactly once on each transition into FAULT, after the state has changed and
+    /// before the listeners. Implementations make their hardware safe here (an actuator
+    /// zeroes its output). Must not throw and must not call back into lifecycle operations.
+    virtual void on_fault() {}
 
     /// Reports (or clears) degradation of a RUNNING endpoint, observable as DEGRADED health.
     void set_degraded(std::string detail);
@@ -133,6 +149,7 @@ private:
     void notify_fault();
     core::Result<void> invalid_state(const char* operation);
     core::Result<void> fail_into_fault(core::Result<void> failed);
+    core::Result<void> complete(core::Result<void> hook_result, core::LifecycleState on_success);
     void transition(core::LifecycleState target);
 
     EndpointInfo info_;
@@ -142,7 +159,7 @@ private:
     std::optional<core::Error> last_error_;
     std::optional<std::string> degraded_detail_;
     std::string fault_detail_;
-    FaultListener fault_listener_;
+    std::vector<std::pair<const void*, FaultListener>> fault_listeners_;
     bool live_{false};
 };
 

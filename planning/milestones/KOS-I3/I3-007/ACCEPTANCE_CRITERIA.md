@@ -14,7 +14,7 @@
 - [x] Demo exits deterministically.
 
 ## Unit
-- [x] Demo support code unit tests PASS.
+- [x] Demo tests PASS: there are no separate unit tests of the demo support code; the demo is covered by in-process system tests (`kritva_device_demo_system`) and the end-to-end executable sanity test (`kritva_device_demo_sanity`), and its building blocks by the I3-001..006 unit and integration tests.
 
 ## Integration
 - [x] Full runtime + registry + mock devices + endpoints test PASS.

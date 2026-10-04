@@ -49,9 +49,15 @@ public:
 
     /// Takes ownership of `endpoint` and returns it. Setup only. Fails with
     /// INVALID_ARGUMENT for a null endpoint or a duplicate endpoint id or name
-    /// within this Device, and with INVALID_STATE once any endpoint of the Device
-    /// has left UNKNOWN (the endpoint set is fixed after first use).
+    /// within this Device, and with INVALID_STATE once the Device is sealed or any
+    /// endpoint of the Device has left UNKNOWN (the endpoint set is fixed after first use).
     core::Result<Endpoint*> add_endpoint(std::unique_ptr<Endpoint> endpoint);
+
+    /// Fixes the endpoint set for good: add_endpoint() then fails with INVALID_STATE.
+    /// Idempotent. The DeviceManager seals every registered Device when it closes the
+    /// registry, so no endpoint can appear after the runtime has taken over.
+    void seal() noexcept { sealed_ = true; }
+    [[nodiscard]] bool sealed() const noexcept { return sealed_; }
 
     /// Endpoints in insertion order.
     [[nodiscard]] const std::vector<Endpoint*>& endpoints() const noexcept { return view_; }
@@ -73,6 +79,7 @@ private:
     DeviceInfo info_;
     std::vector<std::unique_ptr<Endpoint>> owned_;
     std::vector<Endpoint*> view_;
+    bool sealed_{false};
 };
 
 } // namespace kritva::hardware

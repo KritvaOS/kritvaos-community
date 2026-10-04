@@ -156,14 +156,14 @@ std::string check_endpoint_contract(const Fixture<E>& f, EndpointDirection direc
         auto e = f.make();
         int calls = 0;
         const Endpoint* seen = nullptr;
-        e->set_fault_listener([&](const Endpoint& ep) { ++calls; seen = &ep; });
+        e->set_fault_listener(&calls, [&](const Endpoint& ep) { ++calls; seen = &ep; });
         if (auto err = reach(*e, LS::RUNNING, f); !err.empty()) return err;
         if (calls != 0) return "the fault listener fired without a fault";
         if (!f.induce_fault(*e) || calls != 1 || seen != e.get()) return "the fault listener must fire once, with the endpoint";
         if (!f.induce_fault(*e) || calls != 1) return "the fault listener must not fire again while faulted";
         if (!e->shutdown() || calls != 1) return "shutdown must not fire the fault listener";
         if (!e->initialize() || !e->start() || !f.induce_fault(*e) || calls != 2) return "a new fault after restart must fire the listener again";
-        e->set_fault_listener({});
+        e->clear_fault_listener(&calls);
         if (!e->shutdown()) return "shutdown failed";
     }
     {   // a fault is only possible on a live endpoint

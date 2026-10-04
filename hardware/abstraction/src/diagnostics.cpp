@@ -64,16 +64,21 @@ const char* name_of(core::ErrorCode c) {
     return "INVALID";
 }
 
-// One line of output can never be split or forged by a message.
+// Text that comes from a device or an error can neither split a line nor close a quoted
+// field: control characters, the double quote and the comma-list separator are replaced.
 std::string clean(const std::string& text) {
     std::string out = text;
-    for (char& c : out) if (static_cast<unsigned char>(c) < 0x20 || c == 0x7f) c = '?';
+    for (char& c : out) if (static_cast<unsigned char>(c) < 0x20 || c == 0x7f || c == '"') c = '?';
     return out;
 }
 
 std::string join(const std::vector<std::string>& items) {
     std::string out;
-    for (const auto& i : items) out += (out.empty() ? "" : ",") + i;
+    for (const auto& i : items) {
+        std::string item = clean(i);
+        for (char& c : item) if (c == ',') c = '?';
+        out += (out.empty() ? "" : ",") + item;
+    }
     return out.empty() ? "none" : out;
 }
 

@@ -36,9 +36,9 @@ namespace kritva::hardware {
 // timestamp. `sequence == 0` means "no sample has been produced into this object";
 // a producing endpoint numbers its samples 1, 2, 3 ... with no gaps.
 //
-// VALIDITY. A sample is valid iff every numeric value is finite. read() never
-// reports success with an invalid sample; a source that cannot produce a valid one
-// fails with an Error instead (DER-503).
+// VALIDITY. A sample is valid iff every numeric value is finite (is_valid()).
+// SensorEndpoint::read() enforces it: it never reports success with an invalid sample,
+// and the caller's sample object is left unchanged when read() fails (DER-503, DER-505).
 //
 // TIMESTAMP POLICY (DER-702). `timestamp` is MONOTONIC-domain time since the start of
 // the endpoint's live period. I3 endpoints are simulated and use a deterministic

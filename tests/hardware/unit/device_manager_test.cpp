@@ -173,15 +173,119 @@ static void test_failing_hooks_fault_the_manager() {                 // DER-404,
     }
 }
 
-static void test_failing_stop_faults_the_manager() {
+static void test_failing_stop_still_stops_every_endpoint() {          // M1: fail-safe, best effort
+    for (int failing : {0, 1, 2, 3}) {                                                                      // reverse order: position, command, gyro, accel
+        Rig r;
+        r.run_up();
+        Endpoint* const order[] = {r.position, r.command, r.gyro, r.accel};
+        switch (failing) {
+            case 0: r.position->fail_at = FailAt::STOP; break;
+            case 1: r.command->fail_at = FailAt::STOP; break;
+            case 2: r.gyro->fail_at = FailAt::STOP; break;
+            default: r.accel->fail_at = FailAt::STOP; break;
+        }
+        r.log.clear();
+        const auto res = r.manager.stop();
+        KRITVA_CHECK(!res.has_value() && res.error().source == r.manager.info().id() && res.error().code == ErrorCode::INTERNAL_ERROR);
+        KRITVA_CHECK(r.manager.lifecycle_state() == LifecycleState::FAULT);
+        // Every endpoint was attempted, in reverse order, whatever failed.
+        const Log attempts{"position.stop", "command.stop", "gyro.stop", "accel.stop"};
+        KRITVA_CHECK(r.log == attempts);
+        for (int i = 0; i < 4; ++i) {                                                                       // the failing one is FAULT, all others STOPPED
+            KRITVA_CHECK(order[i]->lifecycle_state() == (i == failing ? LifecycleState::FAULT : LifecycleState::STOPPED));
+        }
+        // The actuator in particular is not left running.
+        KRITVA_CHECK(r.command->lifecycle_state() != LifecycleState::RUNNING);
+        KRITVA_CHECK(r.command->write(TestCommand{1}).error().code != ErrorCode::NONE && !r.command->write(TestCommand{1}).has_value());
+        r.position->fail_at = r.command->fail_at = r.gyro->fail_at = r.accel->fail_at = FailAt::NONE;
+        KRITVA_CHECK(r.manager.shutdown().has_value() && r.manager.lifecycle_state() == LifecycleState::STOPPED);
+    }
+}
+
+static void test_shutdown_returns_the_first_stop_error() {            // M2
+    Rig r;
+    r.gyro->fail_at = FailAt::INITIALIZE;                                                                   // accel READY, gyro FAULT, others never started
+    KRITVA_CHECK(!r.manager.initialize().has_value() && r.manager.lifecycle_state() == LifecycleState::FAULT);
+    r.accel->fail_at = FailAt::STOP;                                                                        // releasing accel needs a stop that fails
+    r.gyro->fail_at = FailAt::NONE;
+    const auto res = r.manager.shutdown();
+    KRITVA_CHECK(!res.has_value() && res.error().code == ErrorCode::INTERNAL_ERROR && res.error().source == r.manager.info().id());
+    KRITVA_CHECK(r.manager.lifecycle_state() == LifecycleState::FAULT);                                     // unchanged: a retry resumes
+    KRITVA_CHECK(r.accel->lifecycle_state() == LifecycleState::STOPPED && r.gyro->lifecycle_state() == LifecycleState::STOPPED);   // everything was still released
+    r.accel->fail_at = FailAt::NONE;
+    KRITVA_CHECK(r.manager.shutdown().has_value() && r.manager.lifecycle_state() == LifecycleState::STOPPED);
+}
+
+static void test_failing_shutdown_hook_is_reported_and_retried() {    // M2: on_shutdown path
     Rig r;
     r.run_up();
-    r.command->fail_at = FailAt::STOP;
-    const auto res = r.manager.stop();
-    KRITVA_CHECK(!res.has_value() && res.error().source == r.manager.info().id() && r.manager.lifecycle_state() == LifecycleState::FAULT);
+    KRITVA_CHECK(r.manager.stop().has_value());
+    r.command->fail_at = FailAt::SHUTDOWN;
+    const auto res = r.manager.shutdown();
+    KRITVA_CHECK(!res.has_value() && res.error().source == r.manager.info().id() && r.manager.lifecycle_state() == LifecycleState::STOPPED);
+    KRITVA_CHECK(r.accel->shutdown_calls == 1 && r.gyro->shutdown_calls == 1 && r.position->shutdown_calls == 1 && r.command->shutdown_calls == 1);
     r.command->fail_at = FailAt::NONE;
-    KRITVA_CHECK(r.manager.shutdown().has_value());                                                          // best-effort release of all
-    KRITVA_CHECK(r.accel->lifecycle_state() == LifecycleState::STOPPED && r.gyro->lifecycle_state() == LifecycleState::STOPPED);
+    KRITVA_CHECK(r.manager.shutdown().has_value());                                                         // the retry resumes with the failing endpoint
+    KRITVA_CHECK(r.command->shutdown_calls == 2 && r.accel->shutdown_calls == 1);                           // finished endpoints are not released twice
+    KRITVA_CHECK(r.manager.shutdown().has_value() && r.command->shutdown_calls == 2);                       // and then it is a no-op
+}
+
+static void test_failed_configure_does_not_commit_device_switches() { // M3
+    Rig r;
+    r.command->fail_at = FailAt::CONFIGURE;                                                                 // motor is configured after imu
+    auto res = r.manager.configure(cfg({{"imu.enabled", false, {}}, {"imu.accel.limit", std::int64_t{7}, {}}}));
+    KRITVA_CHECK(!res.has_value() && res.error().source == r.manager.info().id() && r.manager.lifecycle_state() == LifecycleState::UNKNOWN);
+    for (const auto& d : r.manager.diagnostics()) KRITVA_CHECK(d.enabled);                                  // the switch was NOT committed
+    KRITVA_CHECK(r.accel->configure_calls == 0 && r.gyro->configure_calls == 0);                            // imu was disabled in this attempt: skipped
+    // Without rollback: endpoints configured before the failing one keep their settings; later ones are untouched.
+    Rig q;
+    q.command->fail_at = FailAt::CONFIGURE;
+    res = q.manager.configure(cfg({{"imu.accel.limit", std::int64_t{7}, {}}}));
+    KRITVA_CHECK(!res.has_value() && q.accel->limit == 7 && q.accel->configure_calls == 1 && q.position->configure_calls == 0);
+    // A malformed switch changes nothing at all.
+    Rig w;
+    res = w.manager.configure(cfg({{"imu.accel.limit", std::int64_t{7}, {}}, {"motor.enabled", std::string("no"), {}}}));
+    KRITVA_CHECK(!res.has_value() && res.error().code == ErrorCode::CONFIGURATION_ERROR && w.accel->configure_calls == 0);
+    // A successful configure commits the switches.
+    Rig ok;
+    KRITVA_CHECK(ok.manager.configure(cfg({{"motor.enabled", false, {}}})).has_value());
+    KRITVA_CHECK(ok.manager.diagnostics()[0].enabled && !ok.manager.diagnostics()[1].enabled);
+}
+
+static void test_devices_are_sealed_at_initialize() {                  // m7
+    Device empty(DeviceInfo::create(DeviceId{7}, "empty").value());
+    Device off(DeviceInfo::create(DeviceId{8}, "off").value());
+    DeviceManager manager{kritva::core::runtime::ComponentId{101}};
+    KRITVA_CHECK(manager.register_device(empty).has_value() && manager.register_device(off).has_value());
+    KRITVA_CHECK(!empty.sealed());
+    KRITVA_CHECK(empty.add_endpoint(std::make_unique<TestSensor>(1, "early")).has_value());                // allowed before initialize
+    KRITVA_CHECK(manager.configure(cfg({{"off.enabled", false, {}}})).has_value());
+    KRITVA_CHECK(manager.initialize().has_value());
+    KRITVA_CHECK(empty.sealed() && off.sealed());
+    for (Device* d : {&empty, &off}) {
+        const auto res = d->add_endpoint(std::make_unique<TestSensor>(9, "late"));                         // even a disabled or empty device
+        KRITVA_CHECK(!res.has_value() && res.error().code == ErrorCode::INVALID_STATE);
+    }
+    KRITVA_CHECK(manager.start().has_value() && manager.stop().has_value() && manager.shutdown().has_value());
+    KRITVA_CHECK(manager.initialize().has_value());                                                          // a restart is unaffected
+    empty.seal();                                                                                           // idempotent
+    KRITVA_CHECK(empty.sealed());
+}
+
+static void test_a_destroyed_manager_does_not_remove_anothers_listener() {   // m6
+    Device d(DeviceInfo::create(DeviceId{1}, "d").value());
+    auto* e = static_cast<TestSensor*>(d.add_endpoint(std::make_unique<TestSensor>(1, "e")).value());
+    Sink sink_a;
+    DeviceManager a{kritva::core::runtime::ComponentId{101}};
+    KRITVA_CHECK(a.register_device(d).has_value());
+    a.set_event_sink(&sink_a);
+    KRITVA_CHECK(a.initialize().has_value() && a.start().has_value());          // installs A's listener on the endpoint
+    {
+        DeviceManager b{kritva::core::runtime::ComponentId{102}};               // another manager that also knows the device ...
+        KRITVA_CHECK(b.register_device(d).has_value());
+    }                                                                           // ... is destroyed: its cleanup must not touch A's listener
+    KRITVA_CHECK(e->inject_fault().has_value());
+    KRITVA_CHECK(sink_a.events.size() == 1 && sink_a.events[0].source_id == a.info().id());
 }
 
 static void test_endpoint_fault_while_running() {                    // DER-607, DER-703, DER-704
@@ -274,7 +378,12 @@ int main() {
     test_configuration_errors();
     test_disabled_device_is_inert();
     test_failing_hooks_fault_the_manager();
-    test_failing_stop_faults_the_manager();
+    test_failing_stop_still_stops_every_endpoint();
+    test_shutdown_returns_the_first_stop_error();
+    test_failing_shutdown_hook_is_reported_and_retried();
+    test_failed_configure_does_not_commit_device_switches();
+    test_devices_are_sealed_at_initialize();
+    test_a_destroyed_manager_does_not_remove_anothers_listener();
     test_endpoint_fault_while_running();
     test_each_new_fault_is_one_event();
     test_no_sink_is_neutral();

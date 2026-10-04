@@ -55,6 +55,9 @@ class Instrumented : public Base {
 public:
     using Base::Base;
     FailAt fail_at{FailAt::NONE};
+    FailAt fault_inside{FailAt::NONE};              // this hook calls enter_fault() itself (then returns as fail_at says)
+    int on_fault_calls{0};
+    core::LifecycleState state_in_on_fault{core::LifecycleState::UNKNOWN};
     int configure_calls{0}, initialize_calls{0}, start_calls{0}, stop_calls{0}, shutdown_calls{0};
     std::vector<std::string>* log{nullptr};         // shared call log: "<endpoint>.<operation>"
     std::optional<std::int64_t> limit;              // the one setting this double reads: `limit`
@@ -65,6 +68,7 @@ public:
     void recover_degradation() { this->clear_degraded(); }
 
 protected:
+    void on_fault() override { ++on_fault_calls; state_in_on_fault = this->lifecycle_state(); }
     core::Result<void> on_configure(const core::Configuration& cfg) override {
         ++configure_calls;
         if (const core::Parameter* p = cfg.get("limit")) limit = std::get<std::int64_t>(p->value);
@@ -78,6 +82,7 @@ protected:
 private:
     core::Result<void> hook(FailAt which, const char* operation) {
         if (log != nullptr) log->push_back(this->info().name() + "." + operation);
+        if (fault_inside == which) (void)this->enter_fault(injected("fault inside the hook"));
         return fail_at == which ? core::Result<void>::failure(injected("hook failure")) : core::Result<void>::success();
     }
 };
@@ -89,7 +94,8 @@ public:
         : Instrumented<Endpoint>(make_info(id, name, d), one_capability(id, name)) {}
 };
 
-struct TestSample { std::int32_t value{0}; };
+struct TestSample { std::int32_t value{0}; bool valid{true}; };
+inline bool is_valid(const TestSample& s) noexcept { return s.valid; }
 struct TestCommand { std::int32_t value{0}; };
 
 class TestSensor : public Instrumented<SensorEndpoint<TestSample>> {
@@ -97,6 +103,7 @@ public:
     explicit TestSensor(std::uint64_t id = 1, const char* name = "sensor")
         : Instrumented<SensorEndpoint<TestSample>>(make_info(id, name, EndpointDirection::SENSOR), one_capability(id, name)) {}
     bool fail_next_read{false};
+    bool invalid_next_read{false};                  // do_read succeeds but produces an invalid sample
     int reads{0};
 
 protected:
@@ -104,6 +111,7 @@ protected:
         ++reads;
         if (fail_next_read) { fail_next_read = false; return core::Result<void>::failure(injected("read failure")); }
         out.value = reads;                                           // deterministic: 1, 2, 3 ...
+        if (invalid_next_read) { invalid_next_read = false; out.valid = false; }
         return core::Result<void>::success();
     }
 };
