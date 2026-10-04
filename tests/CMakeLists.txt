@@ -110,12 +110,20 @@ if(TARGET kritva_hardware)
     target_link_libraries(kritva_hardware_device_test PRIVATE kritva::hardware)
     add_test(NAME kritva_hardware_device_unit COMMAND kritva_hardware_device_test)
 
+    add_executable(kritva_hardware_registry_test hardware/unit/device_registry_test.cpp)
+    target_link_libraries(kritva_hardware_registry_test PRIVATE kritva::hardware)
+    add_test(NAME kritva_hardware_registry_unit COMMAND kritva_hardware_registry_test)
+
+    add_executable(kritva_hardware_registry_integration_test hardware/integration/registry_discovery_integration_test.cpp)
+    target_link_libraries(kritva_hardware_registry_integration_test PRIVATE kritva::hardware)
+    add_test(NAME kritva_hardware_registry_integration COMMAND kritva_hardware_registry_integration_test)
+
     add_executable(kritva_hardware_runtime_integration_test hardware/integration/contract_runtime_integration_test.cpp)
     target_link_libraries(kritva_hardware_runtime_integration_test PRIVATE kritva::hardware kritva::runtime)
     add_test(NAME kritva_hardware_runtime_integration COMMAND kritva_hardware_runtime_integration_test)
 
     # Sanity: every public header compiles on its own (no hidden include dependencies).
-    set(KRITVA_HARDWARE_HEADERS identity.hpp endpoint.hpp sensor_endpoint.hpp actuator_endpoint.hpp device.hpp)
+    set(KRITVA_HARDWARE_HEADERS identity.hpp endpoint.hpp sensor_endpoint.hpp actuator_endpoint.hpp device.hpp device_registry.hpp)
     set(KRITVA_HARDWARE_HEADER_CHECKS "")
     foreach(header IN LISTS KRITVA_HARDWARE_HEADERS)
         string(REPLACE "." "_" stem "${header}")

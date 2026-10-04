@@ -24,6 +24,7 @@
 
 #include <kritva/hardware/actuator_endpoint.hpp>
 #include <kritva/hardware/device.hpp>
+#include <kritva/hardware/device_registry.hpp>
 #include <kritva/hardware/sensor_endpoint.hpp>
 
 namespace kritva::hardware::test {

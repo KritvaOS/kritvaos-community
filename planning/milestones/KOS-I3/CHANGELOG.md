@@ -4,6 +4,8 @@
 
 - I3-001: Device/Endpoint contracts (`hardware/abstraction/`, library `kritva_hardware`): identity, `Endpoint` lifecycle over Core `Lifecycle`, `SensorEndpoint<T>`, `ActuatorEndpoint<T>`, `Device`, reusable conformance suite and tests.
 
+- I3-002: DeviceRegistry (non-owning, registration-order enumeration, id and name lookup, endpoint lookup, duplicate rejection, close) and tests.
+
 ## Planned
 
 - Define Device and Endpoint hardware abstraction contracts.

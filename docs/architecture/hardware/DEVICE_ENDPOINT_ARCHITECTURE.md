@@ -164,3 +164,7 @@ Rules:
 - **Timing.** Control plane only: operations may allocate and block, and no real-time guarantee is made.
 
 Verification support: `tests/hardware/conformance/endpoint_conformance.hpp` is a reusable suite (exhaustive lifecycle table, observation, no recovery, data-operation errors) that every Endpoint implementation, including the I3-005 mocks, must pass unchanged.
+
+### Device registry (I3-002)
+
+`DeviceRegistry` discovers Devices and, through them, Endpoints. It does not own Devices (the integrator does), enumerates in registration order, rejects a duplicate device id or name, and finds endpoints by Device and Endpoint id or by names (endpoint ids are unique only within a Device). A missing device or endpoint fails with `INVALID_ARGUMENT` and a message naming it. Registration is closed with `close()` (the DeviceManager does this at the first initialize); there is no unregistration. It is separate from the Core component registry.
