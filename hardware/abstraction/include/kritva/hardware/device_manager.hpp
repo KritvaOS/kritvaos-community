@@ -23,6 +23,7 @@
 
 #include <kritva/core/core.hpp>
 #include <kritva/hardware/device_registry.hpp>
+#include <kritva/hardware/diagnostics.hpp>
 
 namespace kritva::hardware {
 
@@ -76,6 +77,11 @@ public:
 
     /// All configuration keys of the registered devices, in registration order.
     [[nodiscard]] std::vector<std::string> config_keys() const;
+
+    /// Snapshot of every registered device and endpoint (disabled ones included, marked
+    /// `enabled=false`), in registration order. Read-only; identical state gives an
+    /// identical snapshot (DER-601..607).
+    [[nodiscard]] std::vector<DeviceDiagnostics> diagnostics() const;
 
     core::Result<void> configure(const core::Configuration& configuration) override;
     core::Result<void> initialize() override;

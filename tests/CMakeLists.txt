@@ -172,12 +172,26 @@ if(TARGET kritva_hardware)
         message(FATAL_ERROR "kritva_hardware_mock must depend only on kritva::hardware (found: ${KRITVA_MOCK_LINKS})")
     endif()
 
+    add_executable(kritva_hardware_diagnostics_test hardware/unit/diagnostics_test.cpp)
+    target_link_libraries(kritva_hardware_diagnostics_test PRIVATE kritva::hardware)
+    add_test(NAME kritva_hardware_diagnostics_unit COMMAND kritva_hardware_diagnostics_test)
+
+    add_executable(kritva_hardware_fault_integration_test hardware/integration/fault_observation_integration_test.cpp)
+    target_link_libraries(kritva_hardware_fault_integration_test PRIVATE kritva::hardware_mock kritva::runtime)
+    add_test(NAME kritva_hardware_fault_integration COMMAND kritva_hardware_fault_integration_test)
+
+    add_executable(kritva_hardware_diagnostics_sanity_exe hardware/sanity/diagnostics_sanity.cpp)
+    target_link_libraries(kritva_hardware_diagnostics_sanity_exe PRIVATE kritva::hardware_mock kritva::runtime)
+    add_test(NAME kritva_hardware_diagnostics_sanity
+        COMMAND ${CMAKE_COMMAND} -DSANITY_EXE=$<TARGET_FILE:kritva_hardware_diagnostics_sanity_exe>
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/hardware/sanity/run_diagnostics_sanity.cmake)
+
     add_executable(kritva_hardware_runtime_integration_test hardware/integration/contract_runtime_integration_test.cpp)
     target_link_libraries(kritva_hardware_runtime_integration_test PRIVATE kritva::hardware kritva::runtime)
     add_test(NAME kritva_hardware_runtime_integration COMMAND kritva_hardware_runtime_integration_test)
 
     # Sanity: every public header compiles on its own (no hidden include dependencies).
-    set(KRITVA_HARDWARE_HEADERS identity.hpp endpoint.hpp sensor_endpoint.hpp actuator_endpoint.hpp device.hpp device_registry.hpp device_manager.hpp samples.hpp typed_endpoints.hpp)
+    set(KRITVA_HARDWARE_HEADERS identity.hpp endpoint.hpp sensor_endpoint.hpp actuator_endpoint.hpp device.hpp device_registry.hpp device_manager.hpp samples.hpp typed_endpoints.hpp diagnostics.hpp)
     set(KRITVA_HARDWARE_HEADER_CHECKS "")
     foreach(header IN LISTS KRITVA_HARDWARE_HEADERS)
         string(REPLACE "." "_" stem "${header}")

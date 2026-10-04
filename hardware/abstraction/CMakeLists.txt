@@ -1,6 +1,7 @@
 # Device / Endpoint contracts (KOS-I3). Depends only on kritva-core: no driver, bus or transport.
 add_library(kritva_hardware STATIC
     src/device.cpp
+    src/diagnostics.cpp
     src/device_manager.cpp
     src/device_registry.cpp
     src/endpoint.cpp

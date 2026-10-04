@@ -206,6 +206,47 @@ Result<void> DeviceManager::shutdown() {
     return Result<void>::success();
 }
 
+std::vector<DeviceDiagnostics> DeviceManager::diagnostics() const {
+    const auto names = [](const core::CapabilitySet& set) {
+        std::vector<std::string> out;
+        for (const auto& c : set.all()) out.push_back(c.name);
+        return out;
+    };
+    std::vector<DeviceDiagnostics> all;
+    for (const Device* d : registry_.devices()) {
+        DeviceDiagnostics dd;
+        dd.id = d->info().id();
+        dd.name = d->info().name();
+        dd.enabled = enabled(*d);
+        dd.status = d->status().code();
+        const auto health = d->health();
+        dd.health = health.state();
+        dd.health_detail = health.detail();
+        dd.capabilities = names(d->capabilities());
+        for (const Endpoint* e : d->endpoints()) {
+            EndpointDiagnostics ed;
+            ed.device_id = dd.id;
+            ed.device_name = dd.name;
+            ed.endpoint_id = e->info().id();
+            ed.endpoint_name = e->info().name();
+            ed.direction = e->info().direction();
+            ed.enabled = dd.enabled;
+            ed.lifecycle = e->lifecycle_state();
+            ed.status = e->status().code();
+            const auto eh = e->health();
+            ed.health = eh.state();
+            ed.health_detail = eh.detail();
+            ed.operations_ok = e->statistics().sample_count.value();
+            ed.operations_failed = e->statistics().error_count.value();
+            ed.last_error = e->last_error();
+            ed.capabilities = names(e->capabilities());
+            dd.endpoints.push_back(std::move(ed));
+        }
+        all.push_back(std::move(dd));
+    }
+    return all;
+}
+
 core::Status DeviceManager::status() const {
     if (lifecycle_.state() == LifecycleState::FAULT) return core::Status{core::StatusCode::FAILED};
     if (lifecycle_.state() == LifecycleState::UNKNOWN) return core::Status{core::StatusCode::UNKNOWN};
