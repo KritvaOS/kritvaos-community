@@ -36,6 +36,8 @@
 |---|---|
 | Technical acceptance (7 tasks) | PASS |
 | Independent audit and remediation | PASS: all findings fixed; targeted re-audit found no blockers or majors; its minor items are fixed |
+| Documentation closure (plan aligned to the as-built architecture, commit hashes recorded, execution order) | PASS (commit `KOS-I3: align final planning records`) |
+| CI | The `build-and-test` job is implemented and its commands were verified locally and in the project container; an external GitHub run for the final commit was not independently confirmed in the external review |
 | Human safety review: `MotorCommand`, motor limits, fault-to-zero behavior, velocity command semantics, mock safety behavior, any future mapping to physical actuator control | **OPEN: not reviewed by a human** |
 
 KOS-I3 is not fully closed until the owner signs off the safety review.

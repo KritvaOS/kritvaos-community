@@ -28,4 +28,4 @@ I3-006 ─────┘
 I3-007
 ```
 
-I3-003 and I3-004 may be developed in parallel after I3-001, but acceptance remains dependency-ordered.
+Tasks are implemented and accepted strictly in the order I3-001 → I3-007, one atomic commit each; there is no parallel-development exception (DECISIONS #14). The diagram shows data dependencies only.

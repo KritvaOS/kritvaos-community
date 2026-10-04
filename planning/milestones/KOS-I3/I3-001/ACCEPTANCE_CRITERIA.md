@@ -38,7 +38,7 @@
 ## Git
 - [x] Diff reviewed.
 - [x] Atomic commit.
-- [ ] Commit hash recorded after commit.
+- [x] Commit hash recorded: `39780cc`.
 
 ## Evidence (I3-001)
 
