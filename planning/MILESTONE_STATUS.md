@@ -2,4 +2,4 @@
 
 | Milestone | Status |
 |---|---|
-| KOS-I2 | PLANNED |
+| KOS-I2 | IN PROGRESS (I2-001 done) |

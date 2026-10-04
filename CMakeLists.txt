@@ -96,6 +96,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/sdk/CMakeLists.txt")
 endif()
 
 # ------------------------------------------------------------------------------
+# KritvaOS Application Runtime (KOS-I2)
+# ------------------------------------------------------------------------------
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/runtime/CMakeLists.txt")
+    add_subdirectory(runtime)
+endif()
+
+# ------------------------------------------------------------------------------
 # Hardware and Drivers
 # ------------------------------------------------------------------------------
 

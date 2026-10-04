@@ -1,0 +1,16 @@
+# Sanity: launch the kritva_demo executable, check exit status and the observed lifecycle.
+execute_process(COMMAND ${DEMO_EXE} RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+message("${out}")
+if(NOT rc EQUAL 0)
+    message(FATAL_ERROR "kritva_demo exited with ${rc}: ${err}")
+endif()
+set(expected
+    "state=UNKNOWN" "state=READY" "state=RUNNING" "state=STOPPED" "shutdown complete")
+set(pos 0)
+foreach(token IN LISTS expected)
+    string(FIND "${out}" "${token}" idx)
+    if(idx LESS 0 OR idx LESS pos)
+        message(FATAL_ERROR "sanity: '${token}' missing or out of order in demo output")
+    endif()
+    set(pos ${idx})
+endforeach()
