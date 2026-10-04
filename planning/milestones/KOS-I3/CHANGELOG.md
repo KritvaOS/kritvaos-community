@@ -8,6 +8,8 @@
 
 - I3-003: DeviceManager (one Core Component; deterministic fan-out, scoped configuration, endpoint fault reported once, controlled shutdown after failure), plus additive Endpoint setting_names() and fault listener.
 
+- I3-004: typed data contracts: Vec3 and per-endpoint samples with SI units, validity, default state and virtual-timestamp policy; MotorCommand with limits and validation; typed endpoint aliases and capability descriptions.
+
 ## Planned
 
 - Define Device and Endpoint hardware abstraction contracts.

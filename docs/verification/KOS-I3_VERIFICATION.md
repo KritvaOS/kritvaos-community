@@ -1,7 +1,7 @@
 # KOS-I3 Verification Report
 
 **Milestone:** KOS-I3 Device & Endpoint Integration  
-**Status:** IN PROGRESS (I3-001..I3-003 done)
+**Status:** IN PROGRESS (I3-001..I3-004 done; I3-004 needs human safety review)
 **Dependency:** `kritva-core` R1.0
 
 ## Planned Evidence

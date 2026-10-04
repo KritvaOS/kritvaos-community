@@ -132,12 +132,20 @@ if(TARGET kritva_hardware)
         COMMAND ${CMAKE_COMMAND} -DSANITY_EXE=$<TARGET_FILE:kritva_hardware_manager_sanity_exe>
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/hardware/sanity/run_device_manager_sanity.cmake)
 
+    add_executable(kritva_hardware_typed_test hardware/unit/typed_data_test.cpp)
+    target_link_libraries(kritva_hardware_typed_test PRIVATE kritva::hardware)
+    add_test(NAME kritva_hardware_typed_unit COMMAND kritva_hardware_typed_test)
+
+    add_executable(kritva_hardware_typed_integration_test hardware/integration/typed_discovery_integration_test.cpp)
+    target_link_libraries(kritva_hardware_typed_integration_test PRIVATE kritva::hardware)
+    add_test(NAME kritva_hardware_typed_integration COMMAND kritva_hardware_typed_integration_test)
+
     add_executable(kritva_hardware_runtime_integration_test hardware/integration/contract_runtime_integration_test.cpp)
     target_link_libraries(kritva_hardware_runtime_integration_test PRIVATE kritva::hardware kritva::runtime)
     add_test(NAME kritva_hardware_runtime_integration COMMAND kritva_hardware_runtime_integration_test)
 
     # Sanity: every public header compiles on its own (no hidden include dependencies).
-    set(KRITVA_HARDWARE_HEADERS identity.hpp endpoint.hpp sensor_endpoint.hpp actuator_endpoint.hpp device.hpp device_registry.hpp device_manager.hpp)
+    set(KRITVA_HARDWARE_HEADERS identity.hpp endpoint.hpp sensor_endpoint.hpp actuator_endpoint.hpp device.hpp device_registry.hpp device_manager.hpp samples.hpp typed_endpoints.hpp)
     set(KRITVA_HARDWARE_HEADER_CHECKS "")
     foreach(header IN LISTS KRITVA_HARDWARE_HEADERS)
         string(REPLACE "." "_" stem "${header}")
