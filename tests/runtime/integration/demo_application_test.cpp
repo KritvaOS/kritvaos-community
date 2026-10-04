@@ -96,6 +96,13 @@ static void test_invalid_configuration() {
     }
 }
 
+static void test_demo_allow_list_rejects_typos() {
+    const auto ok = runtime::parse_configuration("runtime.name=demo\nsensor.failure_after_ticks=3\n", demo_config_keys());
+    KRITVA_CHECK(ok.has_value());
+    const auto typo = runtime::parse_configuration("runtime.name=demo\nsensor.failure_after_tick=3\n", demo_config_keys());
+    KRITVA_CHECK(!typo.has_value() && typo.error().message == "line 2: unknown key 'sensor.failure_after_tick'");
+}
+
 static void test_missing_dependency() {
     const auto r = run_demo("runtime.name=demo\nsensor.enabled=false\n");   // controller needs the sensor
     KRITVA_CHECK(r.outcome == DemoOutcome::ERROR);
@@ -127,6 +134,7 @@ int main() {
     test_failure_run_other_gain_and_ticks();
     test_failure_beyond_run_length_is_clean();
     test_invalid_configuration();
+    test_demo_allow_list_rejects_typos();
     test_missing_dependency();
     test_optional_components();
     test_deterministic_output();

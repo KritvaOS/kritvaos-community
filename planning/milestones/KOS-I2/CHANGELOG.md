@@ -12,4 +12,5 @@
 - I2-006: added Sensor, Controller, Monitor, DemoApplication, demo configs (normal and failure), and unit/system/sanity tests.
 - Audit follow-up: demo tests guarded for KRITVA_BUILD_EXAMPLES=OFF, tightened test ordering checks, documented application-level configuration rule, added docs/verification/KOS-I2_VERIFICATION.md.
 - RuntimeHost::initialize()/run() now require a prior successful configure() (RR-CFG-003); tests updated (ProbeComponent no longer logs configure by default).
+- Hardening: unknown-key rejection, 64 KiB configuration limit, runtime.name validation, no duplicate shutdown ERROR event, stronger no-recovery test.
 - Added mandatory unit, integration, sanity, regression, review, and commit gates.

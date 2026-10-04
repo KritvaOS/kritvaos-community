@@ -22,10 +22,14 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <kritva/core/core.hpp>
 
 namespace kritva::runtime {
+
+/// Maximum size of configuration text or file (RR-PERF-002, RR-SEC-002).
+inline constexpr std::size_t kMaxConfigurationBytes = 64 * 1024;
 
 /// Parses `key=value` text into a Core Configuration (no second representation).
 ///
@@ -35,11 +39,22 @@ namespace kritva::runtime {
 /// `sensor.enabled`. Values become bool (`true`/`false`), int64 (decimal) or
 /// string. Anything else, a repeated key, or an invalid key fails with
 /// CONFIGURATION_ERROR naming the line number; error text never echoes a value.
-[[nodiscard]] core::Result<core::Configuration> parse_configuration(std::string_view text);
+///
+/// Unknown keys (RR-CFG-004): any `runtime.*` key other than `runtime.name`
+/// and `runtime.tick_ms` is rejected. If `allowed_keys` is non-empty, every
+/// other key must also be listed there; an application passes the keys of its
+/// components so that a typo is an error, not a silently ignored setting.
+/// With an empty list, keys outside the `runtime.` namespace are not checked.
+///
+/// Input larger than kMaxConfigurationBytes is rejected.
+[[nodiscard]] core::Result<core::Configuration> parse_configuration(
+    std::string_view text, const std::vector<std::string>& allowed_keys = {});
 
-/// Reads and parses a configuration file. An unreadable file fails with
-/// CONFIGURATION_ERROR (the path is not part of any value).
-[[nodiscard]] core::Result<core::Configuration> load_configuration_file(const std::string& path);
+/// Reads and parses a configuration file (same rules). An unreadable file, or
+/// one larger than kMaxConfigurationBytes (checked while reading, never read
+/// in full), fails with CONFIGURATION_ERROR (the path is not part of any value).
+[[nodiscard]] core::Result<core::Configuration> load_configuration_file(
+    const std::string& path, const std::vector<std::string>& allowed_keys = {});
 
 /// Typed readers for component code. A missing key yields `default_value`;
 /// a present key of the wrong type or out of range fails with
@@ -52,7 +67,7 @@ namespace kritva::runtime {
 
 /// Runtime-level settings (RR-CFG-001).
 struct RuntimeSettings {
-    std::string name;                 ///< `runtime.name`, required, non-empty.
+    std::string name;                 ///< `runtime.name`, required, 1..64 characters of [A-Za-z0-9_.-].
     std::int64_t tick_ms{100};        ///< `runtime.tick_ms`, optional, 1..60000, default 100.
 };
 

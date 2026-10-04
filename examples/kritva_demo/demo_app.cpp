@@ -44,6 +44,13 @@ std::string names(const runtime::RuntimeObservation& o, const std::vector<core::
 
 } // namespace
 
+const std::vector<std::string>& demo_config_keys() {
+    static const std::vector<std::string> keys{
+        "runtime.name", "runtime.tick_ms", "demo.ticks", "sensor.enabled", "sensor.failure_after_ticks",
+        "controller.enabled", "controller.gain", "monitor.enabled"};
+    return keys;
+}
+
 DemoOutcome DemoApplication::run(const core::Configuration& configuration) {
     const auto fail = [&](const std::string& what, const core::Error& e) {
         out_ << "[kritva_demo] " << what << ": " << e.message << "\n";

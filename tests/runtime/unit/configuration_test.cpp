@@ -16,6 +16,8 @@
 // Created     : 04-10-2026
 //==============================================================================
 
+#include <filesystem>
+#include <fstream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -109,6 +111,67 @@ static void test_describe() {                                        // RR-CFG-0
     KRITVA_CHECK(describe_configuration(s, 3) == "runtime.name=demo runtime.tick_ms=25 parameters=3");
 }
 
+static void test_unknown_keys_rejected() {                           // RR-CFG-004
+    auto r = parse_configuration("runtime.name=demo\nruntime.nmae=oops\n");   // typo in the runtime namespace
+    KRITVA_CHECK(fails_with_config_error(r));
+    KRITVA_CHECK(r.error().message == "line 2: unknown key 'runtime.nmae'");
+    KRITVA_CHECK(parse_configuration("runtime.name=demo\nruntime.tick_ms=5\n").has_value());   // known keys pass
+    KRITVA_CHECK(parse_configuration("other.key=1\n").has_value());                              // no list: not checked
+
+    // With an allow-list every key outside the runtime namespace must be listed.
+    const std::vector<std::string> allowed{"sensor.enabled", "sensor.failure_after_ticks"};
+    KRITVA_CHECK(parse_configuration("runtime.name=x\nsensor.enabled=true\n", allowed).has_value());
+    r = parse_configuration("runtime.name=x\nsensor.failure_after_tick=3\n", allowed);          // typo
+    KRITVA_CHECK(fails_with_config_error(r) && r.error().message == "line 2: unknown key 'sensor.failure_after_tick'");
+    KRITVA_CHECK(fails_with_config_error(parse_configuration("runtime.bogus=1\n", allowed)));
+}
+
+static std::string comment_text(std::size_t bytes) {                 // `bytes` bytes of valid configuration text
+    std::string text = "runtime.name=x\n";
+    while (text.size() + 2 <= bytes) text += "#\n";
+    while (text.size() < bytes) text += " ";
+    return text;
+}
+
+static void test_size_limit() {                                      // RR-PERF-002, RR-SEC-002
+    const auto at_limit = comment_text(kMaxConfigurationBytes);
+    KRITVA_CHECK(at_limit.size() == kMaxConfigurationBytes);
+    KRITVA_CHECK(parse_configuration(at_limit).has_value());                         // configuration_at_limit_is_accepted
+    const auto over = comment_text(kMaxConfigurationBytes + 1);
+    KRITVA_CHECK(over.size() == kMaxConfigurationBytes + 1);
+    const auto r = parse_configuration(over);                                        // configuration_over_limit_is_rejected
+    KRITVA_CHECK(fails_with_config_error(r) && r.error().message == "configuration exceeds 65536 bytes");
+
+    const auto dir = std::filesystem::temp_directory_path();
+    const auto good = (dir / "kritva_i2_cfg_at_limit.conf").string();
+    const auto bad = (dir / "kritva_i2_cfg_over_limit.conf").string();
+    std::ofstream(good, std::ios::binary) << at_limit;
+    std::ofstream(bad, std::ios::binary) << over;
+    KRITVA_CHECK(load_configuration_file(good).has_value());
+    const auto f = load_configuration_file(bad);
+    KRITVA_CHECK(fails_with_config_error(f) && f.error().message == "configuration exceeds 65536 bytes");
+    std::filesystem::remove(good);
+    std::filesystem::remove(bad);
+}
+
+static core::Configuration with_name(const std::string& name) {
+    core::Configuration c;
+    KRITVA_CHECK(c.set(core::Parameter{"runtime.name", name, {}}).has_value());
+    return c;
+}
+
+static void test_runtime_name_validation() {                         // diagnostics integrity
+    KRITVA_CHECK(read_runtime_settings(with_name("kritva_demo-1.0")).has_value());
+    KRITVA_CHECK(read_runtime_settings(with_name(std::string(64, 'a'))).has_value());
+    KRITVA_CHECK(!read_runtime_settings(with_name(std::string(65, 'a'))).has_value());            // too long
+    for (const std::string& bad : {std::string("a\nSECOND=1"), std::string("a\rb"), std::string("a\tb"),
+                                  std::string("a b"), std::string("a\x01" "b"), std::string("a") + '\0' + "b",
+                                  std::string("a\x7f" "b"), std::string("na\xc3\xafve")}) {
+        const auto r = read_runtime_settings(with_name(bad));
+        KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::CONFIGURATION_ERROR);
+    }
+}
+
 static void test_host_configure() {
     RuntimeHost host;
     Log log;
@@ -150,6 +213,9 @@ int main() {
     test_typed_readers();
     test_runtime_settings();
     test_describe();
+    test_unknown_keys_rejected();
+    test_size_limit();
+    test_runtime_name_validation();
     test_host_configure();
     std::printf("configuration_test: PASS\n");
     return 0;

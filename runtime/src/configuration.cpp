@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <charconv>
 #include <fstream>
-#include <sstream>
 #include <variant>
 #include <vector>
 
@@ -62,9 +61,23 @@ core::ParameterValue parse_value(std::string_view v) {
     return std::string(v);
 }
 
+bool runtime_key_known(std::string_view key) {
+    return key == "runtime.name" || key == "runtime.tick_ms";
+}
+
+bool valid_runtime_name(const std::string& name) {
+    return !name.empty() && name.size() <= 64 && std::all_of(name.begin(), name.end(), [](char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '.' || c == '-';
+    });
+}
+
 } // namespace
 
-Result<Configuration> parse_configuration(std::string_view text) {
+Result<Configuration> parse_configuration(std::string_view text, const std::vector<std::string>& allowed_keys) {
+    if (text.size() > kMaxConfigurationBytes) {
+        return Result<Configuration>::failure(config_error(
+            "configuration exceeds " + std::to_string(kMaxConfigurationBytes) + " bytes"));
+    }
     Configuration cfg;
     std::size_t line_no = 0;
     std::size_t pos = 0;
@@ -83,6 +96,12 @@ Result<Configuration> parse_configuration(std::string_view text) {
         const auto key = trim(line.substr(0, eq));
         if (!valid_key(key)) return Result<Configuration>::failure(config_error(where + "invalid key"));
         const std::string name(key);
+        const bool unknown_runtime = name.rfind("runtime.", 0) == 0 && !runtime_key_known(name);
+        const bool unlisted = !allowed_keys.empty() && !runtime_key_known(name) &&
+                              std::find(allowed_keys.begin(), allowed_keys.end(), name) == allowed_keys.end();
+        if (unknown_runtime || unlisted) {
+            return Result<Configuration>::failure(config_error(where + "unknown key '" + name + "'"));
+        }
         if (cfg.contains(name)) return Result<Configuration>::failure(config_error(where + "duplicate key '" + name + "'"));
 
         if (auto r = cfg.set(Parameter{name, parse_value(trim(line.substr(eq + 1))), {}}); !r) {
@@ -93,12 +112,18 @@ Result<Configuration> parse_configuration(std::string_view text) {
     return Result<Configuration>::success(std::move(cfg));
 }
 
-Result<Configuration> load_configuration_file(const std::string& path) {
-    std::ifstream in(path);
+Result<Configuration> load_configuration_file(const std::string& path, const std::vector<std::string>& allowed_keys) {
+    std::ifstream in(path, std::ios::binary);
     if (!in) return Result<Configuration>::failure(config_error("cannot read configuration file"));
-    std::ostringstream buffer;
-    buffer << in.rdbuf();
-    return parse_configuration(buffer.str());
+    // Read at most one byte more than the limit, so an oversized file is never held in memory.
+    std::string text(kMaxConfigurationBytes + 1, '\0');
+    in.read(text.data(), static_cast<std::streamsize>(text.size()));
+    text.resize(static_cast<std::size_t>(in.gcount()));
+    if (text.size() > kMaxConfigurationBytes) {
+        return Result<Configuration>::failure(config_error(
+            "configuration exceeds " + std::to_string(kMaxConfigurationBytes) + " bytes"));
+    }
+    return parse_configuration(text, allowed_keys);
 }
 
 Result<bool> get_bool(const Configuration& cfg, const std::string& key, bool default_value) {
@@ -133,7 +158,10 @@ Result<RuntimeSettings> read_runtime_settings(const Configuration& cfg) {
     if (!cfg.contains("runtime.name")) return Result<RuntimeSettings>::failure(config_error("'runtime.name' is required"));
     auto name = get_string(cfg, "runtime.name", {});
     if (!name) return Result<RuntimeSettings>::failure(name.error());
-    if (name.value().empty()) return Result<RuntimeSettings>::failure(config_error("'runtime.name' must not be empty"));
+    if (!valid_runtime_name(name.value())) {
+        return Result<RuntimeSettings>::failure(config_error(
+            "'runtime.name' must be 1..64 characters of [A-Za-z0-9_.-]"));
+    }
     auto tick = get_int(cfg, "runtime.tick_ms", 100, 1, 60000);
     if (!tick) return Result<RuntimeSettings>::failure(tick.error());
     return Result<RuntimeSettings>::success(RuntimeSettings{std::move(name).value(), tick.value()});

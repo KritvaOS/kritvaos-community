@@ -25,8 +25,8 @@
 // kritva_demo [config-file]
 // Exit code: 0 clean run, 1 error, 3 component failure observed and handled by controlled shutdown.
 int main(int argc, char** argv) {
-    const auto config = argc > 1 ? kritva::runtime::load_configuration_file(argv[1])
-                                 : kritva::runtime::parse_configuration("runtime.name=kritva_demo\n");
+    const auto config = argc > 1 ? kritva::runtime::load_configuration_file(argv[1], kritva::demo::demo_config_keys())
+                                 : kritva::runtime::parse_configuration("runtime.name=kritva_demo\n", kritva::demo::demo_config_keys());
     if (!config) {
         std::cout << "[kritva_demo] CONFIG ERROR: " << config.error().message << "\n";
         return kritva::demo::exit_code(kritva::demo::DemoOutcome::ERROR);

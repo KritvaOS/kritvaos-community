@@ -106,9 +106,9 @@ public:
 
     /// Controlled shutdown, valid from any state, including after a failure
     /// (RR-FLT-006): stops the components if the runtime is READY/RUNNING
-    /// (a failed component rejects stop(); that rejection is reported as a
-    /// second ERROR event with the failed component as source, in addition to
-    /// the event the component reported itself), performs Core's reset() if the runtime is in FAULT
+    /// (a component that already failed rejects stop(); that rejection is not
+    /// reported again, the component's own ERROR event stands, while any other
+    /// stop failure is a new failure and is reported as an ERROR event), performs Core's reset() if the runtime is in FAULT
     /// (FAULT -> STOPPED), then shuts every component down. Succeeds when the
     /// runtime is STOPPED and all components are released; there is no retry
     /// and no recovery: a failed component is never restarted.

@@ -90,11 +90,11 @@ private:
     }
 
     core::Result<void> step(const char* hook, Hook which, core::LifecycleState on_success) {
-        record(hook);
         if (state_ == core::LifecycleState::FAULT) {                 // Component contract: FAULT is left only by shutdown()
-            return core::Result<void>::failure(core::Error{
+            return core::Result<void>::failure(core::Error{          // rejected before the hook runs: not logged
                 core::ErrorCode::INVALID_STATE, core::ErrorSeverity::ERROR, info().id(), {}, "component is in FAULT"});
         }
+        record(hook);
         if (fail_at_ == which) {
             state_ = core::LifecycleState::FAULT;
             return core::Result<void>::failure(core::Error{

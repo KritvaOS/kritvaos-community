@@ -19,6 +19,8 @@
 #pragma once
 
 #include <ostream>
+#include <string>
+#include <vector>
 
 #include <kritva/core/core.hpp>
 
@@ -29,6 +31,9 @@ enum class DemoOutcome {
     FAILURE_HANDLED,   ///< A component failure was observed and handled by controlled shutdown.
     ERROR,             ///< Configuration or lifecycle error; the runtime was shut down.
 };
+
+/// The configuration keys the demo understands; pass to the loader so typos are rejected.
+[[nodiscard]] const std::vector<std::string>& demo_config_keys();
 
 /// Process exit code of an outcome: CLEAN 0, ERROR 1, FAILURE_HANDLED 3.
 [[nodiscard]] constexpr int exit_code(DemoOutcome outcome) noexcept {

@@ -132,7 +132,17 @@ Result<FailureReport> RuntimeHost::failure_report() const {
 Result<void> RuntimeHost::controlled_shutdown() {
     const LifecycleState s = manager_.state();
     if (s == LifecycleState::READY || s == LifecycleState::RUNNING) {
-        (void)stop();   // a failed component rejects stop(); the failure is already an ERROR event
+        // A component that already failed rejects stop() (Core: FAULT is left only by shutdown()).
+        // That rejection is not a new failure: its original ERROR event stands, so it is not
+        // reported again. Any other stop failure is a new, independent failure and is reported.
+        std::set<core::runtime::ComponentId> already_failed;
+        if (const auto failures = failure_report()) {
+            already_failed.insert(failures.value().failed.begin(), failures.value().failed.end());
+        }
+        const auto stopped = manager_.stop();
+        if (stopped || already_failed.count(stopped.error().source) == 0) {
+            (void)report(core::EventType::LIFECYCLE, stopped);
+        }
     }
     if (manager_.state() == LifecycleState::FAULT) {
         if (auto r = report(core::EventType::LIFECYCLE, manager_.reset()); !r) return r;

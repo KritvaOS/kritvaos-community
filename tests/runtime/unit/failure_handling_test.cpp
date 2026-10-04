@@ -118,24 +118,60 @@ static void test_controlled_shutdown_after_failure() {               // RR-FLT-0
     KRITVA_CHECK(f.host.state() == LifecycleState::STOPPED);
     for (auto* p : {&f.a, &f.b, &f.c, &f.d}) KRITVA_CHECK(p->lifecycle_state() == LifecycleState::STOPPED);
     for (const char* name : {"a", "b", "c", "d"}) {
-        KRITVA_CHECK(has(f.log, std::string(name) + ".shutdown:FAULT") || has(f.log, std::string(name) + ".shutdown:STOPPED"));
+        KRITVA_CHECK(has(f.log, std::string(name) + ".shutdown:FAULT"));   // released while Core resets from FAULT
     }
     KRITVA_CHECK(f.host.runtime().fault_error() == nullptr);
-    // The failure of the stop sequence is itself observable.
-    bool saw_error = false;
-    for (const auto& e : f.events.snapshot()) if (e.type == EventType::ERROR) saw_error = true;
-    KRITVA_CHECK(saw_error);
+
+    // The original failure is the only ERROR: the failed component's rejected stop() is not a new failure.
+    for (const auto& e : f.events.snapshot()) KRITVA_CHECK(e.type != EventType::ERROR);
     KRITVA_CHECK(!f.host.failure_report().value().any());            // nothing left failed
+}
+
+static void test_independent_stop_failure_is_reported() {            // a new failure is still an ERROR event
+    RuntimeHost host;
+    EventLog events;
+    host.set_event_sink(&events);
+    Log log;
+    ProbeComponent a(1, "a", host.runtime(), log, ProbeComponent::Hook::STOP);   // healthy until stop() fails
+    KRITVA_CHECK(host.add_component(a).has_value());
+    kritva::runtime::test::configure_host(host);
+    KRITVA_CHECK(host.initialize().has_value() && host.start().has_value());
+    events.clear();
+    KRITVA_CHECK(host.controlled_shutdown().has_value());
+    KRITVA_CHECK(host.state() == LifecycleState::STOPPED);
+    std::size_t errors = 0;
+    for (const auto& e : events.snapshot()) {
+        if (e.type == EventType::ERROR) { ++errors; KRITVA_CHECK(e.source_id == a.info().id()); }
+    }
+    KRITVA_CHECK(errors == 1);
 }
 
 static void test_no_silent_recovery() {                              // RR-FLT-007
     Fixture f;
     f.c.inject_failure();
-    auto r = f.host.start();                                         // already RUNNING: not a restart path
-    KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INVALID_STATE);
-    KRITVA_CHECK(f.c.lifecycle_state() == LifecycleState::FAULT);    // stays FAULT until shutdown
-    KRITVA_CHECK(f.c.health().state() == HealthState::UNHEALTHY);
-    KRITVA_CHECK(f.host.failure_report().value().any());
+    const std::size_t events_after_failure = f.events.size();
+    const Log log_after_failure = f.log;
+
+    // Time passes: repeated observation and every kind of attempt that could restart it.
+    for (int round = 0; round < 5; ++round) {
+        KRITVA_CHECK(f.host.failure_report().value().any());
+        (void)f.host.observe();
+        KRITVA_CHECK(!f.host.start().has_value());                   // runtime is already RUNNING
+        KRITVA_CHECK(!f.host.initialize().has_value());
+        KRITVA_CHECK(f.c.start().error().code == ErrorCode::INVALID_STATE);        // components cannot be restarted
+        KRITVA_CHECK(f.c.initialize().error().code == ErrorCode::INVALID_STATE);
+        KRITVA_CHECK(f.c.lifecycle_state() == LifecycleState::FAULT);
+        KRITVA_CHECK(f.c.health().state() == HealthState::UNHEALTHY);
+        KRITVA_CHECK(f.host.state() == LifecycleState::RUNNING);     // the runtime never enters RECOVERING
+    }
+    KRITVA_CHECK(f.log == log_after_failure);                        // no hook of any component was invoked
+    // Only the rejected host calls above produced events (ERROR); nothing reports recovery or a lifecycle change.
+    for (std::size_t i = events_after_failure; i < f.events.size(); ++i) {
+        KRITVA_CHECK(f.events.snapshot()[i].type == EventType::ERROR);
+    }
+    // Only shutdown clears the fault.
+    KRITVA_CHECK(f.host.controlled_shutdown().has_value());
+    KRITVA_CHECK(f.c.lifecycle_state() == LifecycleState::STOPPED);
 }
 
 static void test_failure_in_each_step_then_controlled_shutdown() {   // RR-REL-004
@@ -199,6 +235,7 @@ int main() {
     test_failure_propagation_report();
     test_report_is_deterministic_and_pure();
     test_controlled_shutdown_after_failure();
+    test_independent_stop_failure_is_reported();
     test_no_silent_recovery();
     test_failure_in_each_step_then_controlled_shutdown();
     test_controlled_shutdown_from_any_quiet_state();
