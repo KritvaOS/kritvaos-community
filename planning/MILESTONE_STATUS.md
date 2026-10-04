@@ -35,6 +35,7 @@
 | Gate | Status |
 |---|---|
 | Technical acceptance (7 tasks) | PASS |
+| Milestone acceptance record (`planning/milestones/KOS-I3/ACCEPTANCE_CRITERIA.md`) | PASS: all software items checked with evidence; the safety gate is listed separately and left unchecked |
 | Independent audit and remediation | PASS: all findings fixed; targeted re-audit found no blockers or majors; its minor items are fixed |
 | Documentation closure (plan aligned to the as-built architecture, commit hashes recorded, execution order) | PASS (commit `KOS-I3: align final planning records`) |
 | CI | The `build-and-test` job is implemented and its commands were verified locally and in the project container; an external GitHub run for the final commit was not independently confirmed in the external review |
