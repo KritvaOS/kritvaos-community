@@ -9,7 +9,7 @@
 // Module      : Application
 // Layer       : Application Runtime
 //
-// Requirements: RR-APP-001..004
+// Requirements: RR-APP-001..005; RR-OBS-005
 // API         : main
 //
 // Author      : KritvaOS
@@ -24,6 +24,8 @@ int main(int argc, char** argv) {
     using kritva::runtime::to_string;
 
     kritva::runtime::RuntimeHost host;
+    kritva::runtime::EventLog events;
+    host.set_event_sink(&events);
 
     // Optional: kritva_demo <config-file>. Without one, the defaults apply.
     if (argc > 1) {
@@ -42,14 +44,14 @@ int main(int argc, char** argv) {
 
     std::printf("[kritva_demo] state=%s\n", to_string(host.state()).data());
 
-    const auto result = host.run([](kritva::core::LifecycleState state) {
-        std::printf("[kritva_demo] state=%s\n", to_string(state).data());
+    const auto result = host.run([&events](kritva::core::LifecycleState state) {
+        std::printf("[kritva_demo] state=%s events=%zu\n", to_string(state).data(), events.size());
     });
 
     if (!result) {
         std::printf("[kritva_demo] FAILED: %s\n", result.error().message.c_str());
         return 1;
     }
-    std::printf("[kritva_demo] shutdown complete\n");
+    std::printf("[kritva_demo] shutdown complete (events=%zu)\n", events.size());
     return 0;
 }

@@ -24,6 +24,7 @@
 
 #include <kritva/core/core.hpp>
 #include <kritva/runtime/configuration.hpp>
+#include <kritva/runtime/observation.hpp>
 
 namespace kritva::runtime {
 
@@ -77,12 +78,30 @@ public:
     /// application calls configure().
     [[nodiscard]] const RuntimeSettings& settings() const noexcept { return settings_; }
 
+    /// Optional event sink (not owned; must outlive the host or be cleared with
+    /// nullptr). With a sink set, the host reports runtime-level Events, source
+    /// id invalid (= the runtime): LIFECYCLE (INFO) after each successful
+    /// initialize/start/stop/shutdown, CONFIGURATION (INFO) after a successful
+    /// configure, and on any failed step an ERROR event (severity and source
+    /// from the failing Error, CONFIGURATION type for configure failures).
+    /// Components hand the same sink to Core's ComponentEventReporter.
+    /// Core's Event carries no state payload: read the state with observe().
+    void set_event_sink(core::runtime::IEventSink* sink) noexcept { sink_ = sink; }
+    [[nodiscard]] core::runtime::IEventSink* event_sink() const noexcept { return sink_; }
+
+    /// Snapshot of runtime state, statistics, fault and every component
+    /// (state, status, health, optional statistics) in dependency order.
+    /// Fails with the topology error (CONFIGURATION_ERROR) if a dependency is
+    /// unregistered; nothing is invoked on components other than their
+    /// read-only accessors.
+    [[nodiscard]] core::Result<RuntimeObservation> observe(const StatisticsProviders& providers = {}) const;
+
     /// Each operation forwards to Core and returns its Result unchanged;
     /// an operation invalid for the current state fails with INVALID_STATE.
-    core::Result<void> initialize() { return manager_.initialize(); }  ///< -> READY
-    core::Result<void> start() { return manager_.start(); }            ///< READY -> RUNNING
-    core::Result<void> stop() { return manager_.stop(); }              ///< -> STOPPED
-    core::Result<void> shutdown() { return manager_.shutdown(); }      ///< releases components
+    core::Result<void> initialize();   ///< -> READY
+    core::Result<void> start();        ///< READY -> RUNNING
+    core::Result<void> stop();         ///< -> STOPPED
+    core::Result<void> shutdown();     ///< releases components
 
     [[nodiscard]] core::LifecycleState state() const noexcept { return manager_.state(); }
 
@@ -98,8 +117,12 @@ public:
     core::Result<void> run(const StateObserver& observer = {});
 
 private:
+    void emit(core::EventType type, core::ErrorSeverity severity, core::Id source) const;
+    core::Result<void> report(core::EventType type, core::Result<void> result) const;
+
     core::runtime::RuntimeManager manager_;
     RuntimeSettings settings_;
+    core::runtime::IEventSink* sink_{nullptr};
 };
 
 } // namespace kritva::runtime

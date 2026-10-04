@@ -44,3 +44,18 @@ if(TARGET kritva_demo)
                 -DDEMO_CONFIG=${CMAKE_SOURCE_DIR}/examples/kritva_demo/kritva_demo.conf
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sanity/run_configuration_sanity.cmake)
 endif()
+
+# I2-004 runtime observation
+add_executable(kritva_observation_test runtime/unit/observation_test.cpp)
+target_link_libraries(kritva_observation_test PRIVATE kritva::runtime)
+add_test(NAME kritva_observation_unit COMMAND kritva_observation_test)
+
+add_executable(kritva_observation_integration_test runtime/integration/observation_integration_test.cpp)
+target_link_libraries(kritva_observation_integration_test PRIVATE kritva::runtime)
+add_test(NAME kritva_observation_integration COMMAND kritva_observation_integration_test)
+
+add_executable(kritva_observation_sanity runtime/sanity/observation_sanity.cpp)
+target_link_libraries(kritva_observation_sanity PRIVATE kritva::runtime)
+add_test(NAME kritva_observation_sanity
+    COMMAND ${CMAKE_COMMAND} -DSANITY_EXE=$<TARGET_FILE:kritva_observation_sanity>
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sanity/run_observation_sanity.cmake)

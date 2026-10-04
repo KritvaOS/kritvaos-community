@@ -9,7 +9,7 @@
 // Module      : Runtime Host
 // Layer       : Application Runtime
 //
-// Requirements: RR-LIF-001..008; RR-CMP-002; RR-DEP-001; RR-CFG-001..005; RR-FLT-006
+// Requirements: RR-LIF-001..008; RR-CMP-002; RR-DEP-001; RR-CFG-001..005; RR-OBS-001..007; RR-FLT-006
 // API         : kritva::runtime::RuntimeHost
 //
 // Author      : KritvaOS
@@ -37,6 +37,23 @@ std::string_view to_string(LifecycleState state) noexcept {
     return "INVALID";
 }
 
+void RuntimeHost::emit(core::EventType type, core::ErrorSeverity severity, core::Id source) const {
+    if (sink_ == nullptr) return;
+    core::Event event;
+    event.type = type;
+    event.severity = severity;
+    event.source_id = source;
+    (void)sink_->report(event);   // observation must never change lifecycle behavior
+}
+
+// Reports the outcome of one step as an Event and returns the result unchanged.
+Result<void> RuntimeHost::report(core::EventType type, Result<void> result) const {
+    if (result) emit(type, core::ErrorSeverity::INFO, core::Id{});
+    else emit(type == core::EventType::CONFIGURATION ? type : core::EventType::ERROR,
+              result.error().severity, result.error().source);
+    return result;
+}
+
 Result<void> RuntimeHost::add_component(core::runtime::Component& component,
                                         std::initializer_list<core::runtime::ComponentId> depends_on) {
     if (auto r = manager_.register_component(component); !r) return r;
@@ -48,10 +65,33 @@ Result<void> RuntimeHost::add_component(core::runtime::Component& component,
 
 Result<void> RuntimeHost::configure(const core::Configuration& configuration) {
     auto settings = read_runtime_settings(configuration);
-    if (!settings) return Result<void>::failure(settings.error());
-    if (auto r = manager_.configure(configuration); !r) return r;
+    if (!settings) return report(core::EventType::CONFIGURATION, Result<void>::failure(settings.error()));
+    if (auto r = manager_.configure(configuration); !r) return report(core::EventType::CONFIGURATION, r);
     settings_ = std::move(settings).value();
-    return Result<void>::success();
+    return report(core::EventType::CONFIGURATION, Result<void>::success());
+}
+
+Result<void> RuntimeHost::initialize() { return report(core::EventType::LIFECYCLE, manager_.initialize()); }
+Result<void> RuntimeHost::start() { return report(core::EventType::LIFECYCLE, manager_.start()); }
+Result<void> RuntimeHost::stop() { return report(core::EventType::LIFECYCLE, manager_.stop()); }
+Result<void> RuntimeHost::shutdown() { return report(core::EventType::LIFECYCLE, manager_.shutdown()); }
+
+Result<RuntimeObservation> RuntimeHost::observe(const StatisticsProviders& providers) const {
+    auto order = manager_.component_order();
+    if (!order) return Result<RuntimeObservation>::failure(order.error());
+
+    RuntimeObservation snapshot;
+    snapshot.state = manager_.state();
+    snapshot.statistics = manager_.statistics();
+    if (const core::Error* fault = manager_.fault_error()) snapshot.fault = *fault;
+    for (const auto id : order.value()) {
+        const core::runtime::Component* component = manager_.registry().find(id);
+        const auto it = providers.find(id);
+        snapshot.components.push_back(ComponentRecord{
+            component->info().name(),
+            core::runtime::observe(*component, it == providers.end() ? nullptr : it->second)});
+    }
+    return Result<RuntimeObservation>::success(std::move(snapshot));
 }
 
 Result<void> RuntimeHost::run(const StateObserver& observer) {
@@ -60,18 +100,18 @@ Result<void> RuntimeHost::run(const StateObserver& observer) {
     // A failed step leaves the runtime in FAULT; reset() (FAULT -> STOPPED)
     // stops and shuts down the components. The original error is returned.
     const auto fail = [&](Result<void> failed) {
-        if (manager_.state() == LifecycleState::FAULT) (void)manager_.reset();
-        (void)manager_.shutdown();
+        if (manager_.state() == LifecycleState::FAULT) (void)report(core::EventType::LIFECYCLE, manager_.reset());
+        (void)shutdown();
         return failed;
     };
 
-    if (auto r = manager_.initialize(); !r) return fail(r);
+    if (auto r = initialize(); !r) return fail(r);
     notify();
-    if (auto r = manager_.start(); !r) return fail(r);
+    if (auto r = start(); !r) return fail(r);
     notify();
-    if (auto r = manager_.stop(); !r) return fail(r);
+    if (auto r = stop(); !r) return fail(r);
     notify();
-    return manager_.shutdown();
+    return shutdown();
 }
 
 } // namespace kritva::runtime

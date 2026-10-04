@@ -45,8 +45,16 @@ public:
     core::Result<void> shutdown() override { record("shutdown"); return core::Result<void>::success(); }
 
     core::LifecycleState lifecycle_state() const noexcept override { return state_; }
-    core::Status status() const override { return core::Status{}; }
-    core::Health health() const override { return core::Health{}; }
+    core::Status status() const override {
+        return core::Status{state_ == core::LifecycleState::FAULT ? core::StatusCode::FAILED : core::StatusCode::OK};
+    }
+    core::Health health() const override {
+        switch (state_) {
+            case core::LifecycleState::RUNNING: return core::Health{core::HealthState::HEALTHY};
+            case core::LifecycleState::FAULT: { core::Health h{core::HealthState::UNHEALTHY}; h.set_detail("probe failure"); return h; }
+            default: return core::Health{core::HealthState::UNKNOWN};
+        }
+    }
     core::CapabilitySet capabilities() const override { return core::CapabilitySet{}; }
 
 private:
@@ -69,6 +77,20 @@ private:
     std::vector<std::string>& log_;
     Hook fail_at_;
     core::LifecycleState state_{core::LifecycleState::UNKNOWN};
+};
+
+/// Fixed statistics provider for observation tests.
+class FixedStatistics final : public core::runtime::IComponentStatistics {
+public:
+    FixedStatistics(std::uint64_t samples, std::uint64_t errors) : samples_(samples), errors_(errors) {}
+    core::Statistics statistics() const override {
+        core::Statistics s;
+        s.sample_count.increment(samples_);
+        s.error_count.increment(errors_);
+        return s;
+    }
+private:
+    std::uint64_t samples_, errors_;
 };
 
 } // namespace kritva::runtime::test
