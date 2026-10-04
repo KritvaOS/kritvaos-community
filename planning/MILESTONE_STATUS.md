@@ -2,9 +2,10 @@
 
 | Milestone | Status |
 |---|---|
-| KOS-I2 | IMPLEMENTED (pending human review) |
+| KOS-I2 | IMPLEMENTED / predecessor baseline |
+| KOS-I3 | PLANNED |
 
-Task commits:
+## KOS-I2 Task Commits
 
 | Task | Commit |
 |---|---|
@@ -15,4 +16,16 @@ Task commits:
 | I2-005 | e8ad793 |
 | I2-006 | 69521ef |
 
-Audit: independent audit CONDITIONAL PASS (no blockers); findings addressed in the audit follow-up commit. See `docs/verification/KOS-I2_VERIFICATION.md`.
+## KOS-I3 Task Commits
+
+To be populated after implementation:
+
+| Task | Commit |
+|---|---|
+| I3-001 | — |
+| I3-002 | — |
+| I3-003 | — |
+| I3-004 | — |
+| I3-005 | — |
+| I3-006 | — |
+| I3-007 | — |

@@ -1,5 +1,5 @@
 # Active Milestone
 
-Current milestone: **KOS-I2 — Runtime / Application Foundation**.
+Current milestone: **KOS-I3 — Device & Endpoint Integration**.
 
-See `milestones/KOS-I2/MILESTONE.md`.
+See `milestones/KOS-I3/MILESTONE.md`.

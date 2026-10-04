@@ -1981,3 +1981,53 @@ This provides a practical path from an early open-source project to a larger rob
 **Repository Architecture Status:** Early Architecture / Pre-Alpha
 
 This document should evolve together with `ARCHITECTURE.md`, requirements, APIs, verification plans, and ADRs.
+
+
+## KOS-I3 Hardware Abstraction Placement
+
+KOS-I3 introduces the first concrete use of the repository's hardware abstraction area.
+
+Recommended initial placement:
+
+```text
+hardware/
+└── abstraction/
+    ├── include/
+    │   └── kritva/
+    │       └── hardware/
+    │           ├── device.hpp
+    │           ├── endpoint.hpp
+    │           ├── sensor_endpoint.hpp
+    │           ├── actuator_endpoint.hpp
+    │           └── device_registry.hpp
+    ├── src/
+    └── CMakeLists.txt
+```
+
+Mock implementations belong with I3 verification support:
+
+```text
+tests/hardware/mock/
+```
+
+The reference executable belongs under:
+
+```text
+examples/device_demo/
+```
+
+This placement does not imply that every future Device/Endpoint implementation belongs in one directory. Physical drivers remain under `drivers/`, while platform-specific implementations may live under `soc/edge/` or another appropriate platform area.
+
+The repository must preserve the following dependency direction:
+
+```text
+Runtime
+  ↓
+Hardware Abstraction
+  ↓
+Driver / Platform
+  ↓
+Hardware
+```
+
+The abstraction must not depend upward on Motion, Mind, Skill, or application code.

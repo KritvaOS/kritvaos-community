@@ -34,3 +34,19 @@ A failure in a mandatory test blocks task acceptance unless explicitly reviewed 
 ## Evidence
 
 Each task completion report shall record commands executed, results, test counts, failures, and final PASS/FAIL status.
+
+
+## KOS-I3 Test Expectations
+
+For Device/Endpoint work, the mandatory task gate additionally covers:
+
+1. Device/Endpoint contract tests.
+2. Registry tests.
+3. Lifecycle ordering tests.
+4. Typed sensor/actuator operation tests.
+5. Mock nominal/failure tests.
+6. Runtime + Device/Endpoint integration tests.
+7. Reference Device/Endpoint sanity/system test.
+8. Complete KOS-I2 regression.
+
+Hardware-dependent testing is not an I3 acceptance requirement. I3 tests must run without physical hardware.

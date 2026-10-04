@@ -2,4 +2,14 @@
 
 `planning/` contains active engineering execution plans. Stable requirements and architecture belong under `docs/`.
 
-See `milestones/KOS-I2/` for the current milestone.
+## Current Milestone
+
+**KOS-I3 — Device & Endpoint Integration**
+
+See:
+
+- `milestones/KOS-I3/MILESTONE.md`
+- `milestones/KOS-I3/TASKS.md`
+- `milestones/KOS-I3/IMPLEMENTATION_PLAN.md`
+
+KOS-I2 is retained as the accepted predecessor baseline.

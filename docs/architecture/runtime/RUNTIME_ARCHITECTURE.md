@@ -63,3 +63,56 @@ Behaviors to know:
 - There is no recovery in KOS-I2. A failed component stays `FAULT` / `UNHEALTHY` until shutdown.
 - Valid configuration is a precondition of operation (RR-CFG-003): `RuntimeHost::initialize()` (and `run()`) fail with `CONFIGURATION_ERROR` until `configure()` has succeeded once. The requirement is sticky across restarts from `STOPPED`.
 - Core `Event` carries no state payload or timestamp; a `LIFECYCLE` event does not say which state was reached. Read the state with `observe()`.
+
+
+## 7. KOS-I3 Extension Boundary
+
+KOS-I3 extends the runtime downward with a hardware-facing Device/Endpoint abstraction.
+
+```text
+Kritva Application
+       ↓
+KOS Runtime
+       ↓
+Device Registry / Device Manager
+       ↓
+Device
+       ↓
+Endpoint
+       ↓
+Hardware Abstraction
+       ↓
+Driver / Platform
+```
+
+The I3 implementation uses mock hardware only.
+
+### Runtime ownership
+
+The RuntimeHost/Device Manager coordinates Device/Endpoint lifecycle. Device/Endpoint are not registered as Core runtime Components solely to obtain lifecycle behavior.
+
+### Registry distinction
+
+The Core runtime component registry and the I3 Device Registry are separate:
+
+| Registry | Owns |
+|---|---|
+| Core RuntimeManager registry | Runtime/application components |
+| I3 Device Registry | Physical/simulated Devices and their Endpoints |
+
+### I3 operation
+
+The reference flow is:
+
+```text
+register → discover → configure → initialize → start
+    → sensor read / actuator write
+    → observe → fault
+    → controlled shutdown
+```
+
+### I3 exclusions
+
+I3 does not introduce EtherCAT, CAN, SPI/I2C/UART/GPIO drivers, STM32 firmware, Nexus/Edge transport, ROS2/DDS, PREEMPT_RT, or physical robot hardware.
+
+I4 may provide remote/transport-backed Endpoint implementations while preserving the I3 contract.
