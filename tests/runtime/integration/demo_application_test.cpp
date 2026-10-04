@@ -50,7 +50,7 @@ static bool in_order(const Run& r, std::initializer_list<const char*> tokens) {
     for (const char* t : tokens) {
         const auto idx = r.output.find(t, pos);
         if (idx == std::string::npos) return false;
-        pos = idx;
+        pos = idx + std::string(t).size();
     }
     return true;
 }
@@ -72,7 +72,7 @@ static void test_failure_run() {
                               "FAILURE observed: failed=sensor affected=controller,monitor", "event ERROR source=1",
                               "state=STOPPED", "controlled shutdown complete"}));
     KRITVA_CHECK(!contains(r, "tick 4"));                            // the loop ended at the failure
-    KRITVA_CHECK(!contains(r, "shutdown complete (events") || contains(r, "controlled shutdown complete"));
+    KRITVA_CHECK(!contains(r, "\n[kritva_demo] shutdown complete"));      // the normal-shutdown line is not printed
 }
 
 static void test_failure_run_other_gain_and_ticks() {

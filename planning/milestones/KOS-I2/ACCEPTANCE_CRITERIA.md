@@ -1,16 +1,16 @@
 # KOS-I2 Milestone Acceptance Criteria
 
-- [ ] All six tasks accepted.
-- [ ] Core R1.0 pinned and unmodified for I2.
-- [ ] Runtime lifecycle demonstrated.
-- [ ] Multiple components composed and dependency ordered.
-- [ ] Configuration validated.
-- [ ] Status/health/events/statistics observable.
-- [ ] Controlled component failure demonstrated.
-- [ ] Controlled shutdown demonstrated.
-- [ ] Unit tests pass.
-- [ ] Integration tests pass.
-- [ ] Sanity test passes.
-- [ ] Full regression passes.
-- [ ] Documentation and review checklist complete.
-- [ ] Atomic task commits recorded.
+- [x] All six tasks accepted.
+- [x] Core R1.0 pinned and unmodified for I2.
+- [x] Runtime lifecycle demonstrated.
+- [x] Multiple components composed and dependency ordered.
+- [x] Configuration validated.
+- [x] Status/health/events/statistics observable.
+- [x] Controlled component failure demonstrated.
+- [x] Controlled shutdown demonstrated.
+- [x] Unit tests pass.
+- [x] Integration tests pass.
+- [x] Sanity test passes.
+- [x] Full regression passes.
+- [ ] Documentation and review checklist complete (documentation done; human review pending).
+- [x] Atomic task commits recorded.

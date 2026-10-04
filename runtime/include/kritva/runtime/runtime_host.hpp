@@ -74,8 +74,11 @@ public:
     core::Result<void> configure(const core::Configuration& configuration);
 
     /// Settings of the last successful configure(); defaults before that
-    /// (empty name, tick_ms 100). Valid configuration is required only if the
-    /// application calls configure().
+    /// (empty name, tick_ms 100). Requiring a valid configuration before
+    /// operation (RR-CFG-003) is an application-level rule: the host does not
+    /// refuse initialize() on an unconfigured host (the host is usable without
+    /// configuration); DemoApplication enforces it by configuring first and
+    /// never initializing after a configuration error.
     [[nodiscard]] const RuntimeSettings& settings() const noexcept { return settings_; }
 
     /// Optional event sink (not owned; must outlive the host or be cleared with
@@ -103,8 +106,9 @@ public:
 
     /// Controlled shutdown, valid from any state, including after a failure
     /// (RR-FLT-006): stops the components if the runtime is READY/RUNNING
-    /// (a failed component rejects stop(), which is reported as an ERROR event
-    /// and is expected), performs Core's reset() if the runtime is in FAULT
+    /// (a failed component rejects stop(); that rejection is reported as a
+    /// second ERROR event with the failed component as source, in addition to
+    /// the event the component reported itself), performs Core's reset() if the runtime is in FAULT
     /// (FAULT -> STOPPED), then shuts every component down. Succeeds when the
     /// runtime is STOPPED and all components are released; there is no retry
     /// and no recovery: a failed component is never restarted.
