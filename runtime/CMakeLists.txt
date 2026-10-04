@@ -1,5 +1,6 @@
 # KritvaOS application runtime layer (KOS-I2). Depends only on kritva-core.
 add_library(kritva_runtime STATIC
+    src/configuration.cpp
     src/runtime_host.cpp
 )
 

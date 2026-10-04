@@ -28,3 +28,19 @@ target_link_libraries(kritva_composition_sanity PRIVATE kritva::runtime)
 add_test(NAME kritva_component_composition_sanity
     COMMAND ${CMAKE_COMMAND} -DSANITY_EXE=$<TARGET_FILE:kritva_composition_sanity>
             -P ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sanity/run_composition_sanity.cmake)
+
+# I2-003 configuration
+add_executable(kritva_configuration_test runtime/unit/configuration_test.cpp)
+target_link_libraries(kritva_configuration_test PRIVATE kritva::runtime)
+add_test(NAME kritva_configuration_unit COMMAND kritva_configuration_test)
+
+add_executable(kritva_configuration_integration_test runtime/integration/configuration_integration_test.cpp)
+target_link_libraries(kritva_configuration_integration_test PRIVATE kritva::runtime)
+add_test(NAME kritva_configuration_integration COMMAND kritva_configuration_integration_test)
+
+if(TARGET kritva_demo)
+    add_test(NAME kritva_configuration_sanity
+        COMMAND ${CMAKE_COMMAND} -DDEMO_EXE=$<TARGET_FILE:kritva_demo>
+                -DDEMO_CONFIG=${CMAKE_SOURCE_DIR}/examples/kritva_demo/kritva_demo.conf
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sanity/run_configuration_sanity.cmake)
+endif()

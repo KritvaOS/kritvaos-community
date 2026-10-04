@@ -38,7 +38,7 @@ public:
         : Component(core::runtime::ComponentInfo::create(core::runtime::ComponentId{id}, std::move(name)).value()),
           rt_(rt), log_(log), fail_at_(fail_at) {}
 
-    core::Result<void> configure(const core::Configuration&) override { return core::Result<void>::success(); }
+    core::Result<void> configure(const core::Configuration&) override { record("configure"); return core::Result<void>::success(); }
     core::Result<void> initialize() override { return step("initialize", Hook::INITIALIZE, core::LifecycleState::READY); }
     core::Result<void> start() override { return step("start", Hook::START, core::LifecycleState::RUNNING); }
     core::Result<void> stop() override { return step("stop", Hook::STOP, core::LifecycleState::STOPPED); }

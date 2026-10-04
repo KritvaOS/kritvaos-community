@@ -23,6 +23,7 @@
 #include <string_view>
 
 #include <kritva/core/core.hpp>
+#include <kritva/runtime/configuration.hpp>
 
 namespace kritva::runtime {
 
@@ -64,6 +65,18 @@ public:
     core::Result<void> add_component(core::runtime::Component& component,
                                      std::initializer_list<core::runtime::ComponentId> depends_on = {});
 
+    /// Validates the runtime-level settings, then applies `configuration` to
+    /// every component through Core (`RuntimeManager::configure`, dependency
+    /// order). Valid only while UNKNOWN or STOPPED (Core rule). Fails with
+    /// CONFIGURATION_ERROR on invalid settings and then changes nothing: no
+    /// component is configured and `settings()` keeps its previous value.
+    core::Result<void> configure(const core::Configuration& configuration);
+
+    /// Settings of the last successful configure(); defaults before that
+    /// (empty name, tick_ms 100). Valid configuration is required only if the
+    /// application calls configure().
+    [[nodiscard]] const RuntimeSettings& settings() const noexcept { return settings_; }
+
     /// Each operation forwards to Core and returns its Result unchanged;
     /// an operation invalid for the current state fails with INVALID_STATE.
     core::Result<void> initialize() { return manager_.initialize(); }  ///< -> READY
@@ -86,6 +99,7 @@ public:
 
 private:
     core::runtime::RuntimeManager manager_;
+    RuntimeSettings settings_;
 };
 
 } // namespace kritva::runtime

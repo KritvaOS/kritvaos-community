@@ -9,7 +9,7 @@
 // Module      : Runtime Host
 // Layer       : Application Runtime
 //
-// Requirements: RR-LIF-001..008; RR-CMP-002; RR-DEP-001; RR-FLT-006
+// Requirements: RR-LIF-001..008; RR-CMP-002; RR-DEP-001; RR-CFG-001..005; RR-FLT-006
 // API         : kritva::runtime::RuntimeHost
 //
 // Author      : KritvaOS
@@ -43,6 +43,14 @@ Result<void> RuntimeHost::add_component(core::runtime::Component& component,
     for (const auto dependency : depends_on) {
         if (auto r = manager_.add_dependency(component.info().id(), dependency); !r) return r;
     }
+    return Result<void>::success();
+}
+
+Result<void> RuntimeHost::configure(const core::Configuration& configuration) {
+    auto settings = read_runtime_settings(configuration);
+    if (!settings) return Result<void>::failure(settings.error());
+    if (auto r = manager_.configure(configuration); !r) return r;
+    settings_ = std::move(settings).value();
     return Result<void>::success();
 }
 
