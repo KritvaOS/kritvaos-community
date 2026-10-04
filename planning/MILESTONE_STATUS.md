@@ -28,7 +28,8 @@
 | I3-006 | 46b91fa |
 | I3-007 | d8cd315 |
 | Audit remediation (one follow-up commit; the historical task commits are not rewritten) | 40a6940 |
-| Re-audit follow-up (minor items N1, N2, N3, N5) | commit `KOS-I3: address re-audit findings` |
+| Re-audit follow-up (minor items N1, N2, N3, N5) | 9912e3c |
+| Planning closure | e61814e (plan, task records), ecc0ca3 (milestone acceptance), the review-checklist closure commit |
 
 ## KOS-I3 closure gates
 
@@ -37,7 +38,7 @@
 | Technical acceptance (7 tasks) | PASS |
 | Milestone acceptance record (`planning/milestones/KOS-I3/ACCEPTANCE_CRITERIA.md`) | PASS: all software items checked with evidence; the safety gate is listed separately and left unchecked |
 | Independent audit and remediation | PASS: all findings fixed; targeted re-audit found no blockers or majors; its minor items are fixed |
-| Documentation closure (plan aligned to the as-built architecture, commit hashes recorded, execution order) | PASS (commit `KOS-I3: align final planning records`) |
+| Documentation closure (plan aligned to the as-built architecture, commit hashes recorded, execution order, milestone acceptance, review checklist) | PASS (e61814e, ecc0ca3 and the review-checklist closure commit) |
 | CI | The `build-and-test` job is implemented and its commands were verified locally and in the project container; an external GitHub run for the final commit was not independently confirmed in the external review |
 | Human safety review: `MotorCommand`, motor limits, fault-to-zero behavior, velocity command semantics, mock safety behavior, any future mapping to physical actuator control | **OPEN: not reviewed by a human** |
 
