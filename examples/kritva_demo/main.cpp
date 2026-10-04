@@ -9,49 +9,28 @@
 // Module      : Application
 // Layer       : Application Runtime
 //
-// Requirements: RR-APP-001..005; RR-OBS-005
+// Requirements: RR-APP-001..006
 // API         : main
 //
 // Author      : KritvaOS
 // Created     : 04-10-2026
 //==============================================================================
 
-#include <cstdio>
+#include <iostream>
 
-#include <kritva/runtime/runtime_host.hpp>
+#include <kritva/runtime/configuration.hpp>
 
+#include "demo_app.hpp"
+
+// kritva_demo [config-file]
+// Exit code: 0 clean run, 1 error, 3 component failure observed and handled by controlled shutdown.
 int main(int argc, char** argv) {
-    using kritva::runtime::to_string;
-
-    kritva::runtime::RuntimeHost host;
-    kritva::runtime::EventLog events;
-    host.set_event_sink(&events);
-
-    // Optional: kritva_demo <config-file>. Without one, the defaults apply.
-    if (argc > 1) {
-        const auto config = kritva::runtime::load_configuration_file(argv[1]);
-        if (!config) {
-            std::printf("[kritva_demo] CONFIG ERROR: %s\n", config.error().message.c_str());
-            return 1;
-        }
-        if (const auto r = host.configure(config.value()); !r) {
-            std::printf("[kritva_demo] CONFIG ERROR: %s\n", r.error().message.c_str());
-            return 1;
-        }
-        std::printf("[kritva_demo] config: %s\n",
-                    kritva::runtime::describe_configuration(host.settings(), config.value().size()).c_str());
+    const auto config = argc > 1 ? kritva::runtime::load_configuration_file(argv[1])
+                                 : kritva::runtime::parse_configuration("runtime.name=kritva_demo\n");
+    if (!config) {
+        std::cout << "[kritva_demo] CONFIG ERROR: " << config.error().message << "\n";
+        return kritva::demo::exit_code(kritva::demo::DemoOutcome::ERROR);
     }
-
-    std::printf("[kritva_demo] state=%s\n", to_string(host.state()).data());
-
-    const auto result = host.run([&events](kritva::core::LifecycleState state) {
-        std::printf("[kritva_demo] state=%s events=%zu\n", to_string(state).data(), events.size());
-    });
-
-    if (!result) {
-        std::printf("[kritva_demo] FAILED: %s\n", result.error().message.c_str());
-        return 1;
-    }
-    std::printf("[kritva_demo] shutdown complete (events=%zu)\n", events.size());
-    return 0;
+    kritva::demo::DemoApplication app(std::cout);
+    return kritva::demo::exit_code(app.run(config.value()));
 }

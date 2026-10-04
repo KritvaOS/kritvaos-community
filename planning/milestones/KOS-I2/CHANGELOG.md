@@ -9,4 +9,5 @@
 - I2-003: added key=value configuration loader, typed validation, RuntimeHost::configure, demo --config support and tests.
 - I2-004: added RuntimeHost::observe, EventLog, host runtime events, describe() diagnostics and tests.
 - I2-005: added FailureReport/failure_report(), controlled_shutdown() (also used by run() cleanup) and failure tests.
+- I2-006: added Sensor, Controller, Monitor, DemoApplication, demo configs (normal and failure), and unit/system/sanity tests.
 - Added mandatory unit, integration, sanity, regression, review, and commit gates.
