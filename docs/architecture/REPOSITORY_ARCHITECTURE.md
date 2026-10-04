@@ -2004,10 +2004,10 @@ hardware/
     └── CMakeLists.txt
 ```
 
-Mock implementations belong with I3 verification support:
+Mock implementations are a reusable library shared by tests and examples:
 
 ```text
-tests/hardware/mock/
+hardware/mock/    (library kritva_hardware_mock; depends only on hardware/abstraction)
 ```
 
 The reference executable belongs under:

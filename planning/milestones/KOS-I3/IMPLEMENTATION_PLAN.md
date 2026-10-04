@@ -1,5 +1,7 @@
 # KOS-I3 Implementation Plan
 
+> **Approved alignment:** see `planning/DECISIONS.md`, section "KOS-I3 implementation alignment". Where this document differs (mock location, typed samples, runtime integration through a single `DeviceManager` Component), that section governs.
+
 ## 1. Implementation Strategy
 
 I3 extends the KOS-I2 runtime downward toward hardware without changing Core R1.0.
