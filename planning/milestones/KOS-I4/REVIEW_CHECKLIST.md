@@ -12,6 +12,6 @@
 - [ ] Edge is safety authority; limit validation is before apply.
 - [ ] Session-scoped replay ledger prevents duplicate/replay application.
 - [ ] Heartbeat loss stops affected actuators.
-- [ ] HUMAN SAFETY REVIEW REQUIRED for I4-006 and every actuator write path.
+- [ ] HUMAN SAFETY REVIEW — OPEN. This is an independent human-owned gate. It is not completed by software implementation or automated verification. It blocks formal KOS-I4 closure and physical actuator deployment, but does not block subsequent software tasks.
 - [ ] I3 safety review remains OPEN independently.
 - [ ] Unit/integration/regression/ASan/UBSan/mutation/fresh-clone evidence complete.

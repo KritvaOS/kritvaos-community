@@ -9,7 +9,7 @@
 - [ ] ASan passes.
 - [ ] UBSan passes.
 - [ ] Applicable mutation/fault-injection checks pass.
-- [ ] HUMAN SAFETY REVIEW REQUIRED is explicitly completed for this task/actuator path.
+- [ ] HUMAN SAFETY REVIEW — OPEN. This is an independent human-owned gate. It is not completed by software implementation or automated verification. It blocks formal KOS-I4 closure and physical actuator deployment, but does not block subsequent software tasks.
 - [ ] Review checklist/evidence is complete.
 - [ ] One atomic commit SHA is recorded.
 - [ ] Core R1.0 source is unchanged.

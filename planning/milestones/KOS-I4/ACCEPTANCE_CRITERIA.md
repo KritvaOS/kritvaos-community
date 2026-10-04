@@ -8,5 +8,5 @@
 - [ ] Stale/late/duplicate/malformed messages are rejected deterministically.
 - [ ] No automatic recovery; explicit shutdown->initialize->start creates a fresh session.
 - [ ] Full I2/I3 regression, ASan, UBSan and mutation/fault injection pass.
-- [ ] HUMAN SAFETY REVIEW REQUIRED for I4-006 and every actuator write path.
+- [ ] HUMAN SAFETY REVIEW — OPEN. This is an independent human-owned gate. It is not completed by software implementation or automated verification. It blocks formal KOS-I4 closure and physical actuator deployment, but does not block subsequent software tasks.
 - [ ] I3 human safety review remains OPEN independently.

@@ -6,4 +6,4 @@ Required matrices: malformed frame; bounds; version; identity collisions; reques
 
 Run from a fresh clone/container before milestone closure. Any I2/I3 regression blocks I4 closure.
 
-**HUMAN SAFETY REVIEW REQUIRED:** I4-006 and every actuator write path. I3 human safety review remains OPEN independently.
+**HUMAN SAFETY REVIEW — OPEN (independent human-owned gate):** I4-005 to I4-008 and every actuator write path. It is not completed by software verification, blocks formal KOS-I4 closure and physical actuator deployment, and does not block subsequent software tasks. The I3 human safety review remains OPEN independently.

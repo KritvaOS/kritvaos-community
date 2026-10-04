@@ -20,7 +20,7 @@
 | RR-001 | RemoteDevice/RemoteEndpoint implement unchanged I3 contracts. | I4-005 |
 | RR-002 | Remote calls synchronously pump until response or simulated deadline. | I4-005 |
 | RR-003 | Protocol details do not leak into application-facing Endpoint APIs. | I4-005 |
-| FRL-001 | Link/heartbeat loss faults affected Nexus proxies with exactly one ERROR event per fault. | I4-006 |
+| FRL-001 | Exactly one ERROR event per endpoint fault transition. A link-level failure affecting N remote endpoints produces N endpoint ERROR events plus one link-level diagnostic record; an already-faulted endpoint produces no further ERROR. | I4-006 |
 | FRL-002 | Late, duplicate, stale, unknown-correlation and wrong-address messages are rejected. | I4-006 |
 | FRL-003 | No automatic recovery; explicit shutdown/init/start creates a new session. | I4-006 |
 | SR-001 | Edge validates actuator limits before every apply. | I4-006 |
