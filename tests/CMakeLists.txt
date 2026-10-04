@@ -227,3 +227,45 @@ if(TARGET kritva_device_demo_lib)
                 -DDEMO_CLEAN_CONFIG=${CMAKE_SOURCE_DIR}/examples/device_demo/device_demo_clean.conf
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/hardware/sanity/run_device_demo_sanity.cmake)
 endif()
+
+# ------------------------------------------------------------------------------
+# KOS-I4 Nexus-Edge protocol contract (I4-001)
+# ------------------------------------------------------------------------------
+if(TARGET kritva_hardware_transport AND TARGET kritva_hardware_remote)
+    add_executable(kritva_protocol_contract_test hardware/unit/protocol_contract_test.cpp)
+    target_link_libraries(kritva_protocol_contract_test PRIVATE kritva::hardware_transport)
+    add_test(NAME kritva_protocol_contract_unit COMMAND kritva_protocol_contract_test)
+
+    add_executable(kritva_node_identity_test hardware/unit/node_identity_test.cpp)
+    target_link_libraries(kritva_node_identity_test PRIVATE kritva::hardware_remote)
+    add_test(NAME kritva_node_identity_unit COMMAND kritva_node_identity_test)
+
+    add_executable(kritva_protocol_spec_consistency_test hardware/unit/protocol_spec_consistency_test.cpp)
+    target_link_libraries(kritva_protocol_spec_consistency_test PRIVATE kritva::hardware_transport)
+    add_test(NAME kritva_protocol_spec_consistency
+        COMMAND kritva_protocol_spec_consistency_test ${CMAKE_SOURCE_DIR}/docs/architecture/KOS-I4_PROTOCOL.md)
+
+    # Sanity: every public contract header compiles on its own.
+    set(KRITVA_I4_HEADERS transport/protocol.hpp remote/node.hpp)
+    set(KRITVA_I4_HEADER_CHECKS "")
+    foreach(header IN LISTS KRITVA_I4_HEADERS)
+        string(REPLACE "/" "_" stem "${header}")
+        string(REPLACE "." "_" stem "${stem}")
+        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/i4_header_checks/${stem}.cpp" "#include <kritva/hardware/${header}>\n")
+        list(APPEND KRITVA_I4_HEADER_CHECKS "${CMAKE_CURRENT_BINARY_DIR}/i4_header_checks/${stem}.cpp")
+    endforeach()
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/i4_header_checks/main.cpp" "int main() { return 0; }\n")
+    add_executable(kritva_i4_header_check ${KRITVA_I4_HEADER_CHECKS} "${CMAKE_CURRENT_BINARY_DIR}/i4_header_checks/main.cpp")
+    target_link_libraries(kritva_i4_header_check PRIVATE kritva::hardware_remote)
+    add_test(NAME kritva_i4_header_sanity COMMAND kritva_i4_header_check)
+
+    # Sanity: the I4 layers depend only on what the architecture allows.
+    get_target_property(KRITVA_TRANSPORT_LINKS kritva_hardware_transport INTERFACE_LINK_LIBRARIES)
+    if(NOT KRITVA_TRANSPORT_LINKS STREQUAL "kritva_core::kritva_core")
+        message(FATAL_ERROR "kritva_hardware_transport must depend only on kritva_core (found: ${KRITVA_TRANSPORT_LINKS})")
+    endif()
+    get_target_property(KRITVA_REMOTE_LINKS kritva_hardware_remote INTERFACE_LINK_LIBRARIES)
+    if(NOT KRITVA_REMOTE_LINKS STREQUAL "kritva::hardware;kritva::hardware_transport")
+        message(FATAL_ERROR "kritva_hardware_remote must depend only on kritva::hardware and kritva::hardware_transport (found: ${KRITVA_REMOTE_LINKS})")
+    endif()
+endif()

@@ -18,3 +18,10 @@ Strictly sequential; one atomic commit per task.
 **I4-001 gate:** I4-002 does not start until `docs/architecture/KOS-I4_PROTOCOL.md` and the I4-001 contract headers are review-clean (architect review).
 
 **Commit format:** `KOS-I4 I4-00N <imperative description>`; no `Co-Authored-By` trailer.
+
+## Status
+
+| Task | Status |
+|---|---|
+| I4-001 | Done (software); architect review of `KOS-I4_PROTOCOL.md` pending: gate for I4-002 |
+| I4-002 .. I4-008 | Planned |
