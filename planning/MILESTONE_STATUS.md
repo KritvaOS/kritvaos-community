@@ -3,7 +3,7 @@
 | Milestone | Status |
 |---|---|
 | KOS-I2 | IMPLEMENTED / predecessor baseline |
-| KOS-I3 | IN PROGRESS (I3-001..I3-004 done; I3-004 needs human safety review) |
+| KOS-I3 | IN PROGRESS (I3-001..I3-005 done; I3-004 and I3-005 need human safety review) |
 
 ## KOS-I2 Task Commits
 

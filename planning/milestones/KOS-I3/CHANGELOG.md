@@ -10,6 +10,8 @@
 
 - I3-004: typed data contracts: Vec3 and per-endpoint samples with SI units, validity, default state and virtual-timestamp policy; MotorCommand with limits and validation; typed endpoint aliases and capability descriptions.
 
+- I3-005: mock devices in hardware/mock (library kritva_hardware_mock): MockImuDevice, MockMotorDevice, deterministic data, scheduled failure/fault injection, degradation, fail-safe motor, and tests.
+
 ## Planned
 
 - Define Device and Endpoint hardware abstraction contracts.

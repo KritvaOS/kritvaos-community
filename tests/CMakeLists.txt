@@ -140,6 +140,38 @@ if(TARGET kritva_hardware)
     target_link_libraries(kritva_hardware_typed_integration_test PRIVATE kritva::hardware)
     add_test(NAME kritva_hardware_typed_integration COMMAND kritva_hardware_typed_integration_test)
 
+    add_executable(kritva_hardware_mock_test hardware/unit/mock_test.cpp)
+    target_link_libraries(kritva_hardware_mock_test PRIVATE kritva::hardware_mock)
+    add_test(NAME kritva_hardware_mock_unit COMMAND kritva_hardware_mock_test)
+
+    add_executable(kritva_hardware_mock_integration_test hardware/integration/mock_runtime_integration_test.cpp)
+    target_link_libraries(kritva_hardware_mock_integration_test PRIVATE kritva::hardware_mock kritva::runtime)
+    add_test(NAME kritva_hardware_mock_integration COMMAND kritva_hardware_mock_integration_test)
+
+    add_executable(kritva_hardware_mock_sanity_exe hardware/sanity/mock_sanity.cpp)
+    target_link_libraries(kritva_hardware_mock_sanity_exe PRIVATE kritva::hardware_mock kritva::runtime)
+    add_test(NAME kritva_hardware_mock_sanity
+        COMMAND ${CMAKE_COMMAND} -DSANITY_EXE=$<TARGET_FILE:kritva_hardware_mock_sanity_exe>
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/hardware/sanity/run_mock_sanity.cmake)
+
+    # Sanity: the mock headers compile on their own, and the mock library depends only on the abstraction.
+    set(KRITVA_MOCK_HEADERS mock_endpoint.hpp mock_imu.hpp mock_motor.hpp)
+    set(KRITVA_MOCK_HEADER_CHECKS "")
+    foreach(header IN LISTS KRITVA_MOCK_HEADERS)
+        string(REPLACE "." "_" stem "${header}")
+        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/hardware_mock_header_checks/${stem}.cpp" "#include <kritva/hardware/mock/${header}>\n")
+        list(APPEND KRITVA_MOCK_HEADER_CHECKS "${CMAKE_CURRENT_BINARY_DIR}/hardware_mock_header_checks/${stem}.cpp")
+    endforeach()
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/hardware_mock_header_checks/main.cpp" "int main() { return 0; }\n")
+    add_executable(kritva_hardware_mock_header_check ${KRITVA_MOCK_HEADER_CHECKS}
+        "${CMAKE_CURRENT_BINARY_DIR}/hardware_mock_header_checks/main.cpp")
+    target_link_libraries(kritva_hardware_mock_header_check PRIVATE kritva::hardware_mock)
+    add_test(NAME kritva_hardware_mock_header_sanity COMMAND kritva_hardware_mock_header_check)
+    get_target_property(KRITVA_MOCK_LINKS kritva_hardware_mock INTERFACE_LINK_LIBRARIES)
+    if(NOT KRITVA_MOCK_LINKS STREQUAL "kritva::hardware")
+        message(FATAL_ERROR "kritva_hardware_mock must depend only on kritva::hardware (found: ${KRITVA_MOCK_LINKS})")
+    endif()
+
     add_executable(kritva_hardware_runtime_integration_test hardware/integration/contract_runtime_integration_test.cpp)
     target_link_libraries(kritva_hardware_runtime_integration_test PRIVATE kritva::hardware kritva::runtime)
     add_test(NAME kritva_hardware_runtime_integration COMMAND kritva_hardware_runtime_integration_test)
