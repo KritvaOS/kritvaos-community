@@ -44,6 +44,14 @@ inline constexpr std::size_t kMaxDiscoveryItems = 256;
 inline constexpr std::size_t kMaxCapabilitiesPerEndpoint = 16;
 inline constexpr std::size_t kMaxConfigureSettings = 16;
 
+/// The largest legal DISCOVERY_RESPONSE payload under protocol 1.0, where every endpoint advertises
+/// exactly one capability (spec section 13): status, device count, 64 devices of (id, name length,
+/// name, endpoint count) and 256 endpoints of (id, name length, name, direction, capability count,
+/// one capability of id, name length, name). It must fit one frame; the frame bound is the hard limit.
+inline constexpr std::size_t kMaxDiscoveryPayload =
+    2 + 2 + kMaxDevices * (8 + 2 + kMaxNameLength + 2) +
+    kMaxDiscoveryItems * (8 + 2 + kMaxNameLength + 1 + 2 + (8 + 2 + kMaxNameLength));
+
 // ---- frame header offsets (spec section 4) -------------------------------------------------
 
 inline constexpr std::size_t kOffsetMagic = 0;
@@ -58,6 +66,7 @@ inline constexpr std::size_t kOffsetSequence = 20;
 inline constexpr std::size_t kOffsetCorrelation = 28;
 inline constexpr std::size_t kOffsetSession = 36;
 static_assert(kOffsetSession + 8 == kHeaderSize, "the header layout must add up to HEADER_SIZE");
+static_assert(kMaxDiscoveryPayload <= kMaxPayloadSize, "a complete discovery snapshot must fit one frame");
 
 // ---- message types (spec section 6) --------------------------------------------------------
 

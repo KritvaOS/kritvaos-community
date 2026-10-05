@@ -64,7 +64,8 @@ int main(int argc, char** argv) {
         {"`PROTOCOL_MAJOR` / `PROTOCOL_MINOR`", 0}, {"`HEADER_SIZE`", kHeaderSize}, {"`MAX_FRAME_SIZE`", kMaxFrameSize},
         {"`MAX_PAYLOAD_SIZE`", kMaxPayloadSize}, {"`MAX_NAME_LENGTH`", kMaxNameLength}, {"`MAX_TEXT_LENGTH`", kMaxTextLength},
         {"`MAX_DEVICES`", kMaxDevices}, {"`MAX_DISCOVERY_ITEMS`", kMaxDiscoveryItems},
-        {"`MAX_CAPABILITIES_PER_ENDPOINT`", kMaxCapabilitiesPerEndpoint}, {"`MAX_CONFIGURE_SETTINGS`", kMaxConfigureSettings}};
+        {"`MAX_CAPABILITIES_PER_ENDPOINT`", kMaxCapabilitiesPerEndpoint}, {"`MAX_CONFIGURE_SETTINGS`", kMaxConfigureSettings},
+        {"`MAX_DISCOVERY_PAYLOAD`", kMaxDiscoveryPayload}};
     int constants_seen = 0;
     for (const auto& r : rows) {
         if (r.size() < 2) continue;
@@ -73,7 +74,7 @@ int main(int argc, char** argv) {
         KRITVA_CHECK(first_number(r[1]) == it->second);
         ++constants_seen;
     }
-    KRITVA_CHECK(constants_seen == 9);
+    KRITVA_CHECK(constants_seen == 10);
     KRITVA_CHECK(doc.find("| `MAGIC` | `0x4B344F53`") != std::string::npos && kMagic == 0x4B344F53);
     KRITVA_CHECK(doc.find("| `PROTOCOL_MAJOR` / `PROTOCOL_MINOR` | 1 / 0 |") != std::string::npos && kProtocolMajor == 1 && kProtocolMinor == 0);
 
@@ -154,6 +155,13 @@ int main(int argc, char** argv) {
         ++timing_seen;
     }
     KRITVA_CHECK(timing_seen == 4);
+
+    // The derivation in section 13 gives the same number as the code, and the spec states the wording the architect review required.
+    KRITVA_CHECK(doc.find("`2 + 2 + 4864 + 38656 = 43524` bytes") != std::string::npos);
+    KRITVA_CHECK(doc.find("at-most-once application at the Edge") != std::string::npos);
+    KRITVA_CHECK(doc.find("**DEGRADED never stops any actuator by itself**") != std::string::npos);
+    KRITVA_CHECK(doc.find("This is an Edge-side safety action, not only an identifier replacement") != std::string::npos);
+    KRITVA_CHECK(doc.find("per peer direction and per session") != std::string::npos);
 
     // The capability ids named in section 13 are the I3 ones.
     KRITVA_CHECK(doc.find("`0x1001` acceleration, `0x1002` angular velocity, `0x1003` position, `0x2001` motor command") != std::string::npos);

@@ -158,10 +158,18 @@ static void test_limits_are_consistent() {
     KRITVA_CHECK(kMaxPayloadSize + kHeaderSize == kMaxFrameSize);
     KRITVA_CHECK(kMaxNameLength == 64 && kMaxTextLength == 256 && kMaxDevices == 64 && kMaxDiscoveryItems == 256);
     KRITVA_CHECK(kMaxCapabilitiesPerEndpoint == 16 && kMaxConfigureSettings == 16);
-    // The largest legal discovery response still fits in one frame: 256 endpoints x (8 + 2 + 64 + 1 + 2 + 16 x (8 + 2 + 64)) bytes is
-    // too large, so the capability limit and the endpoint limit are not both reachable at once; the codec (I4-002) enforces the frame bound.
-    const std::size_t worst_endpoint = 8 + 2 + kMaxNameLength + 1 + 2 + kMaxCapabilitiesPerEndpoint * (8 + 2 + kMaxNameLength);
-    KRITVA_CHECK(worst_endpoint * kMaxDiscoveryItems > kMaxPayloadSize);       // documented: the frame limit binds before the item limit in the worst case
+}
+
+static void test_discovery_capacity() {                                  // frame bound versus item limits
+    // Protocol 1.0 needs exactly one capability per endpoint, so the largest legal snapshot is 43524 bytes and fits one frame.
+    KRITVA_CHECK(kMaxDiscoveryPayload == 43524);
+    KRITVA_CHECK(kMaxDiscoveryPayload < kMaxPayloadSize);
+    KRITVA_CHECK(kMaxPayloadSize - kMaxDiscoveryPayload == 21968);               // the remaining headroom
+    // The wire maximum (16 capabilities per endpoint) is a different matter: it could not fit, which is why the frame bound is the
+    // hard limit and the item limits are semantic ones that an encoder checks against the frame size first.
+    const std::size_t worst_on_the_wire = 2 + 2 + kMaxDevices * (8 + 2 + kMaxNameLength + 2) +
+        kMaxDiscoveryItems * (8 + 2 + kMaxNameLength + 1 + 2 + kMaxCapabilitiesPerEndpoint * (8 + 2 + kMaxNameLength));
+    KRITVA_CHECK(worst_on_the_wire > kMaxPayloadSize);
 }
 
 int main() {
@@ -174,6 +182,7 @@ int main() {
     test_link_timing();
     test_key_names();
     test_limits_are_consistent();
+    test_discovery_capacity();
     std::printf("protocol_contract_test: PASS\n");
     return 0;
 }

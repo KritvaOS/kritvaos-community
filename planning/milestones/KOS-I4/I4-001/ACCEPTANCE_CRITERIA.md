@@ -29,3 +29,16 @@ Deliverable: the protocol contract `docs/architecture/KOS-I4_PROTOCOL.md` (frame
 - I3 contracts unchanged; Core R1.0 source unchanged (empty diff of `core/`, `runtime/`, `hardware/abstraction/`, `hardware/mock/`).
 - Deviation recorded: `MAX_PAYLOAD_SIZE` is 65492 (`MAX_FRAME_SIZE - HEADER_SIZE`), not the baseline's 65520, which assumed a 16-byte header; the agreed header fields need 44 bytes.
 - Architect review of the protocol document is the entry gate for I4-002.
+
+## Architect review (provisional, before the commit was visible on GitHub)
+
+All 11 rulings accepted (MAX_PAYLOAD_SIZE 65492; strict header; 23 message types; Core ErrorCode wire status; Edge-allocated sessions; session states; sequence semantics; Edge write order; malformed handling; discovery rules; frame bound before item limits). The review required these clarifications, applied in the follow-up commit `KOS-I4 I4-001 apply architect review clarifications`:
+
+- A HELLO's invalidation of the previous session is an Edge-side safety action in a stated order (invalidate, stop the old session's actuators through `Endpoint::stop()`, reset sequence and ledgers, establish the new session) and the new session inherits no sequence or ledger state.
+- DEGRADED means exactly 2 heartbeat periods without a valid peer frame, returns to CONNECTED on a valid frame, never stops an actuator by itself (safety actions only at the heartbeat timeout), and DISCONNECTED never returns to CONNECTING automatically.
+- The write guarantee is worded as at-most-once application at the Edge, outcome UNKNOWN to the Nexus application after a timeout, not end-to-end exactly-once; the highest accepted sequence is kept per peer direction and per session.
+- Discovery capacity is documented and enforced: under protocol 1.0 every endpoint has exactly one capability, so the largest legal discovery payload is 43524 bytes (`kMaxDiscoveryPayload`, derived in spec section 13), below `MAX_PAYLOAD_SIZE`; the wire maximum of 16 capabilities per endpoint could not fit and is therefore governed by the rule that the frame bound is the hard limit and an encoder checks the required size first. `MAX_CAPABILITIES_PER_ENDPOINT` is not reduced.
+
+Evidence for the follow-up: 119/119 ctest, `make check` PASS, ASan+UBSan clean on the contract and spec-consistency tests, and 5 further mutations (1 code, 4 specification wording) all caught.
+
+Final architect review of the landed commits: requested from the planning review; I4-002 starts when it is granted.

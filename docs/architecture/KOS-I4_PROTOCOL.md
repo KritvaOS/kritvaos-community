@@ -30,6 +30,7 @@ A hand-written, versioned, little-endian binary protocol between a Nexus and an 
 | `MAX_DISCOVERY_ITEMS` | 256 endpoints per node (all devices together) |
 | `MAX_CAPABILITIES_PER_ENDPOINT` | 16 |
 | `MAX_CONFIGURE_SETTINGS` | 16 per request |
+| `MAX_DISCOVERY_PAYLOAD` | 43524 bytes: the largest legal DISCOVERY_RESPONSE payload (derived in section 13) |
 
 Note: the planning baseline gave `MAX_PAYLOAD_SIZE` as 65520, which assumed a 16-byte header; with the 44-byte header required by the agreed field set the payload limit is `MAX_FRAME_SIZE - HEADER_SIZE`.
 
@@ -109,7 +110,7 @@ Direction is enforced: a request type received from the wrong side is `UNKNOWN_T
 | HELLO | `u64 node_id` (the Nexus), `u16 major`, `u16 minor`, `u32 heartbeat_period_ms`, `u32 heartbeat_timeout_ms` |
 | HELLO_ACK | `STATUS`; if OK: `u64 node_id` (the Edge), `u16 major`, `u16 minor` (negotiated), `u64 session_id`, `u32 heartbeat_period_ms`, `u32 heartbeat_timeout_ms` (as accepted) |
 | DISCOVERY_REQUEST | empty |
-| DISCOVERY_RESPONSE | `STATUS`; if OK: `u16 device_count` (<= 64); per device: `u64 device_id`, name `device_name`, `u16 endpoint_count`; per endpoint: `u64 endpoint_id`, name `endpoint_name`, `u8 direction` (0 sensor, 1 actuator), `u16 capability_count` (1..16); per capability: `u64 capability_id`, name `capability_name`. Total endpoints <= 256. |
+| DISCOVERY_RESPONSE | `STATUS`; if OK: `u16 device_count` (<= 64); per device: `u64 device_id`, name `device_name`, `u16 endpoint_count`; per endpoint: `u64 endpoint_id`, name `endpoint_name`, `u8 direction` (0 sensor, 1 actuator), `u16 capability_count` (1..16 on the wire; protocol 1.0 requires exactly 1, section 13); per capability: `u64 capability_id`, name `capability_name`. Total endpoints <= 256. |
 | CONFIGURE_REQUEST | `ADDR`, `u16 setting_count` (<= 16); per setting: name `key`, `u8 type` (0 bool, 1 int64, 2 text), value (`u8` 0/1 / `i64` / text string) |
 | CONFIGURE_RESPONSE, INITIALIZE_RESPONSE, START_RESPONSE, STOP_RESPONSE, SHUTDOWN_RESPONSE | `STATUS`; if OK: `u8 lifecycle_state` (Core `LifecycleState` value after the operation) |
 | INITIALIZE_REQUEST, START_REQUEST, STOP_REQUEST, SHUTDOWN_REQUEST | `ADDR` |
@@ -150,7 +151,7 @@ A status value above 11 makes the payload malformed. The Edge returns the I3 end
 
 - A **HELLO** (`session_id` 0) proposes a version and the heartbeat timing. The Edge accepts if `major == 1` and the peer's `minor <= its own minor`; the negotiated minor is the peer's. It replies HELLO_ACK with a new non-zero `session_id` (the Edge allocates 1, 2, 3 ... per EdgeHost lifetime), the Edge node id and the accepted timing. Timing outside the ranges in section 14 is `INVALID_ARGUMENT`; an unsupported version is `UNSUPPORTED` (HELLO_ACK with `session_id` 0).
 - Every later frame in both directions carries that `session_id`; a frame with any other session id is stale (section 10).
-- **A HELLO always starts a new session and invalidates the previous one.** The Edge then stops every actuator endpoint of the old session through the existing `Endpoint::stop()`, resets all sequence ledgers, and seals the served Devices (idempotent).
+- **A HELLO always starts a new session and invalidates the previous one. This is an Edge-side safety action, not only an identifier replacement**, performed in this order: (1) invalidate the previous `SessionId`; (2) stop every actuator endpoint that belongs to the previous session through the existing `Endpoint::stop()`; (3) reset the per-session sequence tracking and all write ledgers; (4) establish the new `SessionId` and seal the served Devices (idempotent). The new session inherits **no** sequence or write-ledger state from the previous one.
 - Session states (a Nexus-side link state; **not** Core `LifecycleState`):
 
 | From | To | Cause |
@@ -165,19 +166,19 @@ A status value above 11 makes the payload malformed. The Edge returns the I3 end
 | CONNECTED | DISCONNECTED | heartbeat timeout, transport disconnect, explicit close |
 | DEGRADED | DISCONNECTED | heartbeat timeout, transport disconnect, explicit close |
 
-Every other transition is invalid and changes nothing. DISCONNECTED is also the initial state. The only way out of DISCONNECTED is a new `connect()` (no automatic reconnect).
+Every other transition is invalid and changes nothing. DISCONNECTED is also the initial state. DEGRADED means exactly: no valid peer frame for 2 heartbeat periods. A valid frame received while DEGRADED returns the link to CONNECTED. **DEGRADED never stops any actuator by itself**; the safety actions (Nexus remote endpoints to FAULT, Edge actuator stop) happen only when the heartbeat timeout is reached, which ends the session in DISCONNECTED. DISCONNECTED never returns to CONNECTING automatically: a new session needs an explicit application `connect()` (no automatic reconnect).
 
 ## 10. Sequence, correlation, duplicates and stale frames
 
 - Each side numbers its frames in a session `1, 2, 3 ...`: strictly increasing, gaps allowed, counted per sender; the first frame of a session is 1. A HELLO uses sequence 1 of its own counter.
 - A **response** carries `correlation_id` = the request's `sequence`. A request has `correlation_id` 0.
-- The receiver keeps the highest accepted `sequence` per peer. A frame with `sequence <=` that value, or a wrong `session_id`, is **stale or duplicate**: it is dropped and counted, never processed. The single exception is a duplicate WRITE_REQUEST (section 12).
+- The receiver keeps the highest accepted `sequence` **per peer direction and per session** (never globally; a new session starts again from nothing). A frame with `sequence <=` that value, or a wrong `session_id`, is **stale or duplicate**: it is dropped and counted, never processed. The single exception is a duplicate WRITE_REQUEST (section 12).
 - A response is accepted only if it matches an outstanding request by correlation id, expected response type, session and address; any other response (unknown correlation, wrong type, wrong address, already answered, after the deadline) is dropped and counted.
 - Each peer counts, per category: malformed, stale, duplicate, unknown correlation, late.
 
 ## 11. Deadlines and heartbeat
 
-- Every request has a deadline = send time + `link.request_timeout_ms` on the virtual clock. A response whose delivery time is after the deadline is late (dropped and counted); the request completes with `TIMEOUT`. The Nexus never retransmits automatically: a write that times out has an **unknown outcome** and must be treated as such by the application.
+- Every request has a deadline = send time + `link.request_timeout_ms` on the virtual clock. A response whose delivery time is after the deadline is late (dropped and counted); the request completes with `TIMEOUT`. The Nexus never retransmits automatically. The guarantee is **at-most-once application at the Edge; the outcome may be UNKNOWN to the Nexus application after a request timeout** (a timed-out write may or may not have been applied, and the application must treat it as unknown). It is not end-to-end exactly-once.
 - Both sides send a HEARTBEAT every `link.heartbeat_period_ms` once the session exists. Any valid in-session frame counts as proof of liveness. No valid frame from the peer for `link.heartbeat_timeout_ms` ends the session: the Nexus link goes DISCONNECTED and every remote endpoint becomes FAULT (reason `link lost`, one ERROR per endpoint, section 12 of the architecture); the Edge invalidates the session, stops **all** actuator endpoints of that session through `Endpoint::stop()`, and does not itself fault any endpoint.
 - Time is the transport's virtual monotonic nanosecond clock, advanced only by `step(dt)`/`advance(dt)`. A synchronous call pumps in `link.pump_quantum_ms` steps until the response or its deadline.
 
@@ -200,6 +201,7 @@ The Edge never trusts the Nexus for limits or state. A new session starts a new 
 - Discovery is a complete snapshot, sent in answer to DISCOVERY_REQUEST (the Nexus requests it after HELLO and again on each initialize). The Edge topology is sealed from the first HELLO; there is no change notification.
 - Duplicate device ids or names, or duplicate endpoint ids or names inside one device, make a discovery response malformed. Device ids may collide across different nodes; the Nexus keys everything by `(node_id, device_id, endpoint_id)`.
 - The capability id selects the typed proxy: `0x1001` acceleration, `0x1002` angular velocity, `0x1003` position, `0x2001` motor command (the I3 capability ids). A sensor endpoint must advertise exactly one of the first three and an actuator exactly the last; any other id or combination is `UNSUPPORTED` and discovery fails.
+- **Capacity.** The wire format allows up to 16 capabilities per endpoint, but protocol 1.0 requires exactly one (above), so the largest legal discovery is: `2` (status) `+ 2` (device_count) `+ 64 x (8 + 2 + 64 + 2)` (devices: id, name length, name, endpoint_count) `+ 256 x (8 + 2 + 64 + 1 + 2 + (8 + 2 + 64))` (endpoints: id, name length, name, direction, capability_count, one capability with id, name length, name) = `2 + 2 + 4864 + 38656 = 43524` bytes, which is at most `MAX_PAYLOAD_SIZE` (65492), so a complete snapshot always fits one DISCOVERY_RESPONSE. The frame bound is the hard wire limit and the item limits are semantic limits: an encoder computes the required size first and rejects before producing an oversized frame; an Edge whose topology cannot be encoded within `MAX_PAYLOAD_SIZE` (possible only if a later minor version allows more capabilities) answers `UNSUPPORTED` and serves no topology. The decoder checks the frame bound before any item limit.
 - **Topology equivalence** (registered snapshot versus a fresh discovery): the sets are equal iff they contain the same `(node_id, device_id, device_name, endpoint_id, endpoint_name, direction, capability ids)` tuples. Order is not part of identity. Any difference fails deterministically.
 
 ## 14. Link timing (configuration keys, defaults, ranges)
