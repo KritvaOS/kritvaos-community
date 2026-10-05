@@ -23,5 +23,6 @@ Strictly sequential; one atomic commit per task.
 
 | Task | Status |
 |---|---|
-| I4-001 | Done (software); architect review of `KOS-I4_PROTOCOL.md` pending: gate for I4-002 |
-| I4-002 .. I4-008 | Planned |
+| I4-001 | Done; architect review APPROVED (d2f8936) |
+| I4-002 | Done (software); landed commit under architect review |
+| I4-003 .. I4-008 | Planned |

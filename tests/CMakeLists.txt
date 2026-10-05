@@ -240,13 +240,32 @@ if(TARGET kritva_hardware_transport AND TARGET kritva_hardware_remote)
     target_link_libraries(kritva_node_identity_test PRIVATE kritva::hardware_remote)
     add_test(NAME kritva_node_identity_unit COMMAND kritva_node_identity_test)
 
+    add_executable(kritva_frame_test hardware/unit/frame_test.cpp)
+    target_link_libraries(kritva_frame_test PRIVATE kritva::hardware_transport)
+    add_test(NAME kritva_frame_unit COMMAND kritva_frame_test)
+
+    add_executable(kritva_codec_test hardware/unit/codec_test.cpp)
+    target_link_libraries(kritva_codec_test PRIVATE kritva::hardware_transport)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(kritva_codec_test PRIVATE -Wno-mismatched-new-delete)   # the test replaces operator new/delete to track allocations
+    endif()
+    add_test(NAME kritva_codec_unit COMMAND kritva_codec_test)
+
+    add_executable(kritva_codec_truncation_test hardware/unit/codec_truncation_test.cpp)
+    target_link_libraries(kritva_codec_truncation_test PRIVATE kritva::hardware_transport)
+    add_test(NAME kritva_codec_truncation_unit COMMAND kritva_codec_truncation_test)
+
+    add_executable(kritva_codec_fuzz_test hardware/unit/codec_fuzz_test.cpp)
+    target_link_libraries(kritva_codec_fuzz_test PRIVATE kritva::hardware_transport)
+    add_test(NAME kritva_codec_fuzz_unit COMMAND kritva_codec_fuzz_test)
+
     add_executable(kritva_protocol_spec_consistency_test hardware/unit/protocol_spec_consistency_test.cpp)
     target_link_libraries(kritva_protocol_spec_consistency_test PRIVATE kritva::hardware_transport)
     add_test(NAME kritva_protocol_spec_consistency
         COMMAND kritva_protocol_spec_consistency_test ${CMAKE_SOURCE_DIR}/docs/architecture/KOS-I4_PROTOCOL.md)
 
     # Sanity: every public contract header compiles on its own.
-    set(KRITVA_I4_HEADERS transport/protocol.hpp remote/node.hpp)
+    set(KRITVA_I4_HEADERS transport/protocol.hpp transport/frame.hpp transport/codec.hpp remote/node.hpp)
     set(KRITVA_I4_HEADER_CHECKS "")
     foreach(header IN LISTS KRITVA_I4_HEADERS)
         string(REPLACE "/" "_" stem "${header}")

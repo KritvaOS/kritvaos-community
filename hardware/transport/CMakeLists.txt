@@ -1,5 +1,7 @@
 # Nexus-Edge protocol and transport layer (KOS-I4). Depends only on kritva-core.
 add_library(kritva_hardware_transport STATIC
+    src/codec.cpp
+    src/frame.cpp
     src/protocol.cpp
 )
 

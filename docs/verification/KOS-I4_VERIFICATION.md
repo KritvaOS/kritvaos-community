@@ -12,6 +12,7 @@ Run from a fresh clone/container before milestone closure. Any I2/I3 regression 
 
 | Task | Commit | Debug/Release | Regression (I2 + I3 + I4) | ASan/UBSan | Mutation |
 |---|---|---|---|---|---|
-| I4-001 | recorded in the next commit | PASS, 0 warnings | 119/119 | PASS | 15 of 15 caught |
+| I4-001 | 5e9acfc, 6b73c6c, d2f8936 | PASS, 0 warnings | 119/119 | PASS | 20 of 20 caught |
+| I4-002 | recorded in the next commit | PASS, 0 warnings | 123/123 | PASS | 26 of 28 caught by tests, 1 by ASan, 1 equivalent |
 
 Per-task detail is in `planning/milestones/KOS-I4/I4-00x/ACCEPTANCE_CRITERIA.md`.
