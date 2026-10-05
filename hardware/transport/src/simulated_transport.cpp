@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <limits>
 
-#include <kritva/hardware/transport/protocol.hpp>
 
 namespace kritva::hardware::transport {
 
@@ -118,7 +117,7 @@ void SimulatedTransport::enqueue(Lane& l, std::uint64_t delay_ns, const std::vec
 
 core::Result<void> SimulatedTransport::send(LinkDirection direction, std::span<const std::uint8_t> frame) {
     Lane& l = lane(direction);
-    if (frame.empty() || frame.size() > kMaxFrameSize) {
+    if (frame.empty() || frame.size() > kMaxTransportFrameSize) {
         ++l.stats.rejected_invalid;
         return core::Result<void>::failure(make_error(ErrorCode::INVALID_ARGUMENT, "a frame must be 1..65536 bytes"));
     }

@@ -25,9 +25,13 @@
 
 #include <kritva/hardware/transport/frame.hpp>
 #include <kritva/hardware/transport/simulated_transport.hpp>
+#include <kritva/hardware/transport/transport.hpp>
 
 using namespace kritva::hardware::transport;
 using Bytes = std::vector<std::uint8_t>;
+
+// The transport owns its own frame bound (it does not include the protocol); the two must agree.
+static_assert(kMaxTransportFrameSize == kMaxFrameSize, "the transport frame bound must equal the protocol MAX_FRAME_SIZE");
 
 static Bytes make_frame(MessageType type, std::uint64_t sequence, std::uint64_t correlation, std::uint64_t session, const Bytes& payload) {
     FrameHeader h;

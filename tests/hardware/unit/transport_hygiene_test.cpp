@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     // The transport carries bytes; it must not know the frame layout or the protocol.
     const std::vector<std::string> protocol_knowledge = {
         "decode_frame", "encode_frame", "FrameHeader", "kMagic", "kHeaderSize", "MessageType", "session", "correlation",
-        "heartbeat", "codec.hpp", "frame.hpp", "protocol.hpp", "SessionState",
+        "heartbeat", "codec.hpp", "frame.hpp", "protocol.hpp", "SessionState", "kMaxFrameSize", "kMaxPayloadSize", "kProtocol",
     };
     for (const auto& f : files) {
         const std::string code = code_of(read(root + "/" + f));
@@ -73,12 +73,23 @@ int main(int argc, char** argv) {
             }
         }
     }
+    // The transport carries bytes; it owns no knowledge of the frame layout or the protocol, and it
+    // does not include the protocol, frame, codec or node headers (no exemption, not even for a constant).
+    const std::vector<std::string> forbidden_includes = {"protocol.hpp", "frame.hpp", "codec.hpp", "node.hpp", "remote/", "hardware/abstraction", "kritva/hardware/"};
     for (const auto& f : files) {
-        std::string code = code_of(read(root + "/" + f));
-        // simulated_transport.cpp may use kMaxFrameSize from protocol.hpp (the size bound is a transport concern).
-        const std::string bound_include = "#include <kritva/hardware/transport/protocol.hpp>";
-        const auto pos = code.find(bound_include);
-        if (pos != std::string::npos) code.erase(pos, bound_include.size());
+        const std::string code = code_of(read(root + "/" + f));
+        std::istringstream in(code);
+        std::string line;
+        while (std::getline(in, line)) {
+            if (line.find("#include") == std::string::npos) continue;
+            for (const auto& token : forbidden_includes) {
+                if (line.find(token) == std::string::npos) continue;
+                // The only project include a transport source may have is its own interface headers.
+                if (line.find("transport/transport.hpp") != std::string::npos || line.find("transport/simulated_transport.hpp") != std::string::npos) continue;
+                std::fprintf(stderr, "%s has a forbidden include: %s\n", f.c_str(), line.c_str());
+                return 1;
+            }
+        }
         for (const auto& token : protocol_knowledge) {
             if (code.find(token) != std::string::npos) {
                 std::fprintf(stderr, "%s knows about the protocol: '%s'\n", f.c_str(), token.c_str());

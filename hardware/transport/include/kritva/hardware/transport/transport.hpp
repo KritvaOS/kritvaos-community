@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <span>
@@ -26,6 +27,10 @@
 #include <kritva/core/core.hpp>
 
 namespace kritva::hardware::transport {
+
+/// The largest frame a transport carries, in bytes. A transport-level bound of its own: the transport
+/// does not depend on the protocol, and a test checks that it equals the protocol's MAX_FRAME_SIZE.
+inline constexpr std::size_t kMaxTransportFrameSize = 65536;
 
 enum class LinkState : std::uint8_t { DISCONNECTED, CONNECTED };
 
@@ -51,7 +56,7 @@ public:
     virtual void disconnect() = 0;
     [[nodiscard]] virtual LinkState link_state() const noexcept = 0;
 
-    /// Hands one frame (1..65536 bytes) to the link. It does not mean the frame will arrive.
+    /// Hands one frame (1..kMaxTransportFrameSize (65536) bytes) to the link. It does not mean the frame will arrive.
     /// INVALID_ARGUMENT: empty or oversized. RESOURCE_UNAVAILABLE: link down, or the in-flight
     /// queue is full. The bytes are copied.
     virtual core::Result<void> send(std::span<const std::uint8_t> frame) = 0;
