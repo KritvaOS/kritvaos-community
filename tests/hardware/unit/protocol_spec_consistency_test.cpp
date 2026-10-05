@@ -162,6 +162,10 @@ int main(int argc, char** argv) {
     KRITVA_CHECK(doc.find("**DEGRADED never stops any actuator by itself**") != std::string::npos);
     KRITVA_CHECK(doc.find("This is an Edge-side safety action, not only an identifier replacement") != std::string::npos);
     KRITVA_CHECK(doc.find("per peer direction and per session") != std::string::npos);
+    KRITVA_CHECK(doc.find("do not impose an order between independently outstanding **responses**") != std::string::npos);
+    KRITVA_CHECK(doc.find("it is **not** rejected because its `sequence` is lower than a later frame already accepted") != std::string::npos ||
+                 doc.find("It is **not** rejected because its `sequence` is lower than a later frame already accepted") != std::string::npos);
+    KRITVA_CHECK(doc.find("these relaxations apply only once a negotiated minor version actually defines them") != std::string::npos);
 
     // The capability ids named in section 13 are the I3 ones.
     KRITVA_CHECK(doc.find("`0x1001` acceleration, `0x1002` angular velocity, `0x1003` position, `0x2001` motor command") != std::string::npos);

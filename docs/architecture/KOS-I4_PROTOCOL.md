@@ -172,8 +172,10 @@ Every other transition is invalid and changes nothing. DISCONNECTED is also the 
 
 - Each side numbers its frames in a session `1, 2, 3 ...`: strictly increasing, gaps allowed, counted per sender; the first frame of a session is 1. A HELLO uses sequence 1 of its own counter.
 - A **response** carries `correlation_id` = the request's `sequence`. A request has `correlation_id` 0.
-- The receiver keeps the highest accepted `sequence` **per peer direction and per session** (never globally; a new session starts again from nothing). A frame with `sequence <=` that value, or a wrong `session_id`, is **stale or duplicate**: it is dropped and counted, never processed. The single exception is a duplicate WRITE_REQUEST (section 12).
-- A response is accepted only if it matches an outstanding request by correlation id, expected response type, session and address; any other response (unknown correlation, wrong type, wrong address, already answered, after the deadline) is dropped and counted.
+- **Two admission rules, by kind of frame.** Frame sequence numbers detect duplicate and stale **request and notice** frames; they do not impose an order between independently outstanding **responses**, because the transport may reorder frames and a response may legitimately arrive after a later heartbeat.
+  - *Requests and notices* (every request type, HEARTBEAT and FAULT_EVENT, and PROTOCOL_ERROR with `correlation_id` 0): the receiver keeps the highest accepted `sequence` of these frames **per peer direction and per session** (never globally; a new session starts again from nothing). A frame with `sequence <=` that value, or a wrong `session_id`, is **stale or duplicate**: it is dropped and counted, never processed. The single exception is a duplicate WRITE_REQUEST (section 12).
+  - *Responses* (every response type, HELLO_ACK, and PROTOCOL_ERROR with a non-zero `correlation_id`): a response is validated by session, `correlation_id`, expected response type, address and outstanding-request state. It is **not** rejected because its `sequence` is lower than a later frame already accepted, and it neither raises nor is compared with the request/notice watermark. Example: the Edge sends WRITE_RESPONSE (sequence 10) then HEARTBEAT (sequence 11); the transport delivers the heartbeat first; the response with sequence 10 is still admitted if request 7 is outstanding and unexpired, whereas a *request* with sequence 10 arriving after request 11 is stale.
+- A response is accepted only if it matches an outstanding request by correlation id, expected response type, session and address; any other response (unknown correlation, wrong type, wrong address, already answered, after the deadline) is dropped and counted. A duplicate response is dropped because its request is no longer outstanding.
 - Each peer counts, per category: malformed, stale, duplicate, unknown correlation, late.
 
 ## 11. Deadlines and heartbeat
@@ -225,7 +227,7 @@ The pump quantum is a simulation/control-plane parameter, not a protocol timing 
 
 ## 16. Versioning
 
-Within major 1, a peer with a smaller or equal minor is compatible. A minor increment may only add message types, flags and trailing optional behaviour that older peers can ignore by the rules above; it never changes a layout in this document. A different major is incompatible.
+Within major 1, a peer with a smaller or equal minor is compatible. A minor increment may only add message types, flags and trailing optional behaviour that older peers can ignore; **these relaxations apply only once a negotiated minor version actually defines them. In version 1.0 none is defined: `flags` must be 0, `reserved` must be 0, trailing bytes after a payload are malformed and an unknown message type is dropped.** A minor increment never changes a layout in this document. A different major is incompatible.
 
 ## 17. I4-001 traceability
 

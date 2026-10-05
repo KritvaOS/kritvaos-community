@@ -135,6 +135,24 @@ enum class Direction : std::uint8_t { NEXUS_TO_EDGE, EDGE_TO_NEXUS, BOTH };
     return t == MessageType::FAULT_EVENT || t == MessageType::HEARTBEAT || t == MessageType::PROTOCOL_ERROR;
 }
 
+// ---- sequence admission (spec section 10) --------------------------------------------------------
+
+/// A response-like frame is admitted by session, correlation id, expected type, address and outstanding
+/// request state, never by comparing its sequence with other frames: every response type, HELLO_ACK, and
+/// PROTOCOL_ERROR with a non-zero correlation id. Everything else (requests, HEARTBEAT, FAULT_EVENT and a
+/// PROTOCOL_ERROR with correlation id 0) is a request or notice frame.
+[[nodiscard]] constexpr bool is_response_like(MessageType type, std::uint64_t correlation_id) noexcept {
+    if (type == MessageType::PROTOCOL_ERROR) return correlation_id != 0;
+    return !is_request(type) && !is_notice(type);
+}
+
+/// The stale/duplicate test for a request or notice frame against the highest sequence already accepted
+/// from that peer in this session. A response-like frame always passes it: its admission is by correlation.
+[[nodiscard]] constexpr bool passes_stale_check(MessageType type, std::uint64_t correlation_id, std::uint64_t sequence,
+                                                std::uint64_t highest_accepted) noexcept {
+    return is_response_like(type, correlation_id) || sequence > highest_accepted;
+}
+
 // ---- version negotiation (spec sections 4, 9, 16) --------------------------------------------
 
 struct ProtocolVersion {

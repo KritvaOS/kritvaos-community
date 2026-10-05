@@ -89,6 +89,35 @@ static void test_request_response_pairing() {
     KRITVA_CHECK(*response_for(MessageType::HELLO) == MessageType::HELLO_ACK);
 }
 
+static void test_sequence_admission_by_kind_of_frame() {             // architect review: responses are admitted by correlation
+    int response_like = 0, watermarked = 0;
+    for (MessageType t : kAllMessageTypes) {
+        if (t == MessageType::PROTOCOL_ERROR) continue;                       // depends on the correlation id, below
+        if (is_response_like(t, 0)) ++response_like; else ++watermarked;
+        KRITVA_CHECK(is_response_like(t, 0) == is_response_like(t, 99));      // for every other type the correlation id is irrelevant
+        KRITVA_CHECK(is_response_like(t, 0) == (!is_request(t) && !is_notice(t)));
+    }
+    KRITVA_CHECK(response_like == 10 && watermarked == 12);                    // 10 responses (HELLO_ACK included); 10 requests + HEARTBEAT + FAULT_EVENT
+    KRITVA_CHECK(is_response_like(MessageType::HELLO_ACK, 0) && is_response_like(MessageType::WRITE_RESPONSE, 7));
+    KRITVA_CHECK(!is_response_like(MessageType::WRITE_REQUEST, 0) && !is_response_like(MessageType::HEARTBEAT, 0) &&
+                 !is_response_like(MessageType::FAULT_EVENT, 0));
+    KRITVA_CHECK(!is_response_like(MessageType::PROTOCOL_ERROR, 0) && is_response_like(MessageType::PROTOCOL_ERROR, 7));
+
+    // The reordered-delivery scenario: WRITE_RESPONSE (10) sent before HEARTBEAT (11), delivered in the opposite order.
+    std::uint64_t highest_notice = 0;
+    KRITVA_CHECK(passes_stale_check(MessageType::HEARTBEAT, 0, 11, highest_notice));                 // the heartbeat is accepted first ...
+    highest_notice = 11;
+    KRITVA_CHECK(passes_stale_check(MessageType::WRITE_RESPONSE, 7, 10, highest_notice));            // ... and the response 10 is still admissible
+    KRITVA_CHECK(passes_stale_check(MessageType::READ_RESPONSE, 3, 1, highest_notice));              // even a much lower sequence
+    // Requests and notices keep the strict monotonic rule.
+    KRITVA_CHECK(!passes_stale_check(MessageType::WRITE_REQUEST, 0, 10, highest_notice));            // a request 10 after 11 is stale
+    KRITVA_CHECK(!passes_stale_check(MessageType::WRITE_REQUEST, 0, 11, highest_notice));            // equal: duplicate
+    KRITVA_CHECK(passes_stale_check(MessageType::WRITE_REQUEST, 0, 12, highest_notice));
+    KRITVA_CHECK(!passes_stale_check(MessageType::HEARTBEAT, 0, 11, highest_notice) && !passes_stale_check(MessageType::FAULT_EVENT, 0, 5, highest_notice));
+    KRITVA_CHECK(!passes_stale_check(MessageType::PROTOCOL_ERROR, 0, 4, highest_notice));            // uncorrelated PROTOCOL_ERROR is a notice
+    KRITVA_CHECK(passes_stale_check(MessageType::PROTOCOL_ERROR, 9, 4, highest_notice));             // correlated PROTOCOL_ERROR answers a request
+}
+
 static void test_version_negotiation() {
     const ProtocolVersion edge{1, 3};
     KRITVA_CHECK(negotiate(edge, {1, 3}) == ProtocolVersion(1, 3));          // equal: accepted
@@ -176,6 +205,7 @@ int main() {
     test_magic_on_the_wire();
     test_message_type_table();
     test_request_response_pairing();
+    test_sequence_admission_by_kind_of_frame();
     test_version_negotiation();
     test_status_mapping();
     test_session_transition_table();

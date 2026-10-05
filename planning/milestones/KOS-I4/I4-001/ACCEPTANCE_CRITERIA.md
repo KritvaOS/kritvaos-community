@@ -41,4 +41,13 @@ All 11 rulings accepted (MAX_PAYLOAD_SIZE 65492; strict header; 23 message types
 
 Evidence for the follow-up: 119/119 ctest, `make check` PASS, ASan+UBSan clean on the contract and spec-consistency tests, and 5 further mutations (1 code, 4 specification wording) all caught.
 
-Final architect review of the landed commits: requested from the planning review; I4-002 starts when it is granted.
+## Architect review of the landed commits (5e9acfc, 6b73c6c): conditional approval, one change required
+
+Findings accepted: items 1 to 6 and 8 to 11 PASS. Item 7 required one change: frame sequence numbers are shared by responses and by heartbeats/notices, and the simulated transport may reorder, so a valid response with a lower sequence arriving after a later heartbeat must not be dropped as stale. Fixed in the follow-up commit `KOS-I4 I4-001 admit responses by correlation`:
+
+- Spec section 10 now has two admission rules: requests and notices (every request type, HEARTBEAT, FAULT_EVENT, uncorrelated PROTOCOL_ERROR) use the per-direction per-session monotonic stale/duplicate rule; responses (every response type, HELLO_ACK, correlated PROTOCOL_ERROR) are admitted by session, correlation id, expected type, address and outstanding-request state and never rejected for a lower sequence. The reordered WRITE_RESPONSE (10) / HEARTBEAT (11) example is in the spec.
+- Spec section 16: future relaxations (ignorable flags, trailing bytes) apply only once a negotiated minor version defines them; in 1.0 none exists.
+- Contract: `is_response_like()` and `passes_stale_check()` in `protocol.hpp`, with a test of the classification of all 22 non-PROTOCOL_ERROR types and of the reordering scenario; the spec-consistency test checks the new wording.
+- Evidence: clean Debug and Release 119/119 (I2 and I3 regression unchanged), `make check`, ASan and UBSan clean on the three unit tests, 5 further mutations (3 code, 2 spec) all caught.
+
+Final approval of I4-001: requested from the planning review on the landed follow-up commit; I4-002 starts when it is granted.
