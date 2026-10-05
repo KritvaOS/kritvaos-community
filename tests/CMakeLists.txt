@@ -259,13 +259,28 @@ if(TARGET kritva_hardware_transport AND TARGET kritva_hardware_remote)
     target_link_libraries(kritva_codec_fuzz_test PRIVATE kritva::hardware_transport)
     add_test(NAME kritva_codec_fuzz_unit COMMAND kritva_codec_fuzz_test)
 
+    add_executable(kritva_simulated_transport_test hardware/unit/simulated_transport_test.cpp)
+    target_link_libraries(kritva_simulated_transport_test PRIVATE kritva::hardware_transport)
+    add_test(NAME kritva_simulated_transport_unit COMMAND kritva_simulated_transport_test)
+
+    add_executable(kritva_link_config_test hardware/unit/link_config_test.cpp)
+    target_link_libraries(kritva_link_config_test PRIVATE kritva::hardware_transport)
+    add_test(NAME kritva_link_config_unit COMMAND kritva_link_config_test)
+
+    add_executable(kritva_transport_hygiene_test hardware/unit/transport_hygiene_test.cpp)
+    add_test(NAME kritva_transport_hygiene_unit COMMAND kritva_transport_hygiene_test ${CMAKE_SOURCE_DIR})
+
+    add_executable(kritva_frame_transport_test hardware/integration/frame_transport_test.cpp)
+    target_link_libraries(kritva_frame_transport_test PRIVATE kritva::hardware_transport)
+    add_test(NAME kritva_frame_transport_integration COMMAND kritva_frame_transport_test)
+
     add_executable(kritva_protocol_spec_consistency_test hardware/unit/protocol_spec_consistency_test.cpp)
     target_link_libraries(kritva_protocol_spec_consistency_test PRIVATE kritva::hardware_transport)
     add_test(NAME kritva_protocol_spec_consistency
         COMMAND kritva_protocol_spec_consistency_test ${CMAKE_SOURCE_DIR}/docs/architecture/KOS-I4_PROTOCOL.md)
 
     # Sanity: every public contract header compiles on its own.
-    set(KRITVA_I4_HEADERS transport/protocol.hpp transport/frame.hpp transport/codec.hpp remote/node.hpp)
+    set(KRITVA_I4_HEADERS transport/protocol.hpp transport/frame.hpp transport/codec.hpp transport/transport.hpp transport/simulated_transport.hpp transport/link_config.hpp remote/node.hpp)
     set(KRITVA_I4_HEADER_CHECKS "")
     foreach(header IN LISTS KRITVA_I4_HEADERS)
         string(REPLACE "/" "_" stem "${header}")

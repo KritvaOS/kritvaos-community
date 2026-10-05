@@ -2,7 +2,9 @@
 add_library(kritva_hardware_transport STATIC
     src/codec.cpp
     src/frame.cpp
+    src/link_config.cpp
     src/protocol.cpp
+    src/simulated_transport.cpp
 )
 
 target_compile_features(kritva_hardware_transport PUBLIC cxx_std_20)

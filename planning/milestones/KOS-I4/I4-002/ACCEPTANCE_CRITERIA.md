@@ -11,7 +11,7 @@
 - [x] Applicable mutation/fault-injection checks pass.
 
 - [x] Review checklist/evidence is complete.
-- [ ] One atomic commit SHA is recorded.
+- [x] One atomic commit SHA is recorded: 52218f4.
 - [x] Core R1.0 source is unchanged.
 
 ## Evidence (I4-002)

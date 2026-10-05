@@ -25,4 +25,5 @@ Strictly sequential; one atomic commit per task.
 |---|---|
 | I4-001 | Done; architect review APPROVED (d2f8936) |
 | I4-002 | Done (software); landed commit under architect review |
-| I4-003 .. I4-008 | Planned |
+| I4-003 | Done (software); landed commit under architect review |
+| I4-004 .. I4-008 | Planned |
