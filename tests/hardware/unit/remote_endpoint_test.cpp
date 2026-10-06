@@ -141,10 +141,12 @@ static void test_a_failing_remote_read_returns_the_edge_error_unchanged() {
     KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::INTERNAL_ERROR && r.error().message == "injected read failure");
     KRITVA_CHECK(accel.last_error() && accel.last_error()->message == "injected read failure" && accel.statistics().error_count.value() == 1);
     KRITVA_CHECK(accel.lifecycle_state() == LifecycleState::RUNNING && accel.read(s).has_value());     // a failed read does not fault
-    // An Edge endpoint that is faulted answers RESOURCE_UNAVAILABLE; the Nexus proxy does not turn FAULT by itself (I4-006).
+    // An Edge endpoint that is faulted answers RESOURCE_UNAVAILABLE, and tells the Nexus with a FAULT_EVENT (sent after the
+    // answer): the proxy goes FAULT with a reason that says the fault is the Edge's.
     KRITVA_CHECK(rig.imu().acceleration().inject_fault("hardware fault").has_value());
     const auto faulted = accel.read(s);
-    KRITVA_CHECK(!faulted.has_value() && faulted.error().code == ErrorCode::RESOURCE_UNAVAILABLE && accel.lifecycle_state() == LifecycleState::RUNNING);
+    KRITVA_CHECK(!faulted.has_value() && faulted.error().code == ErrorCode::RESOURCE_UNAVAILABLE);
+    KRITVA_CHECK(accel.lifecycle_state() == LifecycleState::FAULT && accel.health().detail() == "remote fault: hardware fault");   // the reason is the health detail
 }
 
 // ---- the Edge stays authoritative ------------------------------------------------------------------------------------
@@ -178,16 +180,19 @@ static void test_writes_are_validated_by_the_edge_not_the_nexus() {          // 
     KRITVA_CHECK(cmd.write(hw::MotorCommand{0.1}).error().code == ErrorCode::INVALID_ARGUMENT && cmd.write(hw::MotorCommand{0.0}).has_value());
 }
 
-static void test_a_faulted_edge_actuator_refuses_but_the_proxy_is_not_derived_faulted_yet() {
+static void test_a_faulted_edge_actuator_faults_the_proxy_through_a_fault_event() {
     NexusRig rig;
     KRITVA_CHECK(rig.node.connect().has_value());
     auto& cmd = rig.remote<RemoteMotorCommandEndpoint>("motor", "command");
     KRITVA_CHECK(cmd.configure(config({{"fault_after_writes", 1}})).has_value() && cmd.initialize().has_value() && cmd.start().has_value());
     KRITVA_CHECK(cmd.write(hw::MotorCommand{0.5}).has_value());                                   // succeeds, then the Edge endpoint faults itself
     KRITVA_CHECK(rig.motor().command().lifecycle_state() == LifecycleState::FAULT);
-    const auto r = cmd.write(hw::MotorCommand{0.1});
-    KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::RESOURCE_UNAVAILABLE);
-    KRITVA_CHECK(cmd.lifecycle_state() == LifecycleState::RUNNING);                              // derived fault and FAULT_EVENT: I4-006
+    KRITVA_CHECK(rig.edge().stats().fault_events_sent == 1);                                       // told after the response, once
+    KRITVA_CHECK(cmd.lifecycle_state() == LifecycleState::FAULT && cmd.health().detail().rfind("remote fault: ", 0) == 0);
+    KRITVA_CHECK(rig.node.node_stats().remote_faults_applied == 1);
+    const auto sent = rig.session().stats().requests_sent;
+    const auto r = cmd.write(hw::MotorCommand{0.1});                                               // a FAULT endpoint refuses locally (I3), nothing is sent
+    KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::RESOURCE_UNAVAILABLE && rig.session().stats().requests_sent == sent);
 }
 
 static void test_a_timed_out_write_has_an_unknown_outcome_and_retransmission_is_explicit() {
@@ -251,7 +256,7 @@ static void test_initialize_compares_the_topology_as_a_set() {
 
 // ---- link loss and explicit recovery (the policy itself is I4-006) ---------------------------------------------------
 
-static void test_link_loss_leaves_the_proxies_alone_and_recovery_is_explicit() {
+static void test_link_loss_faults_the_live_proxies_and_recovery_is_explicit() {        // FRL-001, FRL-003
     NexusRig rig;
     rig.connect_and_run();
     auto& cmd = rig.remote<RemoteMotorCommandEndpoint>("motor", "command");
@@ -262,25 +267,30 @@ static void test_link_loss_leaves_the_proxies_alone_and_recovery_is_explicit() {
     const auto r = accel.read(s);
     KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::RESOURCE_UNAVAILABLE);
     KRITVA_CHECK(rig.session().state() == SessionState::DISCONNECTED);
-    KRITVA_CHECK(cmd.lifecycle_state() == LifecycleState::RUNNING && accel.lifecycle_state() == LifecycleState::RUNNING);   // no policy here: I4-006
-    KRITVA_CHECK(cmd.write(hw::MotorCommand{0.1}).error().code == ErrorCode::RESOURCE_UNAVAILABLE);
-    KRITVA_CHECK(rig.motor().command().lifecycle_state() == LifecycleState::RUNNING);              // the Edge was not told either
-
-    // The explicit way back: shutdown (local when nobody is reachable), initialize (a fresh HELLO), start.
+    // The Nexus side: every live proxy is FAULT with the deterministic reason, and ONE link record says so.
     for (const auto& d : rig.node.devices()) {
         for (hw::Endpoint* e : d->endpoints()) {
-            KRITVA_CHECK(e->stop().has_value() == false);                                          // stop needs the session; the endpoint goes FAULT
-            KRITVA_CHECK(e->lifecycle_state() == LifecycleState::FAULT);
-            KRITVA_CHECK(e->shutdown().has_value() && e->lifecycle_state() == LifecycleState::STOPPED);
+            KRITVA_CHECK(e->lifecycle_state() == LifecycleState::FAULT && e->health().detail() == "link lost");
         }
     }
+    KRITVA_CHECK(rig.node.link_loss_records().size() == 1 && rig.node.link_loss_records()[0].endpoints_faulted == 4 && rig.node.link_loss_records()[0].reason == "link lost");
+    KRITVA_CHECK(cmd.write(hw::MotorCommand{0.1}).error().code == ErrorCode::RESOURCE_UNAVAILABLE);      // refused locally: FAULT
+    // The Edge was not told (the link is down); it stops its actuator by its own timeout, when it is driven.
+    KRITVA_CHECK(rig.motor().command().lifecycle_state() == LifecycleState::RUNNING);
+    KRITVA_CHECK(rig.link().advance(300 * kMs).has_value() && rig.edge().poll() == 0);
+    KRITVA_CHECK(rig.motor().command().lifecycle_state() == LifecycleState::STOPPED && rig.edge().stats().sessions_timed_out == 1);
+
+    // The explicit way back: shutdown (local when nobody is reachable), initialize (a fresh HELLO), start. A fresh HELLO does
+    // not clear a FAULT by itself.
+    KRITVA_CHECK(rig.session().reopen().has_value());
+    for (const auto& d : rig.node.devices()) for (hw::Endpoint* e : d->endpoints()) KRITVA_CHECK(e->lifecycle_state() == LifecycleState::FAULT);
+    rig.session().close();
+    for (const auto& d : rig.node.devices()) for (hw::Endpoint* e : d->endpoints()) KRITVA_CHECK(e->shutdown().has_value() && e->lifecycle_state() == LifecycleState::STOPPED);
     KRITVA_CHECK(rig.node.live_endpoints() == 0);
     for (const auto& d : rig.node.devices()) {
         for (hw::Endpoint* e : d->endpoints()) KRITVA_CHECK(e->initialize().has_value() && e->start().has_value());
     }
     KRITVA_CHECK(rig.session().state() == SessionState::CONNECTED && rig.link().link_state() == LinkState::CONNECTED);
-    // The new HELLO made the Edge stop its running actuator (the old session's), and the proxies then drove it again.
-    KRITVA_CHECK(rig.edge().stats().actuators_stopped_on_new_session >= 1);
     KRITVA_CHECK(cmd.write(hw::MotorCommand{0.25}).has_value() && accel.read(s).has_value());
 }
 
@@ -396,10 +406,10 @@ int main() {
     test_typed_reads();
     test_a_failing_remote_read_returns_the_edge_error_unchanged();
     test_writes_are_validated_by_the_edge_not_the_nexus();
-    test_a_faulted_edge_actuator_refuses_but_the_proxy_is_not_derived_faulted_yet();
+    test_a_faulted_edge_actuator_faults_the_proxy_through_a_fault_event();
     test_a_timed_out_write_has_an_unknown_outcome_and_retransmission_is_explicit();
     test_initialize_compares_the_topology_as_a_set();
-    test_link_loss_leaves_the_proxies_alone_and_recovery_is_explicit();
+    test_link_loss_faults_the_live_proxies_and_recovery_is_explicit();
     test_remote_devices_run_inside_the_existing_device_manager();
     test_the_pending_cleanup_is_done_once();
     test_position_samples_carry_the_edges_value_and_time();

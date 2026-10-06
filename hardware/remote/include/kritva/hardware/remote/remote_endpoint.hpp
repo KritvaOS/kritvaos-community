@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -34,11 +35,20 @@ namespace kritva::hardware::remote {
 class RemoteProxy {
 public:
     RemoteProxy(RemoteNode& node, EndpointAddress address, std::vector<std::string> settings) noexcept
-        : node_(node), address_(address), settings_(std::move(settings)) {}
+        : node_(node), address_(address), settings_(std::move(settings)) { node_.add_proxy(*this); }
 
     [[nodiscard]] const EndpointAddress& address() const noexcept { return address_; }
     [[nodiscard]] const std::vector<std::string>& settings() const noexcept { return settings_; }
     [[nodiscard]] RemoteNode& node() noexcept { return node_; }
+
+    /// The endpoint binds its I3 state and its fault entry point, so that the node can apply the link-loss policy.
+    void bind(std::function<core::LifecycleState()> state, std::function<void(const core::Error&)> fault) {
+        state_ = std::move(state);
+        fault_ = std::move(fault);
+    }
+    [[nodiscard]] core::LifecycleState state() const { return state_ ? state_() : core::LifecycleState::UNKNOWN; }
+    /// Puts the endpoint into FAULT (only a live one can; the I3 enter_fault refuses others and notifies once).
+    void fault(const core::Error& cause) { if (fault_) fault_(cause); }
 
     /// The Edge's own error (code and message, unchanged), the local TIMEOUT or the link error.
     core::Result<void> configure(const core::Configuration& scoped);
@@ -53,6 +63,8 @@ private:
     RemoteNode& node_;
     EndpointAddress address_;
     std::vector<std::string> settings_;
+    std::function<core::LifecycleState()> state_;
+    std::function<void(const core::Error&)> fault_;
     bool holds_period_{false};
     bool cleanup_pending_{false};     ///< a shutdown happened while nobody was reachable: the Edge endpoint may still be live
 };
@@ -67,7 +79,9 @@ class RemoteSensorEndpoint final : public Base {
 public:
     RemoteSensorEndpoint(EndpointInfo info, core::CapabilitySet capabilities, RemoteNode& node, EndpointAddress address,
                          std::vector<std::string> settings)
-        : Base(std::move(info), std::move(capabilities)), proxy_(node, address, std::move(settings)) {}
+        : Base(std::move(info), std::move(capabilities)), proxy_(node, address, std::move(settings)) {
+        proxy_.bind([this] { return this->lifecycle_state(); }, [this](const core::Error& e) { (void)this->enter_fault(e); });
+    }
 
     [[nodiscard]] std::vector<std::string> setting_names() const override { return proxy_.settings(); }
 
@@ -93,7 +107,9 @@ using RemotePositionEndpoint = RemoteSensorEndpoint<PositionEndpoint, PositionSa
 class RemoteMotorCommandEndpoint final : public MotorCommandEndpoint {
 public:
     RemoteMotorCommandEndpoint(EndpointInfo info, RemoteNode& node, EndpointAddress address, std::vector<std::string> settings)
-        : MotorCommandEndpoint(std::move(info), motor_command_capability()), proxy_(node, address, std::move(settings)) {}
+        : MotorCommandEndpoint(std::move(info), motor_command_capability()), proxy_(node, address, std::move(settings)) {
+        proxy_.bind([this] { return this->lifecycle_state(); }, [this](const core::Error& e) { (void)this->enter_fault(e); });
+    }
 
     [[nodiscard]] std::vector<std::string> setting_names() const override { return proxy_.settings(); }
 

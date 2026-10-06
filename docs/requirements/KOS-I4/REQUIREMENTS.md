@@ -25,7 +25,7 @@
 | FRL-003 | No automatic recovery; explicit shutdown/init/start creates a new session. | I4-006 |
 | SR-001 | Edge validates actuator limits before every apply. | I4-004 (mechanism), I4-006 (end-to-end verification) |
 | SR-002 | Edge uses a session-scoped last-applied sequence/bounded ledger to prevent replay/duplicate apply. | I4-004 (mechanism), I4-006 (end-to-end verification) |
-| SR-003 | Heartbeat/session timeout stops affected actuator endpoints through existing stop(). | I4-006 |
+| SR-003 | Heartbeat/session timeout stops affected actuator endpoints through existing stop(). The timeout is `>=`, one transition, evaluated only when the Edge is driven; a duplicate, stale or replayed frame never refreshes liveness. | I4-006 |
 | RI-001 | Remote devices register through existing DeviceManager; no RemoteDeviceManager. | I4-007 |
 | RI-002 | RuntimeHost, RuntimeManager and Core remain unchanged. | I4-007 |
 | RI-003 | Remote lifecycle/observation use I3 configuration/status/health/statistics paths. | I4-007 |

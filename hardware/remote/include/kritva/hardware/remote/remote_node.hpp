@@ -31,6 +31,7 @@
 namespace kritva::hardware::remote {
 
 class RemoteNode;
+class RemoteProxy;
 
 /// A Device whose endpoints are RemoteEndpoints. It is an ordinary I3 Device: it registers in the existing
 /// DeviceManager like any other (there is no RemoteDeviceManager) and has no lifecycle of its own.
@@ -48,6 +49,19 @@ private:
 /// lists `<device>.<endpoint>.<setting>` for them and its configure scopes the values to the endpoint.
 using RemoteSettings = std::map<std::pair<std::string, std::string>, std::vector<std::string>>;
 
+/// One link-level diagnostic record per live session that ended (FRL-001): it never replaces the endpoint events.
+struct LinkLossRecord {
+    std::uint64_t time_ns{0};
+    std::string reason;                       ///< "link lost" or "session closed"
+    std::uint64_t session_id{0};
+    std::size_t endpoints_faulted{0};         ///< the live remote endpoints this loss put into FAULT
+};
+
+struct RemoteNodeStats {
+    std::uint64_t remote_faults_applied{0};   ///< live proxies put into FAULT by an Edge FAULT_EVENT
+    std::uint64_t fault_events_ignored{0};    ///< a FAULT_EVENT for an unknown, not live or already faulted proxy
+};
+
 class RemoteNode {
 public:
     RemoteNode(transport::Transport& link, RemoteSessionConfig config, RemoteSettings settings = {});
@@ -61,6 +75,22 @@ public:
     /// The devices connect() built; the integrator registers them with the DeviceManager. The node owns them.
     [[nodiscard]] const std::vector<std::unique_ptr<RemoteDevice>>& devices() const noexcept { return devices_; }
 
+    /// Supervision of the link (heartbeat sending, DEGRADED, timeout), against the virtual clock and only when called.
+    /// The synchronous request pump calls it by itself; an integrator that spends virtual time without a request calls it.
+    void service() { session_.service(); }
+
+    /// The link-loss policy (protocol section 11). When a LIVE session ends, every live (READY or RUNNING) remote endpoint
+    /// goes FAULT through the existing Endpoint::enter_fault with the reason "link lost" (or "session closed"): one
+    /// ERROR per endpoint through whatever fault listener the DeviceManager installed, nothing for an endpoint that is
+    /// UNKNOWN, STOPPED or already FAULT, and ONE record here. A FAULT_EVENT from the Edge puts the matching live
+    /// endpoint FAULT with the reason "remote fault: <reason>", once. Nothing recovers by itself: the way back is
+    /// shutdown, initialize, start (a fresh HELLO never clears a FAULT).
+    [[nodiscard]] const std::vector<LinkLossRecord>& link_loss_records() const noexcept { return records_; }
+    [[nodiscard]] const RemoteNodeStats& node_stats() const noexcept { return node_stats_; }
+
+    /// Used by the proxies at construction.
+    void add_proxy(RemoteProxy& proxy) { proxies_.push_back(&proxy); }
+
     [[nodiscard]] RemoteSession& session() noexcept { return session_; }
     [[nodiscard]] const RemoteSession& session() const noexcept { return session_; }
 
@@ -72,7 +102,13 @@ public:
     [[nodiscard]] std::size_t live_endpoints() const noexcept { return live_; }
 
 private:
+    void on_link_lost(const LinkLoss& loss);
+    void on_fault_event(const EndpointAddress& address, const std::string& reason);
+
     RemoteSession session_;
+    std::vector<RemoteProxy*> proxies_;
+    std::vector<LinkLossRecord> records_;
+    RemoteNodeStats node_stats_;
     RemoteSettings settings_;
     std::vector<std::unique_ptr<RemoteDevice>> devices_;
     std::size_t live_{0};

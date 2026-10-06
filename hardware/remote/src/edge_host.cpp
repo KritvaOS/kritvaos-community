@@ -61,6 +61,8 @@ StatusField status_of(const core::Error& e) {
 
 StatusField failure(ErrorCode code, const char* message) { return StatusField{code, message}; }
 
+std::uint64_t saturating_add(std::uint64_t a, std::uint64_t b) noexcept { return a > UINT64_MAX - b ? UINT64_MAX : a + b; }
+
 bool same_bytes(ByteSpan a, const std::vector<std::uint8_t>& b) {
     return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
 }
@@ -74,13 +76,23 @@ core::Result<std::unique_ptr<EdgeHost>> EdgeHost::create(NodeId node, DeviceRegi
     return core::Result<std::unique_ptr<EdgeHost>>::success(std::unique_ptr<EdgeHost>(new EdgeHost(node, registry, link)));
 }
 
+EdgeHost::~EdgeHost() { *self_ = nullptr; }
+
 std::size_t EdgeHost::poll() {
     std::size_t taken = 0;
-    while (auto frame = link_.receive()) {
+    while (auto frame = link_.receive()) {              // frames that are due now are handled first, so they count before supervision
         ++taken;
         handle(*frame);
     }
+    supervise();
+    flush_fault_events();
     return taken;
+}
+
+SessionState EdgeHost::link_state() const noexcept {
+    if (session_ == 0) return SessionState::DISCONNECTED;
+    const std::uint64_t since = link_.now_ns() - last_valid_frame_ns_;
+    return since >= 2 * static_cast<std::uint64_t>(timing_.heartbeat_period_ms) * 1'000'000ull ? SessionState::DEGRADED : SessionState::CONNECTED;
 }
 
 // ---- sending --------------------------------------------------------------------------------------------
@@ -118,6 +130,11 @@ void EdgeHost::send_protocol_error(const FrameHeader& request, const char* messa
 // ---- intake -----------------------------------------------------------------------------------------------
 
 void EdgeHost::handle(const std::vector<std::uint8_t>& bytes) {
+    handle_frame(bytes);
+    flush_fault_events();                               // a fault caused by this request is told after its response
+}
+
+void EdgeHost::handle_frame(const std::vector<std::uint8_t>& bytes) {
     ++stats_.frames_received;
     const DecodedFrame frame = decode_frame(bytes, Receiver::EDGE);
     if (!frame.ok()) {                                // header violations and unknown types: dropped silently, counted
@@ -175,7 +192,7 @@ void EdgeHost::handle_hello(const FrameHeader& header, ByteSpan payload) {
     // Accepted: from here on the session changes. Order of spec section 9.
     const bool replacing = session_ != 0;
     session_ = 0;                                     // (1) the previous session is invalid from this point
-    if (replacing) stop_running_actuators();          // (2)
+    if (replacing) stop_running_actuators(false);     // (2)
     ledgers_.clear();                                 // (3) no sequence or write-ledger state is inherited
     in_watermark_ = 0;
     out_sequence_ = 0;
@@ -183,6 +200,7 @@ void EdgeHost::handle_hello(const FrameHeader& header, ByteSpan payload) {
     in_watermark_ = header.sequence;                  // the HELLO is the peer's frame 1 of this session
     timing_ = timing;
     last_valid_frame_ns_ = link_.now_ns();
+    next_heartbeat_ns_ = saturating_add(link_.now_ns(), static_cast<std::uint64_t>(timing.heartbeat_period_ms) * 1'000'000ull);
     ++stats_.hellos_accepted;
 
     HelloAckPayload ack;
@@ -201,16 +219,17 @@ void EdgeHost::begin_session() {
         registry_.close();
         for (Device* d : registry_.devices()) d->seal();
         sealed_ = true;
+        install_fault_listeners();
     }
 }
 
-void EdgeHost::stop_running_actuators() {
+void EdgeHost::stop_running_actuators(bool on_timeout) {
     for (Device* d : registry_.devices()) {
         for (Endpoint* e : d->endpoints()) {
             if (e->info().direction() != EndpointDirection::ACTUATOR) continue;
             if (e->lifecycle_state() != core::LifecycleState::RUNNING) continue;
             // The existing I3 stop(): an endpoint that fails to stop is FAULT, as I3 defines.
-            if (e->stop()) ++stats_.actuators_stopped_on_new_session;
+            if (e->stop()) ++(on_timeout ? stats_.actuators_stopped_on_timeout : stats_.actuators_stopped_on_new_session);
             else ++stats_.actuator_stop_failures;
         }
     }
@@ -401,6 +420,78 @@ void EdgeHost::handle_in_session(const FrameHeader& header, ByteSpan payload) {
         default:
             ++stats_.unexpected_frames;                // not reachable for the Edge receiver; defensive
             return;
+    }
+}
+
+// ---- supervision (I4-006) ---------------------------------------------------------------------------------------
+
+void EdgeHost::supervise() {
+    if (session_ == 0) return;
+    const std::uint64_t now = link_.now_ns();
+    const std::uint64_t timeout_ns = static_cast<std::uint64_t>(timing_.heartbeat_timeout_ms) * 1'000'000ull;
+    if (now - last_valid_frame_ns_ >= timeout_ns) {       // exactly at the timeout, not only after it
+        end_session_on_timeout();
+        return;
+    }
+    if (now >= next_heartbeat_ns_) {                      // at most one heartbeat per call: a time jump is not a burst
+        send_heartbeat();
+        next_heartbeat_ns_ = saturating_add(now, static_cast<std::uint64_t>(timing_.heartbeat_period_ms) * 1'000'000ull);
+    }
+}
+
+// One transition: the old session id is invalid for good before anything else happens, so nothing can revive it.
+void EdgeHost::end_session_on_timeout() {
+    session_ = 0;
+    ledgers_.clear();
+    in_watermark_ = 0;
+    out_sequence_ = 0;
+    timing_ = LinkTiming{0, 0, 0, 0};
+    pending_faults_.clear();                              // there is no session left to tell
+    ++stats_.sessions_timed_out;
+    stop_running_actuators(true);                         // the existing I3 stop(); sensors keep their state, no endpoint is faulted
+    pending_faults_.clear();                              // a fault caused by a failed stop has nobody to be told to either
+}
+
+void EdgeHost::send_heartbeat() {
+    const auto payload = encode(HeartbeatPayload{link_.now_ns()});
+    if (!payload) { ++stats_.send_failures; return; }
+    ++stats_.heartbeats_sent;
+    send(MessageType::HEARTBEAT, 0, session_, next_sequence(), payload.value());
+}
+
+// ---- FAULT_EVENT -------------------------------------------------------------------------------------------------------
+
+void EdgeHost::install_fault_listeners() {
+    for (Device* d : registry_.devices()) {
+        for (Endpoint* e : d->endpoints()) {
+            addresses_[e] = LedgerKey{d->info().id().value(), e->info().id().value()};
+            e->set_fault_listener(this, [self = self_](const Endpoint& endpoint) { if (*self != nullptr) (*self)->on_endpoint_fault(endpoint); });
+        }
+    }
+}
+
+// Called by the I3 endpoint on the transition into FAULT (never on FAULT to FAULT): queue it, tell the peer later.
+void EdgeHost::on_endpoint_fault(const Endpoint& endpoint) {
+    const auto it = addresses_.find(&endpoint);
+    if (it == addresses_.end()) return;
+    if (session_ == 0) { ++stats_.fault_events_dropped; return; }
+    FaultEventPayload event;
+    event.address = AddressPayload{node_.value(), it->second.first, it->second.second};
+    event.state = core::LifecycleState::FAULT;
+    event.reason = wire_text(endpoint.last_error() ? endpoint.last_error()->message : std::string("endpoint fault"));
+    pending_faults_.push_back(std::move(event));
+}
+
+void EdgeHost::flush_fault_events() {
+    if (pending_faults_.empty()) return;
+    std::vector<FaultEventPayload> events;
+    events.swap(pending_faults_);
+    if (session_ == 0) { stats_.fault_events_dropped += events.size(); return; }
+    for (const FaultEventPayload& e : events) {
+        const auto payload = encode(e);
+        if (!payload) { ++stats_.send_failures; continue; }
+        ++stats_.fault_events_sent;
+        send(MessageType::FAULT_EVENT, 0, session_, next_sequence(), payload.value());
     }
 }
 

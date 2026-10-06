@@ -65,7 +65,64 @@ void RemoteSession::disconnect_session() noexcept {
     outstanding_.clear();
 }
 
-void RemoteSession::close() { disconnect_session(); }
+void RemoteSession::close() { end_session("session closed"); }
+
+void RemoteSession::set_handlers(LinkLostHandler link_lost, FaultEventHandler fault_event) {
+    link_lost_ = std::move(link_lost);
+    fault_event_ = std::move(fault_event);
+}
+
+// A live session ends as one transition: it is DISCONNECTED (and its id forgotten) before anyone is told, once.
+void RemoteSession::end_session(const char* reason) {
+    const bool live = state_ == SessionState::CONNECTED || state_ == SessionState::DEGRADED;
+    const std::uint64_t id = session_;
+    disconnect_session();
+    if (!live) return;                                       // a handshake that fails is not a link loss
+    ++stats_.sessions_lost;
+    if (link_lost_) link_lost_(LinkLoss{reason, id, link_.now_ns()});
+}
+
+// Any valid in-session frame from the Edge is proof of liveness; it also ends DEGRADED.
+void RemoteSession::refresh_liveness() {
+    last_valid_frame_ns_ = link_.now_ns();
+    if (state_ == SessionState::DEGRADED) to_state(SessionState::CONNECTED);
+}
+
+void RemoteSession::send_heartbeat() {
+    const auto payload = encode(HeartbeatPayload{link_.now_ns()});
+    FrameHeader header;
+    header.type = MessageType::HEARTBEAT;
+    header.sequence = ++out_sequence_;
+    header.correlation_id = 0;
+    header.session_id = session_;
+    const auto frame = payload ? encode_frame(header, payload.value()) : core::Result<Bytes>::failure(payload.error());
+    if (!frame || !link_.send(frame.value())) { ++stats_.heartbeat_send_failures; return; }
+    ++stats_.heartbeats_sent;
+}
+
+void RemoteSession::service() {
+    if (state_ != SessionState::CONNECTED && state_ != SessionState::DEGRADED) return;
+    if (link_.link_state() != LinkState::CONNECTED) { end_session("link lost"); return; }
+    // What has become due is read first, so that a heartbeat or a FAULT_EVENT counts before the supervision decides. A frame's
+    // liveness time is the virtual time at which it is handled: a backlog is handled when the Nexus is driven again (a gap in
+    // driving is a gap in supervision).
+    while (auto incoming = link_.receive()) handle(*incoming);
+    if (state_ != SessionState::CONNECTED && state_ != SessionState::DEGRADED) return;
+    const std::uint64_t now = link_.now_ns();
+    const std::uint64_t period_ns = static_cast<std::uint64_t>(config_.timing.heartbeat_period_ms) * kNsPerMs;
+    const std::uint64_t timeout_ns = static_cast<std::uint64_t>(config_.timing.heartbeat_timeout_ms) * kNsPerMs;
+    const std::uint64_t since = now - last_valid_frame_ns_;
+    if (since >= timeout_ns) { end_session("link lost"); return; }          // exactly at the timeout, not only after it
+    if (since >= 2 * period_ns) {
+        if (state_ == SessionState::CONNECTED) { to_state(SessionState::DEGRADED); ++stats_.degraded_entries; }
+    } else if (state_ == SessionState::DEGRADED) {
+        to_state(SessionState::CONNECTED);
+    }
+    if (now >= next_heartbeat_ns_) {                                        // at most one per call: a jump in time is not a burst
+        send_heartbeat();
+        next_heartbeat_ns_ = saturating_add(now, period_ns);
+    }
+}
 
 core::Result<void> RemoteSession::require_connected() const {
     if (state_ != SessionState::CONNECTED) {
@@ -138,6 +195,8 @@ core::Result<void> RemoteSession::handshake(bool compare) {
         registered_topology_ = topology;
         discovery_ = std::move(discovery);
     }
+    last_valid_frame_ns_ = link_.now_ns();
+    next_heartbeat_ns_ = saturating_add(last_valid_frame_ns_, static_cast<std::uint64_t>(config_.timing.heartbeat_period_ms) * kNsPerMs);
     to_state(SessionState::CONNECTED);
     return core::Result<void>::success();
 }
@@ -154,7 +213,7 @@ core::Result<Bytes> RemoteSession::exchange(MessageType type, std::uint64_t sequ
     const auto frame = encode_frame(header, payload);
     if (!frame) return core::Result<Bytes>::failure(frame.error());
     if (auto sent = link_.send(frame.value()); !sent) {
-        if (link_.link_state() != LinkState::CONNECTED) disconnect_session();
+        if (link_.link_state() != LinkState::CONNECTED) end_session("link lost");
         return core::Result<Bytes>::failure(sent.error());
     }
     ++stats_.requests_sent;
@@ -185,9 +244,10 @@ core::Result<Bytes> RemoteSession::exchange(MessageType type, std::uint64_t sequ
         }
         if (link_.link_state() != LinkState::CONNECTED) {
             outstanding_.erase(sequence);
-            disconnect_session();
+            end_session("link lost");
             return core::Result<Bytes>::failure(make_error(ErrorCode::RESOURCE_UNAVAILABLE, "the link is down"));
         }
+        service();                                               // supervision at every pump step: heartbeat, DEGRADED, timeout
         const std::uint64_t now = link_.now_ns();
         if (now >= deadline) {                                   // a response due exactly at the deadline was handled above
             outstanding_.erase(sequence);
@@ -233,7 +293,7 @@ void RemoteSession::handle_response(const FrameHeader& header, ByteSpan payload)
         const auto err = decode_protocol_error(payload);
         o.done = true;
         o.ok = false;
-        if (err.ok()) { o.error = error_from(err.value.status); }
+        if (err.ok()) { o.error = error_from(err.value.status); refresh_liveness(); }
         else { ++stats_.malformed_responses; o.error = make_error(ErrorCode::INVALID_ARGUMENT, "malformed PROTOCOL_ERROR"); }
         if (o.hello) hello_session_ = header.session_id;
         return;
@@ -251,16 +311,40 @@ void RemoteSession::handle_response(const FrameHeader& header, ByteSpan payload)
     o.ok = true;
     o.payload.assign(payload.begin(), payload.end());
     ++stats_.responses_accepted;
-    last_valid_frame_ns_ = link_.now_ns();
+    refresh_liveness();
 }
 
 void RemoteSession::handle_notice(const FrameHeader& header, ByteSpan payload) {
-    (void)payload;                                               // the content of notices is I4-006's
     if (session_ == 0 || header.session_id != session_) { ++stats_.wrong_session; return; }
+    // The payload is decoded before the frame is admitted: a malformed notice must not raise the watermark or count as liveness.
+    std::optional<FaultEventPayload> fault;
+    switch (header.type) {
+        case MessageType::HEARTBEAT:
+            if (!decode<HeartbeatPayload>(payload).ok()) { ++stats_.malformed_notices; return; }
+            break;
+        case MessageType::FAULT_EVENT: {
+            auto event = decode<FaultEventPayload>(payload);
+            if (!event.ok()) { ++stats_.malformed_notices; return; }
+            fault = std::move(event.value);
+            break;
+        }
+        case MessageType::PROTOCOL_ERROR:
+            if (!decode_protocol_error(payload).ok()) { ++stats_.malformed_notices; return; }
+            break;
+        default:
+            ++stats_.frame_errors;
+            return;
+    }
     if (header.sequence <= in_watermark_) { ++stats_.stale_notices; return; }
     in_watermark_ = header.sequence;
-    last_valid_frame_ns_ = link_.now_ns();
+    refresh_liveness();
     ++stats_.notices;
+    if (!fault) return;
+    if (fault->address.node_id != config_.edge_node.value()) { ++stats_.wrong_node_events; return; }
+    ++stats_.fault_events;
+    if (fault_event_) {
+        fault_event_(EndpointAddress{config_.edge_node, DeviceId{fault->address.device_id}, EndpointId{fault->address.endpoint_id}}, fault->reason);
+    }
 }
 
 // ---- typed requests --------------------------------------------------------------------------------------------------

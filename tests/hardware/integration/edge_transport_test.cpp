@@ -118,7 +118,9 @@ static void test_a_link_duplicated_hello_replaces_the_session() {
     KRITVA_CHECK(rig.edge->session().value() == 2 && rig.stats().hellos_accepted == 2);
 }
 
-static void test_link_loss_is_connectivity_only_for_the_edge() {                       // no safety policy in I4-004: that is I4-006
+// I4-006: the loss of the link is a safety event for the Edge. After the heartbeat timeout the Edge ends the session and
+// stops its running actuators through the existing stop(); sensors keep their state and nothing is faulted.
+static void test_link_loss_ends_the_edge_session_and_stops_the_actuators() {            // SR-003
     EdgeRig rig;
     KRITVA_CHECK(rig.hello().status.ok());
     rig.bring_up_all();
@@ -126,13 +128,24 @@ static void test_link_loss_is_connectivity_only_for_the_edge() {                
     rig.link.disconnect();
     KRITVA_CHECK(rig.link.advance(10'000'000'000ull).has_value());                        // ten virtual seconds
     KRITVA_CHECK(rig.edge->poll() == 0);
-    KRITVA_CHECK(rig.motor.command().lifecycle_state() == LifecycleState::RUNNING && rig.motor.command().effective_velocity() == 0.5);
-    KRITVA_CHECK(rig.edge->session().value() == 1 && rig.stats().actuators_stopped_on_new_session == 0);
-    // After the link is back the session and its ledger are exactly as they were: the last write can still be resent, not re-applied.
+    KRITVA_CHECK(rig.motor.command().lifecycle_state() == LifecycleState::STOPPED && rig.motor.command().effective_velocity() == 0.0);
+    KRITVA_CHECK(!rig.edge->session().valid() && rig.stats().sessions_timed_out == 1 && rig.stats().actuators_stopped_on_timeout == 1);
+    KRITVA_CHECK(rig.imu.acceleration().lifecycle_state() == LifecycleState::RUNNING && rig.motor.position().lifecycle_state() == LifecycleState::RUNNING);
+    for (const auto& [d, e] : EdgeRig::all_endpoints()) {
+        const kritva::hardware::Endpoint* ep = d == kImu ? (e == kAccel ? static_cast<const kritva::hardware::Endpoint*>(&rig.imu.acceleration()) : &rig.imu.angular_velocity())
+                                                         : (e == kCommand ? static_cast<const kritva::hardware::Endpoint*>(&rig.motor.command()) : &rig.motor.position());
+        KRITVA_CHECK(ep->lifecycle_state() != LifecycleState::FAULT);
+    }
+    // Polling again changes nothing and stops nothing again.
+    KRITVA_CHECK(rig.edge->poll() == 0 && rig.stats().sessions_timed_out == 1 && rig.stats().actuators_stopped_on_timeout == 1);
+    // The old session is gone for good: its frames, a replay of its last write included, are dropped; only a new HELLO starts anything.
     KRITVA_CHECK(rig.link.connect().has_value());
     const std::uint64_t ops = rig.motor.command().statistics().sample_count.value();
     rig.send_raw(EdgeRig::frame(MessageType::WRITE_REQUEST, write_payload(0.5), rig.seq, rig.session));
-    KRITVA_CHECK(rig.poll().size() == 1 && rig.stats().writes_resent == 1 && rig.motor.command().statistics().sample_count.value() == ops);
+    KRITVA_CHECK(rig.poll().empty() && rig.stats().no_session == 1 && rig.motor.command().statistics().sample_count.value() == ops);
+    KRITVA_CHECK(rig.hello().status.ok() && rig.edge->session().value() == 2);
+    rig.send_raw(EdgeRig::frame(MessageType::WRITE_REQUEST, write_payload(0.5), rig.seq + 1, 1));   // the old session id, still invalid
+    KRITVA_CHECK(rig.poll().empty() && rig.stats().wrong_session == 1);
 }
 
 static void test_an_answer_the_link_refuses_is_counted() {
@@ -186,7 +199,7 @@ int main() {
     test_a_reordered_write_is_never_applied_late();
     test_a_lost_response_does_not_apply_the_command_twice();
     test_a_link_duplicated_hello_replaces_the_session();
-    test_link_loss_is_connectivity_only_for_the_edge();
+    test_link_loss_ends_the_edge_session_and_stops_the_actuators();
     test_an_answer_the_link_refuses_is_counted();
     test_repeatability();
     std::printf("edge_transport_test: PASS\n");

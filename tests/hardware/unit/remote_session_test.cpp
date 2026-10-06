@@ -445,15 +445,16 @@ static void test_retransmission_is_explicit_and_uses_the_same_sequence() {   // 
     KRITVA_CHECK(!r.has_value() && r.error().code == ErrorCode::TIMEOUT && rig.link().now_ns() - t0 == 100 * kMs);
     KRITVA_CHECK(rig.motor().model().velocity_rad_s == 0.5 && rig.edge().stats().writes_applied == 1);          // applied, answer lost: the outcome is UNKNOWN to the Nexus
     const std::uint64_t seq = *rig.session().last_write_sequence(kMotorCommand);
-    KRITVA_CHECK(seq + 1 == rig.session().next_request_sequence());          // the Nexus did not retransmit by itself
+    const std::uint64_t next_before = rig.session().next_request_sequence();   // heartbeats use sequence numbers too, so compare with this, not with seq + 1
+    KRITVA_CHECK(next_before > seq);                                         // the Nexus did not retransmit by itself
     const std::uint64_t ops = rig.motor().command().statistics().sample_count.value();
 
     const auto again = rig.session().retransmit_write(kMotorCommand);
     KRITVA_CHECK(again.has_value() && again.value().status.ok());
     KRITVA_CHECK(rig.edge().stats().writes_resent == 1 && rig.edge().stats().writes_applied == 1 && rig.motor().command().statistics().sample_count.value() == ops);
-    KRITVA_CHECK(rig.session().next_request_sequence() == seq + 1 && rig.session().stats().retransmissions == 1);   // the same sequence was reused
+    KRITVA_CHECK(rig.session().next_request_sequence() == next_before && rig.session().stats().retransmissions == 1);   // the same sequence was reused: nothing new was numbered
     // A new write is a new request.
-    KRITVA_CHECK(rig.session().write(kMotorCommand, 0.25).has_value() && *rig.session().last_write_sequence(kMotorCommand) == seq + 1);
+    KRITVA_CHECK(rig.session().write(kMotorCommand, 0.25).has_value() && *rig.session().last_write_sequence(kMotorCommand) > seq);
 }
 
 static void test_retransmission_preconditions() {

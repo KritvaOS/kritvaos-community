@@ -35,7 +35,43 @@ core::Error make_error(ErrorCode code, const char* message) {
 } // namespace
 
 RemoteNode::RemoteNode(Transport& link, RemoteSessionConfig config, RemoteSettings settings)
-    : session_(link, std::move(config)), settings_(std::move(settings)) {}
+    : session_(link, std::move(config)), settings_(std::move(settings)) {
+    session_.set_handlers([this](const LinkLoss& loss) { on_link_lost(loss); },
+                          [this](const EndpointAddress& address, const std::string& reason) { on_fault_event(address, reason); });
+}
+
+namespace {
+
+bool live(core::LifecycleState s) { return s == core::LifecycleState::READY || s == core::LifecycleState::RUNNING; }
+
+constexpr std::size_t kMaxRecords = 256;
+
+} // namespace
+
+// The session is already DISCONNECTED here. Each live endpoint becomes FAULT exactly once (a faulted, stopped or never
+// started endpoint is left alone), so N live endpoints give N faults, N ERROR notifications and one record.
+void RemoteNode::on_link_lost(const LinkLoss& loss) {
+    const core::Error cause{ErrorCode::RESOURCE_UNAVAILABLE, core::ErrorSeverity::ERROR, {}, {}, loss.reason};
+    std::size_t faulted = 0;
+    for (RemoteProxy* proxy : proxies_) {
+        if (!live(proxy->state())) continue;
+        proxy->fault(cause);
+        ++faulted;
+    }
+    records_.push_back(LinkLossRecord{loss.time_ns, loss.reason, loss.session_id, faulted});
+    if (records_.size() > kMaxRecords) records_.erase(records_.begin());
+}
+
+void RemoteNode::on_fault_event(const EndpointAddress& address, const std::string& reason) {
+    for (RemoteProxy* proxy : proxies_) {
+        if (proxy->address().device != address.device || proxy->address().endpoint != address.endpoint) continue;
+        if (!live(proxy->state())) { ++node_stats_.fault_events_ignored; return; }      // not live, or already FAULT: no second event
+        proxy->fault(core::Error{ErrorCode::INTERNAL_ERROR, core::ErrorSeverity::ERROR, {}, {}, "remote fault: " + reason});
+        ++node_stats_.remote_faults_applied;
+        return;
+    }
+    ++node_stats_.fault_events_ignored;
+}
 
 core::Result<void> RemoteNode::connect() {
     if (connected_once_) return core::Result<void>::failure(make_error(ErrorCode::INVALID_STATE, "the node is already connected"));

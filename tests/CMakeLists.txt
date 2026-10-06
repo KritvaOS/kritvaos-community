@@ -313,6 +313,14 @@ if(TARGET kritva_hardware_transport AND TARGET kritva_hardware_remote)
     target_link_libraries(kritva_nexus_edge_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
     add_test(NAME kritva_nexus_edge_integration COMMAND kritva_nexus_edge_test)
 
+    add_executable(kritva_edge_supervision_test hardware/unit/edge_supervision_test.cpp)
+    target_link_libraries(kritva_edge_supervision_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
+    add_test(NAME kritva_edge_supervision_unit COMMAND kritva_edge_supervision_test)
+
+    add_executable(kritva_remote_supervision_test hardware/unit/remote_supervision_test.cpp)
+    target_link_libraries(kritva_remote_supervision_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
+    add_test(NAME kritva_remote_supervision_unit COMMAND kritva_remote_supervision_test)
+
     add_executable(kritva_protocol_spec_consistency_test hardware/unit/protocol_spec_consistency_test.cpp)
     target_link_libraries(kritva_protocol_spec_consistency_test PRIVATE kritva::hardware_transport)
     add_test(NAME kritva_protocol_spec_consistency

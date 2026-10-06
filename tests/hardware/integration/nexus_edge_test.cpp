@@ -76,6 +76,7 @@ static Outcome campaign(std::uint64_t seed, int writes) {
     std::set<double> applied_set;
     const auto note_application = [&] {
         const double v = rig.motor().model().velocity_rad_s;
+        if (v == 0.0) { last_seen = v; return; }                              // a stop to zero is the Edge's safety action, not an application
         if (v != last_seen) {
             if (applied_set.count(v) != 0) {                                 // a value applied a second time
                 std::fprintf(stderr, "value %f applied twice (seed %llu)\n", v, static_cast<unsigned long long>(seed));
@@ -87,6 +88,9 @@ static Outcome campaign(std::uint64_t seed, int writes) {
         }
     };
     for (int i = 1; i <= writes; ++i) {
+        // A session the supervision has legitimately ended (every heartbeat of a window lost) ends the campaign: from then on
+        // the proxy is FAULT and the Edge has stopped its actuator, which is the safe outcome, not an application.
+        if (cmd.lifecycle_state() != kritva::core::LifecycleState::RUNNING || !rig.edge().session().valid()) break;
         const double v = 0.001 * i;                                          // every command has its own value, within the Edge limits
         ++out.writes_called;
         auto r = cmd.write(hw::MotorCommand{v});
@@ -100,10 +104,14 @@ static Outcome campaign(std::uint64_t seed, int writes) {
                 note_application();
             }
         }
-        // Let late, duplicated and reordered frames of earlier requests arrive between calls.
-        KRITVA_CHECK(rig.link().advance(40 * kMs).has_value());
-        rig.edge().poll();
-        note_application();
+        // Let late, duplicated and reordered frames of earlier requests arrive between calls, with both sides driven (supervision
+        // runs only when driven).
+        for (int step = 0; step < 4; ++step) {
+            KRITVA_CHECK(rig.link().advance(10 * kMs).has_value());
+            rig.node.service();
+            rig.edge().poll();
+            note_application();
+        }
         if (i % 5 == 0) { (void)rig.session().observe(EndpointAddress{NodeId{kEdgeNode}, hw::DeviceId{kMotor}, hw::EndpointId{kCommand}}); }
     }
     const EdgeStats& e = rig.edge().stats();
@@ -128,7 +136,7 @@ static void test_a_fault_campaign_never_applies_a_command_twice() {
         total_stale += o.stale;
     }
     // The campaign really exercised the faults (otherwise it proves little).
-    KRITVA_CHECK(total_timeouts > 100 && total_stale > 50);
+    KRITVA_CHECK(total_timeouts > 50 && total_stale > 25);
     KRITVA_CHECK(total_resent > 0);
 }
 

@@ -28,4 +28,5 @@ Strictly sequential; one atomic commit per task.
 | I4-003 | Done (software); landed commit under architect review |
 | I4-004 | Done (software); landed commit under architect review; HUMAN SAFETY REVIEW OPEN |
 | I4-005 | Done (software); landed commit under architect review; HUMAN SAFETY REVIEW OPEN |
-| I4-006 .. I4-008 | Planned |
+| I4-006 | Done (software); landed commit under architect review; HUMAN SAFETY REVIEW OPEN |
+| I4-007 .. I4-008 | Planned |

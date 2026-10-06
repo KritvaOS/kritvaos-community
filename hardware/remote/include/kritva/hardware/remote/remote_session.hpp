@@ -23,6 +23,7 @@
 #include <deque>
 #include <functional>
 #include <map>
+#include <string>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -50,6 +51,20 @@ struct RemoteStats {
     std::uint64_t notices{0};                 ///< admitted notices (HEARTBEAT, FAULT_EVENT, PROTOCOL_ERROR with correlation 0)
     std::uint64_t stale_notices{0};
     std::uint64_t retransmissions{0};
+    std::uint64_t heartbeats_sent{0};
+    std::uint64_t heartbeat_send_failures{0};
+    std::uint64_t sessions_lost{0};           ///< live sessions that ended (heartbeat timeout, link down, explicit close)
+    std::uint64_t degraded_entries{0};
+    std::uint64_t malformed_notices{0};
+    std::uint64_t fault_events{0};            ///< admitted FAULT_EVENT notices about the expected Edge
+    std::uint64_t wrong_node_events{0};
+};
+
+/// Why a live session ended, handed to the link-lost handler after the session is DISCONNECTED.
+struct LinkLoss {
+    std::string reason;                       ///< "link lost" (heartbeat timeout or the transport went down) or "session closed" (explicit close)
+    std::uint64_t session_id{0};
+    std::uint64_t time_ns{0};
 };
 
 struct RemoteSessionConfig {
@@ -96,8 +111,23 @@ public:
     /// difference fails with CONFIGURATION_ERROR and leaves the session DISCONNECTED.
     core::Result<void> reopen();
 
-    /// Explicit close: the session becomes DISCONNECTED. The transport is left as it is.
+    /// Explicit close: the session becomes DISCONNECTED (the handler is told "session closed" if it was live). The
+    /// transport is left as it is, and the Edge learns of it only by its own heartbeat timeout: protocol 1.0 has no
+    /// termination message, and the Edge's actuator safety is never driven by the Nexus.
     void close();
+
+    using LinkLostHandler = std::function<void(const LinkLoss&)>;
+    using FaultEventHandler = std::function<void(const EndpointAddress&, const std::string& reason)>;
+    /// The node's reactions: `link_lost` after a LIVE session (CONNECTED or DEGRADED) became DISCONNECTED, once per
+    /// loss; `fault_event` for an admitted FAULT_EVENT of the expected Edge.
+    void set_handlers(LinkLostHandler link_lost, FaultEventHandler fault_event);
+
+    /// Supervision, against the transport's virtual clock and only when called (the synchronous exchange pump calls it
+    /// at every step): a transport that is down, or no liveness for `heartbeat_timeout` (>=), ends the session; no
+    /// liveness for 2 heartbeat periods is DEGRADED (observation only, and a valid frame returns to CONNECTED); one
+    /// HEARTBEAT is sent if a period has passed (at most one per call). Calling it on a session that is not live does
+    /// nothing, so repeated calls after a loss produce no further events.
+    void service();
 
     [[nodiscard]] transport::SessionState state() const noexcept { return state_; }
     /// The current session id, or an invalid id when there is none.
@@ -155,6 +185,9 @@ private:
     void handle_response(const transport::FrameHeader& header, transport::ByteSpan payload);
     void handle_notice(const transport::FrameHeader& header, transport::ByteSpan payload);
     void to_state(transport::SessionState next) noexcept;
+    void end_session(const char* reason);
+    void refresh_liveness();
+    void send_heartbeat();
     void disconnect_session() noexcept;
     [[nodiscard]] core::Result<void> require_connected() const;
 
@@ -164,7 +197,10 @@ private:
     std::uint64_t session_{0};
     std::uint64_t out_sequence_{0};
     std::uint64_t in_watermark_{0};
-    std::uint64_t hello_session_{0};                         // the session id carried by the HELLO_ACK header
+    std::uint64_t hello_session_{0};
+    std::uint64_t next_heartbeat_ns_{0};
+    LinkLostHandler link_lost_;
+    FaultEventHandler fault_event_;                         // the session id carried by the HELLO_ACK header
     std::uint64_t last_valid_frame_ns_{0};
     bool registered_{false};
     transport::DiscoveryResponsePayload discovery_;

@@ -116,10 +116,18 @@ public:
         return s;
     }
 
-    // Send and expect exactly one reply, correlated to the request.
+    // Notices the Edge sent (HEARTBEAT, FAULT_EVENT) that call() set aside, in arrival order.
+    std::vector<Reply> notices;
+
+    // Send and expect exactly one reply, correlated to the request. Notices that arrive with it are kept in `notices`.
     Reply call(MessageType type, const Bytes& payload) {
         const std::uint64_t s = send(type, payload);
-        auto replies = poll();
+        auto all = poll();
+        std::vector<Reply> replies;
+        for (auto& r : all) {
+            if (r.header.type == MessageType::HEARTBEAT || r.header.type == MessageType::FAULT_EVENT) notices.push_back(std::move(r));
+            else replies.push_back(std::move(r));
+        }
         KRITVA_CHECK(replies.size() == 1);
         KRITVA_CHECK(replies[0].header.correlation_id == s);
         KRITVA_CHECK(replies[0].header.type == *response_for(type));

@@ -26,7 +26,7 @@ Capability dispatch is the only place that knows concrete typed endpoint contrac
 
 Sessions: the first accepted HELLO seals the registry and the Devices. Only an accepted HELLO changes session state; a rejected one has no observable effect on the current session. An accepted HELLO replaces the session as an Edge-side safety action (the previous id invalid; RUNNING actuator endpoints stopped through `Endpoint::stop()`; sequence tracking and ledgers reset; a fresh session sealed in). HELLO is not idempotent (protocol section 9).
 
-Out of I4-004, by architect ruling: heartbeat transmission, heartbeat-timeout supervision and the stop-all-actuators action on timeout, FAULT_EVENT, DEGRADED handling and the end-to-end safety campaign are I4-006. A link disconnect is a connectivity fact only and stops nothing in I4-004 (a test asserts it).
+Out of I4-004, by architect ruling, and delivered by I4-006 (see the failure and actuator-safety policy below): heartbeat transmission, heartbeat-timeout supervision, the stop of the running actuators on timeout, FAULT_EVENT, DEGRADED and the end-to-end safety campaign. In I4-004 itself a link disconnect stopped nothing; since I4-006 the Edge stops its running actuators at the heartbeat timeout.
 
 ## Nexus side (I4-005)
 
@@ -46,4 +46,24 @@ A deadline returns the local `TIMEOUT`, never put on the wire. The Nexus never r
 
 **RemoteEndpoint** classes derive from the unchanged I3 typed endpoints (`SensorEndpoint<AccelerationSample>` and the others, `ActuatorEndpoint<MotorCommand>`); nothing of the protocol appears in their application-facing API. The I3 state machine, the state checks (a read before RUNNING is refused locally with NOT_READY), the counters and `last_error` are the endpoint's own; the lifecycle hooks and `do_read`/`do_write` are protocol requests, and the Edge's own code and message come back unchanged (a hardware TIMEOUT is mapped by the Edge, see its section). The Nexus keeps no safety authority: a write validates only that the value can be encoded; session, sequence, state, limits and the application remain the Edge's. Floating-point settings cannot be carried by protocol 1.0 and are refused locally.
 
-**Link loss (policy is I4-006).** A request that finds the link down returns RESOURCE_UNAVAILABLE and the session is DISCONNECTED; a proxy does not turn FAULT by itself and the Edge is not told. The explicit way back is shutdown, initialize, start: a shutdown with nobody reachable succeeds locally and marks a pending remote cleanup; the next initialize (a fresh HELLO, which also stops the Edge's running actuators) first brings the Edge endpoint to STOPPED with a best-effort STOP and a SHUTDOWN (sensor endpoints keep running on the Edge when a session ends), then initializes it.
+**Link loss.** The normative policy is I4-006's (the failure and actuator-safety policy below): when a live session ends the node faults every live proxy with `link lost`, once, and records it; a request that finds the link down returns RESOURCE_UNAVAILABLE and ends the session. The explicit way back is shutdown, initialize, start: a shutdown with nobody reachable succeeds locally and marks a pending remote cleanup; the next initialize (a fresh HELLO, which also stops the Edge's running actuators) first brings the Edge endpoint to STOPPED with a best-effort STOP and a SHUTDOWN (sensor endpoints keep running on the Edge when a session ends), then initializes it.
+
+## Failure and actuator-safety policy (I4-006)
+
+Authoritative statement: **the Edge is the final actuator-safety authority. Nexus supervision protects the correctness of the remote representation; Edge supervision protects the physical actuator.** The normative text, including the table of which frames refresh liveness, is in `docs/architecture/KOS-I4_PROTOCOL.md` section 11; this section places it.
+
+```text
+                 Nexus                                 Edge
+        supervision (service())                supervision (poll())
+                 |                                       |
+   DEGRADED (observation) / link lost          DEGRADED (observation) / timeout
+                 |                                       |
+   live remote endpoints -> FAULT         running actuators -> Endpoint::stop()
+   + one link record                      sensors untouched, no endpoint faulted
+```
+
+- **Edge** (`EdgeHost::poll()`): heartbeat sending, the `>=` heartbeat timeout as one transition (session permanently invalid, ledgers and watermark cleared, every RUNNING actuator stopped through the existing `Endpoint::stop()`), `link_state()` (CONNECTED, DEGRADED, DISCONNECTED; observation only), the liveness rules, and FAULT_EVENT through an I3 fault listener on each served endpoint (queued after the response, flushed at the next drive; a shared token makes it safe whichever of the host and the devices is destroyed first). Nothing stops an actuator because of a duplicate or replayed frame, a heartbeat, a FAULT_EVENT or a Nexus-side close.
+- **Nexus** (`RemoteSession::service()`, `RemoteNode::service()`; also called at every step of the synchronous request pump): reads what is due, supervises (link down, `>=` timeout, DEGRADED), sends at most one heartbeat per call, and on the end of a live session tells the node, which faults the live remote endpoints with a deterministic reason, once, and records one `LinkLossRecord`. FAULT_EVENTs fault the matching live endpoint with `remote fault: <reason>`.
+- **Sensors** keep their state when the Edge's session ends (ruled by the architect: nothing about a lost link makes a sensor unsafe). The Nexus-side recovery cleanup of I4-005 brings a surviving Edge sensor back into a clean I3 lifecycle: shutdown, initialize, start with a fresh HELLO.
+- **No automatic recovery** anywhere, and a fresh HELLO never clears a FAULT.
+- Limits, stated: supervision runs only when driven (an integrator that spends virtual time without a request calls `service()` and `poll()`); a backlog of frames is handled with the time of the drive that handles it; the Edge learns that the Nexus closed a session only by its heartbeat timeout.

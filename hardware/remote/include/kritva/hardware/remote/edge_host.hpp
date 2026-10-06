@@ -52,6 +52,11 @@ struct EdgeStats {
     std::uint64_t send_failures{0};           ///< a frame the transport refused
     std::uint64_t actuators_stopped_on_new_session{0};
     std::uint64_t actuator_stop_failures{0};
+    std::uint64_t heartbeats_sent{0};
+    std::uint64_t sessions_timed_out{0};          ///< sessions ended by the heartbeat timeout
+    std::uint64_t actuators_stopped_on_timeout{0};
+    std::uint64_t fault_events_sent{0};
+    std::uint64_t fault_events_dropped{0};        ///< an endpoint fault with no session to tell
 };
 
 /// The Edge service of KOS-I4 (docs/architecture/KOS-I4_PROTOCOL.md). It is an I4 service, not a Core
@@ -78,8 +83,26 @@ struct EdgeStats {
 /// established and the served Devices are sealed (idempotent). The new session inherits no sequence or ledger
 /// state.
 ///
-/// Not here (I4-006): heartbeat transmission and timeout supervision, stopping actuators on a heartbeat
-/// timeout, FAULT_EVENT, DEGRADED. A valid heartbeat is only recorded (last_valid_frame_ns()).
+/// Supervision (I4-006, protocol section 11). The Edge is the final actuator-safety authority. poll() also
+/// supervises, against the transport's virtual clock and only when it is called: a gap in driving is a gap in
+/// supervision (no timer, thread or wall clock exists). After the frames that are due have been handled:
+///  - If no frame that counts as liveness has arrived for `heartbeat_timeout` (the comparison is >=), the session
+///    ends as ONE transition: the session id becomes permanently invalid, the ledgers and the watermark are
+///    cleared, every RUNNING actuator endpoint is stopped through the existing Endpoint::stop() (sensors keep
+///    their I3 state, no Edge endpoint is faulted by the loss of the link), and the Edge awaits a new HELLO.
+///  - Otherwise one HEARTBEAT is sent if `heartbeat_period` has passed since the last one (at most one per
+///    call, never a catch-up burst).
+/// A heartbeat only reports liveness: it never starts, restarts, recovers or clears anything.
+/// Which frames refresh liveness (last_valid_frame_ns): a new admitted request or notice, a HEARTBEAT, and a valid
+/// request the Edge then refuses for its address, state or limits. NOT a duplicate WRITE answered from the ledger
+/// (an old frame is no evidence that the peer is alive now: a link that keeps replaying the last write must not keep
+/// an actuator running), a stale frame, a malformed frame, a frame of another or no session, or a frame that cannot
+/// reach an Edge. link_state() reports CONNECTED, DEGRADED (no liveness for 2 periods, observation only: it never
+/// acts) or DISCONNECTED.
+///
+/// FAULT_EVENT: when a served endpoint enters FAULT (I3 fault listener) the Edge tells the Nexus with one FAULT_EVENT,
+/// queued and sent AFTER the response of the request being handled, or at the next poll() for a fault that happened
+/// outside a request; none without a session. Losing it is safe: the endpoint's own state is authoritative.
 ///
 /// Lifetimes: the registry, its Devices and the transport must outlive the EdgeHost. Single-threaded.
 class EdgeHost {
@@ -87,6 +110,7 @@ public:
     /// `node` must be valid (non-zero). The EdgeHost keeps references to `registry` and `link` (the Edge end).
     [[nodiscard]] static core::Result<std::unique_ptr<EdgeHost>> create(NodeId node, DeviceRegistry& registry, transport::Transport& link);
 
+    ~EdgeHost();
     EdgeHost(const EdgeHost&) = delete;
     EdgeHost& operator=(const EdgeHost&) = delete;
 
@@ -97,11 +121,13 @@ public:
     /// The current session, or an invalid id when there is none.
     [[nodiscard]] SessionId session() const noexcept { return SessionId{session_}; }
     [[nodiscard]] bool sealed() const noexcept { return sealed_; }
-    /// The heartbeat timing accepted in the current HELLO (for the I4-006 supervision); zeros without a session.
+    /// The heartbeat timing accepted in the current HELLO; zeros without a session.
     [[nodiscard]] const transport::LinkTiming& timing() const noexcept { return timing_; }
     /// Virtual time of the last frame accepted in the current session (any valid in-session frame).
     [[nodiscard]] std::uint64_t last_valid_frame_ns() const noexcept { return last_valid_frame_ns_; }
     [[nodiscard]] const EdgeStats& stats() const noexcept { return stats_; }
+    /// CONNECTED, DEGRADED (observation only) or DISCONNECTED (no session), evaluated at the current virtual time.
+    [[nodiscard]] transport::SessionState link_state() const noexcept;
 
 private:
     struct Ledger {
@@ -119,7 +145,14 @@ private:
     void handle_in_session(const transport::FrameHeader& header, transport::ByteSpan payload);
     void handle_write(const transport::FrameHeader& header, transport::ByteSpan payload);
     void begin_session();
-    void stop_running_actuators();
+    void stop_running_actuators(bool on_timeout);
+    void handle_frame(const std::vector<std::uint8_t>& bytes);
+    void supervise();
+    void end_session_on_timeout();
+    void send_heartbeat();
+    void install_fault_listeners();
+    void on_endpoint_fault(const Endpoint& endpoint);
+    void flush_fault_events();
     [[nodiscard]] bool admit(const transport::FrameHeader& header);   // watermark: raises it on success
 
     void reject_hello(const transport::FrameHeader& header, core::ErrorCode code, const char* message);
@@ -141,6 +174,12 @@ private:
     std::uint64_t last_valid_frame_ns_{0};
     transport::LinkTiming timing_{0, 0, 0, 0};
     std::map<LedgerKey, Ledger> ledgers_;
+    std::uint64_t next_heartbeat_ns_{0};
+    // The fault listeners installed on the served endpoints reach this host only through the token, which the destructor
+    // clears: whichever of the host and the devices is destroyed first, nothing dangles.
+    std::shared_ptr<EdgeHost*> self_{std::make_shared<EdgeHost*>(this)};
+    std::map<const Endpoint*, LedgerKey> addresses_;      // served endpoint -> (device id, endpoint id), for FAULT_EVENT
+    std::vector<transport::FaultEventPayload> pending_faults_;
     EdgeStats stats_;
 };
 
