@@ -297,13 +297,29 @@ if(TARGET kritva_hardware_transport AND TARGET kritva_hardware_remote)
     add_executable(kritva_remote_hygiene_test hardware/unit/remote_hygiene_test.cpp)
     add_test(NAME kritva_remote_hygiene_unit COMMAND kritva_remote_hygiene_test ${CMAKE_SOURCE_DIR})
 
+    add_executable(kritva_topology_test hardware/unit/topology_test.cpp)
+    target_link_libraries(kritva_topology_test PRIVATE kritva::hardware_remote)
+    add_test(NAME kritva_topology_unit COMMAND kritva_topology_test)
+
+    add_executable(kritva_remote_session_test hardware/unit/remote_session_test.cpp)
+    target_link_libraries(kritva_remote_session_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
+    add_test(NAME kritva_remote_session_unit COMMAND kritva_remote_session_test)
+
+    add_executable(kritva_remote_endpoint_test hardware/unit/remote_endpoint_test.cpp)
+    target_link_libraries(kritva_remote_endpoint_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
+    add_test(NAME kritva_remote_endpoint_unit COMMAND kritva_remote_endpoint_test)
+
+    add_executable(kritva_nexus_edge_test hardware/integration/nexus_edge_test.cpp)
+    target_link_libraries(kritva_nexus_edge_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
+    add_test(NAME kritva_nexus_edge_integration COMMAND kritva_nexus_edge_test)
+
     add_executable(kritva_protocol_spec_consistency_test hardware/unit/protocol_spec_consistency_test.cpp)
     target_link_libraries(kritva_protocol_spec_consistency_test PRIVATE kritva::hardware_transport)
     add_test(NAME kritva_protocol_spec_consistency
         COMMAND kritva_protocol_spec_consistency_test ${CMAKE_SOURCE_DIR}/docs/architecture/KOS-I4_PROTOCOL.md)
 
     # Sanity: every public contract header compiles on its own.
-    set(KRITVA_I4_HEADERS transport/protocol.hpp transport/frame.hpp transport/codec.hpp transport/transport.hpp transport/simulated_transport.hpp transport/link_config.hpp remote/node.hpp remote/capability_dispatch.hpp remote/edge_host.hpp)
+    set(KRITVA_I4_HEADERS transport/protocol.hpp transport/frame.hpp transport/codec.hpp transport/transport.hpp transport/simulated_transport.hpp transport/link_config.hpp remote/node.hpp remote/capability_dispatch.hpp remote/edge_host.hpp remote/topology.hpp remote/remote_session.hpp remote/remote_node.hpp remote/remote_endpoint.hpp)
     set(KRITVA_I4_HEADER_CHECKS "")
     foreach(header IN LISTS KRITVA_I4_HEADERS)
         string(REPLACE "/" "_" stem "${header}")

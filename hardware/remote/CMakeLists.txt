@@ -2,6 +2,10 @@
 add_library(kritva_hardware_remote STATIC
     src/capability_dispatch.cpp
     src/edge_host.cpp
+    src/remote_endpoint.cpp
+    src/remote_node.cpp
+    src/remote_session.cpp
+    src/topology.cpp
 )
 
 target_compile_features(kritva_hardware_remote PUBLIC cxx_std_20)

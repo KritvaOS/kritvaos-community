@@ -85,6 +85,29 @@ int main(int argc, char** argv) {
             return 1;
         }
     }
+    // The Nexus side: it never depends on the Edge service (a peer in the same process is wired through the peer tick
+    // only), on the runtime or the manager, and there is no RemoteDeviceManager.
+    const std::vector<std::string> nexus_files = {
+        "include/kritva/hardware/remote/remote_session.hpp", "src/remote_session.cpp",
+        "include/kritva/hardware/remote/remote_node.hpp", "src/remote_node.cpp",
+        "include/kritva/hardware/remote/remote_endpoint.hpp", "src/remote_endpoint.cpp",
+        "include/kritva/hardware/remote/topology.hpp", "src/topology.cpp",
+    };
+    const std::vector<std::string> nexus_forbidden = {
+        "EdgeHost", "edge_host.hpp", "RuntimeHost", "RuntimeManager", "DeviceManager", "device_manager.hpp", "RemoteDeviceManager",
+        "kritva/runtime/", "core/runtime", "mock_", "Mock",
+        "<chrono>", "<thread>", "<mutex>", "<atomic>", "<random>", "<ctime>", "sleep", "steady_clock", "system_clock", "clock_gettime",
+        "<sys/socket.h>", "<netinet", "socket(", "std::thread", "std::async",
+    };
+    for (const auto& f : nexus_files) {
+        const std::string code = code_of(root + f);
+        for (const auto& token : nexus_forbidden) {
+            if (has(code, token)) {
+                std::fprintf(stderr, "%s uses forbidden token '%s'\n", f.c_str(), token.c_str());
+                return 1;
+            }
+        }
+    }
     std::printf("remote_hygiene_test: PASS\n");
     return 0;
 }
