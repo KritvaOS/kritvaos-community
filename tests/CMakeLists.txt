@@ -274,13 +274,36 @@ if(TARGET kritva_hardware_transport AND TARGET kritva_hardware_remote)
     target_link_libraries(kritva_frame_transport_test PRIVATE kritva::hardware_transport)
     add_test(NAME kritva_frame_transport_integration COMMAND kritva_frame_transport_test)
 
+    add_executable(kritva_edge_session_test hardware/unit/edge_session_test.cpp)
+    target_link_libraries(kritva_edge_session_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
+    add_test(NAME kritva_edge_session_unit COMMAND kritva_edge_session_test)
+
+    add_executable(kritva_edge_service_test hardware/unit/edge_service_test.cpp)
+    target_link_libraries(kritva_edge_service_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
+    add_test(NAME kritva_edge_service_unit COMMAND kritva_edge_service_test)
+
+    add_executable(kritva_edge_write_test hardware/unit/edge_write_test.cpp)
+    target_link_libraries(kritva_edge_write_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
+    add_test(NAME kritva_edge_write_unit COMMAND kritva_edge_write_test)
+
+    add_executable(kritva_capability_dispatch_test hardware/unit/capability_dispatch_test.cpp)
+    target_link_libraries(kritva_capability_dispatch_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
+    add_test(NAME kritva_capability_dispatch_unit COMMAND kritva_capability_dispatch_test)
+
+    add_executable(kritva_edge_transport_test hardware/integration/edge_transport_test.cpp)
+    target_link_libraries(kritva_edge_transport_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
+    add_test(NAME kritva_edge_transport_integration COMMAND kritva_edge_transport_test)
+
+    add_executable(kritva_remote_hygiene_test hardware/unit/remote_hygiene_test.cpp)
+    add_test(NAME kritva_remote_hygiene_unit COMMAND kritva_remote_hygiene_test ${CMAKE_SOURCE_DIR})
+
     add_executable(kritva_protocol_spec_consistency_test hardware/unit/protocol_spec_consistency_test.cpp)
     target_link_libraries(kritva_protocol_spec_consistency_test PRIVATE kritva::hardware_transport)
     add_test(NAME kritva_protocol_spec_consistency
         COMMAND kritva_protocol_spec_consistency_test ${CMAKE_SOURCE_DIR}/docs/architecture/KOS-I4_PROTOCOL.md)
 
     # Sanity: every public contract header compiles on its own.
-    set(KRITVA_I4_HEADERS transport/protocol.hpp transport/frame.hpp transport/codec.hpp transport/transport.hpp transport/simulated_transport.hpp transport/link_config.hpp remote/node.hpp)
+    set(KRITVA_I4_HEADERS transport/protocol.hpp transport/frame.hpp transport/codec.hpp transport/transport.hpp transport/simulated_transport.hpp transport/link_config.hpp remote/node.hpp remote/capability_dispatch.hpp remote/edge_host.hpp)
     set(KRITVA_I4_HEADER_CHECKS "")
     foreach(header IN LISTS KRITVA_I4_HEADERS)
         string(REPLACE "/" "_" stem "${header}")

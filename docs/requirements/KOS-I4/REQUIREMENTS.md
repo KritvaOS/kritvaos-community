@@ -23,8 +23,8 @@
 | FRL-001 | Exactly one ERROR event per endpoint fault transition. A link-level failure affecting N remote endpoints produces N endpoint ERROR events plus one link-level diagnostic record; an already-faulted endpoint produces no further ERROR. | I4-006 |
 | FRL-002 | Late, duplicate, stale, unknown-correlation and wrong-address messages are rejected. | I4-006 |
 | FRL-003 | No automatic recovery; explicit shutdown/init/start creates a new session. | I4-006 |
-| SR-001 | Edge validates actuator limits before every apply. | I4-006 |
-| SR-002 | Edge uses a session-scoped last-applied sequence/bounded ledger to prevent replay/duplicate apply. | I4-006 |
+| SR-001 | Edge validates actuator limits before every apply. | I4-004 (mechanism), I4-006 (end-to-end verification) |
+| SR-002 | Edge uses a session-scoped last-applied sequence/bounded ledger to prevent replay/duplicate apply. | I4-004 (mechanism), I4-006 (end-to-end verification) |
 | SR-003 | Heartbeat/session timeout stops affected actuator endpoints through existing stop(). | I4-006 |
 | RI-001 | Remote devices register through existing DeviceManager; no RemoteDeviceManager. | I4-007 |
 | RI-002 | RuntimeHost, RuntimeManager and Core remain unchanged. | I4-007 |
@@ -38,4 +38,4 @@
 
 ## Family documents
 
-NDR, PR, FR, TR, ER, RR, FRL, SR, RI, DR and VR are the requirement families. IDs are unique across the I4 baseline and each maps to exactly one task.
+NDR, PR, FR, TR, ER, RR, FRL, SR, RI, DR and VR are the requirement families. IDs are unique across the I4 baseline and each maps to one task; SR-001 and SR-002 name two: the mechanism is implemented in the first (the Edge write path of I4-004) and the distributed failure-safety behavior is verified end to end in the second (I4-006), by architect ruling.

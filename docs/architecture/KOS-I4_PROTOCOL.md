@@ -151,7 +151,9 @@ A status value above 11 makes the payload malformed. The Edge returns the I3 end
 
 - A **HELLO** (`session_id` 0) proposes a version and the heartbeat timing. The Edge accepts if `major == 1` and the peer's `minor <= its own minor`; the negotiated minor is the peer's. It replies HELLO_ACK with a new non-zero `session_id` (the Edge allocates 1, 2, 3 ... per EdgeHost lifetime), the Edge node id and the accepted timing. Timing outside the ranges in section 14 is `INVALID_ARGUMENT`; an unsupported version is `UNSUPPORTED` (HELLO_ACK with `session_id` 0).
 - Every later frame in both directions carries that `session_id`; a frame with any other session id is stale (section 10).
-- **A HELLO always starts a new session and invalidates the previous one. This is an Edge-side safety action, not only an identifier replacement**, performed in this order: (1) invalidate the previous `SessionId`; (2) stop every actuator endpoint that belongs to the previous session through the existing `Endpoint::stop()`; (3) reset the per-session sequence tracking and all write ledgers; (4) establish the new `SessionId` and seal the served Devices (idempotent). The new session inherits **no** sequence or write-ledger state from the previous one.
+- **Only an ACCEPTED HELLO changes session state.** A rejected HELLO (a header with `session_id` other than 0 or `sequence` other than 1, a malformed payload, an unsupported version, timing out of range) is answered once, unsessioned (`session_id` 0, `correlation_id` = the HELLO's sequence), and has **no observable effect** on the current session: not its identity, the actuator state, the sequence tracking, the write ledgers, the topology or any lifecycle state. Otherwise a malformed or incompatible HELLO would be a remote actuator-stop primitive.
+- **A HELLO always starts a new session and invalidates the previous one. This is an Edge-side safety action, not only an identifier replacement**, performed in this order: (1) invalidate the previous `SessionId`; (2) stop every actuator endpoint that belongs to the previous session through the existing `Endpoint::stop()`; (3) reset the per-session sequence tracking and all write ledgers; (4) establish the new `SessionId` and seal the served Devices (idempotent). The new session inherits **no** sequence or write-ledger state from the previous one. Step (2) applies when there was a previous session; it stops the actuator endpoints that are RUNNING (a READY or STOPPED endpoint is not driving anything); an endpoint that fails to stop is FAULT as the I3 contract defines. Sensor endpoints are not touched.
+- **HELLO is not idempotent.** Protocol 1.0 has no HELLO replay or deduplication: every accepted HELLO establishes a fresh session. A HELLO delivered twice (for example duplicated by the link) therefore replaces the session it just created; the peer that holds the earlier session id finds all its frames stale and must fail deterministically. Peers must not assume HELLO is idempotent.
 - Session states (a Nexus-side link state; **not** Core `LifecycleState`):
 
 | From | To | Cause |
@@ -195,6 +197,8 @@ For each session and actuator endpoint the Edge keeps `last_applied_sequence` an
 5. the endpoint must be RUNNING (`NOT_READY`; faulted: `RESOURCE_UNAVAILABLE`);
 6. the command is validated by the I3 endpoint (finite, within its limits) **before** it is applied; a rejected command changes nothing;
 7. apply once, record `last_applied_sequence = sequence`, cache the response, respond.
+
+A stale frame (section 10) is dropped before any response, so steps 2 and 5 to 7 apply to admitted frames only; the duplicate exception of step 3 needs the ledger, which is found by the address, so a frame whose address does not resolve is never a duplicate. A rejected write (steps 2, 5, 6) does not change the ledger.
 
 The Edge never trusts the Nexus for limits or state. A new session starts a new ledger, so a retransmission from an old session can never be applied.
 

@@ -15,5 +15,6 @@ Run from a fresh clone/container before milestone closure. Any I2/I3 regression 
 | I4-001 | 5e9acfc, 6b73c6c, d2f8936 | PASS, 0 warnings | 119/119 | PASS | 20 of 20 caught |
 | I4-002 | 52218f4 | PASS, 0 warnings | 123/123 | PASS | 26 of 28 caught by tests, 1 by ASan, 1 equivalent |
 | I4-003 | subject `KOS-I4 I4-003 implement deterministic simulated transport` | PASS, 0 warnings | 127/127 | PASS | 33 of 33 caught (1 by hang timeout) |
+| I4-004 | subject `KOS-I4 I4-004 implement edge host and remote service` | PASS, 0 warnings | 133/133 | PASS | 70 mutants: 56 caught first time, 8 survivors fixed with new tests, 6 equivalent |
 
 Per-task detail is in `planning/milestones/KOS-I4/I4-00x/ACCEPTANCE_CRITERIA.md`.
