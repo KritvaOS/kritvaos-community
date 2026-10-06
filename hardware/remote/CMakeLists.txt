@@ -1,7 +1,10 @@
 # Nexus-side remote proxies and the Edge service (KOS-I4). Depends on the hardware abstraction and the transport layer only.
 add_library(kritva_hardware_remote STATIC
     src/capability_dispatch.cpp
+    src/edge_diagnostics.cpp
     src/edge_host.cpp
+    src/loopback_link.cpp
+    src/remote_diagnostics.cpp
     src/remote_endpoint.cpp
     src/remote_node.cpp
     src/remote_session.cpp

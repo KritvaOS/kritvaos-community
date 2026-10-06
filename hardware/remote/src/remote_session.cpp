@@ -65,7 +65,7 @@ void RemoteSession::disconnect_session() noexcept {
     outstanding_.clear();
 }
 
-void RemoteSession::close() { end_session("session closed"); }
+void RemoteSession::close() { end_session(LinkLossKind::SESSION_CLOSED); }
 
 void RemoteSession::set_handlers(LinkLostHandler link_lost, FaultEventHandler fault_event) {
     link_lost_ = std::move(link_lost);
@@ -73,13 +73,13 @@ void RemoteSession::set_handlers(LinkLostHandler link_lost, FaultEventHandler fa
 }
 
 // A live session ends as one transition: it is DISCONNECTED (and its id forgotten) before anyone is told, once.
-void RemoteSession::end_session(const char* reason) {
+void RemoteSession::end_session(LinkLossKind kind) {
     const bool live = state_ == SessionState::CONNECTED || state_ == SessionState::DEGRADED;
     const std::uint64_t id = session_;
     disconnect_session();
     if (!live) return;                                       // a handshake that fails is not a link loss
     ++stats_.sessions_lost;
-    if (link_lost_) link_lost_(LinkLoss{reason, id, link_.now_ns()});
+    if (link_lost_) link_lost_(LinkLoss{kind, reason_of(kind), id, link_.now_ns()});
 }
 
 // Any valid in-session frame from the Edge is proof of liveness; it also ends DEGRADED.
@@ -102,7 +102,7 @@ void RemoteSession::send_heartbeat() {
 
 void RemoteSession::service() {
     if (state_ != SessionState::CONNECTED && state_ != SessionState::DEGRADED) return;
-    if (link_.link_state() != LinkState::CONNECTED) { end_session("link lost"); return; }
+    if (link_.link_state() != LinkState::CONNECTED) { end_session(LinkLossKind::LINK_LOST); return; }
     // What has become due is read first, so that a heartbeat or a FAULT_EVENT counts before the supervision decides. A frame's
     // liveness time is the virtual time at which it is handled: a backlog is handled when the Nexus is driven again (a gap in
     // driving is a gap in supervision).
@@ -112,7 +112,7 @@ void RemoteSession::service() {
     const std::uint64_t period_ns = static_cast<std::uint64_t>(config_.timing.heartbeat_period_ms) * kNsPerMs;
     const std::uint64_t timeout_ns = static_cast<std::uint64_t>(config_.timing.heartbeat_timeout_ms) * kNsPerMs;
     const std::uint64_t since = now - last_valid_frame_ns_;
-    if (since >= timeout_ns) { end_session("link lost"); return; }          // exactly at the timeout, not only after it
+    if (since >= timeout_ns) { end_session(LinkLossKind::LINK_LOST); return; }          // exactly at the timeout, not only after it
     if (since >= 2 * period_ns) {
         if (state_ == SessionState::CONNECTED) { to_state(SessionState::DEGRADED); ++stats_.degraded_entries; }
     } else if (state_ == SessionState::DEGRADED) {
@@ -213,7 +213,7 @@ core::Result<Bytes> RemoteSession::exchange(MessageType type, std::uint64_t sequ
     const auto frame = encode_frame(header, payload);
     if (!frame) return core::Result<Bytes>::failure(frame.error());
     if (auto sent = link_.send(frame.value()); !sent) {
-        if (link_.link_state() != LinkState::CONNECTED) end_session("link lost");
+        if (link_.link_state() != LinkState::CONNECTED) end_session(LinkLossKind::LINK_LOST);
         return core::Result<Bytes>::failure(sent.error());
     }
     ++stats_.requests_sent;
@@ -244,7 +244,7 @@ core::Result<Bytes> RemoteSession::exchange(MessageType type, std::uint64_t sequ
         }
         if (link_.link_state() != LinkState::CONNECTED) {
             outstanding_.erase(sequence);
-            end_session("link lost");
+            end_session(LinkLossKind::LINK_LOST);
             return core::Result<Bytes>::failure(make_error(ErrorCode::RESOURCE_UNAVAILABLE, "the link is down"));
         }
         service();                                               // supervision at every pump step: heartbeat, DEGRADED, timeout

@@ -55,10 +55,10 @@ void RemoteNode::on_link_lost(const LinkLoss& loss) {
     std::size_t faulted = 0;
     for (RemoteProxy* proxy : proxies_) {
         if (!live(proxy->state())) continue;
-        proxy->fault(cause);
+        proxy->fault(cause, loss.kind == LinkLossKind::SESSION_CLOSED ? FaultOrigin::SESSION_CLOSED : FaultOrigin::LINK_LOST);
         ++faulted;
     }
-    records_.push_back(LinkLossRecord{loss.time_ns, loss.reason, loss.session_id, faulted});
+    records_.push_back(LinkLossRecord{loss.time_ns, loss.kind, loss.reason, loss.session_id, faulted});
     if (records_.size() > kMaxRecords) records_.erase(records_.begin());
 }
 
@@ -66,7 +66,7 @@ void RemoteNode::on_fault_event(const EndpointAddress& address, const std::strin
     for (RemoteProxy* proxy : proxies_) {
         if (proxy->address().device != address.device || proxy->address().endpoint != address.endpoint) continue;
         if (!live(proxy->state())) { ++node_stats_.fault_events_ignored; return; }      // not live, or already FAULT: no second event
-        proxy->fault(core::Error{ErrorCode::INTERNAL_ERROR, core::ErrorSeverity::ERROR, {}, {}, "remote fault: " + reason});
+        proxy->fault(core::Error{ErrorCode::INTERNAL_ERROR, core::ErrorSeverity::ERROR, {}, {}, "remote fault: " + reason}, FaultOrigin::REMOTE_FAULT);
         ++node_stats_.remote_faults_applied;
         return;
     }
@@ -119,6 +119,13 @@ core::Result<void> RemoteNode::acquire() {
     }
     ++live_;
     return core::Result<void>::success();
+}
+
+FaultOrigin RemoteNode::fault_origin(const EndpointAddress& address) const {
+    for (const RemoteProxy* proxy : proxies_) {
+        if (proxy->address().device == address.device && proxy->address().endpoint == address.endpoint) return proxy->origin();
+    }
+    return FaultOrigin::NONE;
 }
 
 void RemoteNode::release() noexcept {

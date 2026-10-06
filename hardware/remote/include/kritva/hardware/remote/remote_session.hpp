@@ -60,9 +60,18 @@ struct RemoteStats {
     std::uint64_t wrong_node_events{0};
 };
 
-/// Why a live session ended, handed to the link-lost handler after the session is DISCONNECTED.
+/// Why a live session ended. An explicit close is a Nexus-local event: protocol 1.0 has no termination message.
+enum class LinkLossKind : std::uint8_t { LINK_LOST, SESSION_CLOSED };
+
+/// The deterministic reason text of a loss, as faulted endpoints and link records carry it.
+[[nodiscard]] constexpr const char* reason_of(LinkLossKind kind) noexcept {
+    return kind == LinkLossKind::SESSION_CLOSED ? "session closed" : "link lost";
+}
+
+/// Handed to the link-lost handler after the session is DISCONNECTED.
 struct LinkLoss {
-    std::string reason;                       ///< "link lost" (heartbeat timeout or the transport went down) or "session closed" (explicit close)
+    LinkLossKind kind{LinkLossKind::LINK_LOST};
+    std::string reason;                       ///< reason_of(kind): "link lost" (heartbeat timeout or the transport went down) or "session closed"
     std::uint64_t session_id{0};
     std::uint64_t time_ns{0};
 };
@@ -136,6 +145,8 @@ public:
     [[nodiscard]] const transport::DiscoveryResponsePayload& discovery() const noexcept { return discovery_; }
     [[nodiscard]] const RemoteStats& stats() const noexcept { return stats_; }
     [[nodiscard]] const transport::LinkTiming& timing() const noexcept { return config_.timing; }
+    /// The transport's virtual time now (a read, never a drive).
+    [[nodiscard]] std::uint64_t now_ns() const noexcept { return link_.now_ns(); }
     /// Virtual time of the last valid in-session frame from the Edge.
     [[nodiscard]] std::uint64_t last_valid_frame_ns() const noexcept { return last_valid_frame_ns_; }
     [[nodiscard]] transport::Transport& link() noexcept { return link_; }
@@ -185,7 +196,7 @@ private:
     void handle_response(const transport::FrameHeader& header, transport::ByteSpan payload);
     void handle_notice(const transport::FrameHeader& header, transport::ByteSpan payload);
     void to_state(transport::SessionState next) noexcept;
-    void end_session(const char* reason);
+    void end_session(LinkLossKind kind);
     void refresh_liveness();
     void send_heartbeat();
     void disconnect_session() noexcept;

@@ -49,9 +49,32 @@ private:
 /// lists `<device>.<endpoint>.<setting>` for them and its configure scopes the values to the endpoint.
 using RemoteSettings = std::map<std::pair<std::string, std::string>, std::vector<std::string>>;
 
+/// Why a remote endpoint is FAULT, recorded explicitly when the Nexus puts it there (never parsed from text). It is metadata
+/// of the Nexus-side representation, not part of the I3 Endpoint contract. One value per fault episode: it is set when the
+/// endpoint enters FAULT, never changes while it stays FAULT, and a new lifecycle (shutdown, initialize) starts a new episode.
+enum class FaultOrigin : std::uint8_t {
+    NONE,             ///< the endpoint is not FAULT
+    LINK_LOST,        ///< the session ended by heartbeat timeout or the transport going down (reason "link lost")
+    SESSION_CLOSED,   ///< the Nexus closed the session (reason "session closed"; the Edge learns of it only by its own timeout)
+    REMOTE_FAULT,     ///< the Edge told us that its endpoint faulted (reason "remote fault: <reason>")
+    LOCAL_FAILURE,    ///< FAULT by the I3 rules of the proxy itself, for example a lifecycle request that failed
+};
+
+[[nodiscard]] constexpr const char* fault_origin_name(FaultOrigin o) noexcept {
+    switch (o) {
+        case FaultOrigin::NONE: return "NONE";
+        case FaultOrigin::LINK_LOST: return "LINK_LOST";
+        case FaultOrigin::SESSION_CLOSED: return "SESSION_CLOSED";
+        case FaultOrigin::REMOTE_FAULT: return "REMOTE_FAULT";
+        case FaultOrigin::LOCAL_FAILURE: return "LOCAL_FAILURE";
+    }
+    return "INVALID";
+}
+
 /// One link-level diagnostic record per live session that ended (FRL-001): it never replaces the endpoint events.
 struct LinkLossRecord {
     std::uint64_t time_ns{0};
+    LinkLossKind kind{LinkLossKind::LINK_LOST};
     std::string reason;                       ///< "link lost" or "session closed"
     std::uint64_t session_id{0};
     std::size_t endpoints_faulted{0};         ///< the live remote endpoints this loss put into FAULT
@@ -87,6 +110,10 @@ public:
     /// shutdown, initialize, start (a fresh HELLO never clears a FAULT).
     [[nodiscard]] const std::vector<LinkLossRecord>& link_loss_records() const noexcept { return records_; }
     [[nodiscard]] const RemoteNodeStats& node_stats() const noexcept { return node_stats_; }
+
+    /// Why the endpoint at `address` is FAULT: NONE if it is not, LOCAL_FAILURE if it is and the Nexus did not put it there.
+    /// A read; it changes nothing.
+    [[nodiscard]] FaultOrigin fault_origin(const EndpointAddress& address) const;
 
     /// Used by the proxies at construction.
     void add_proxy(RemoteProxy& proxy) { proxies_.push_back(&proxy); }

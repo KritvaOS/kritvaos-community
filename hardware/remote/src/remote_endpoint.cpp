@@ -79,6 +79,7 @@ core::Result<void> RemoteProxy::lifecycle(MessageType request) {
 }
 
 core::Result<void> RemoteProxy::initialize() {
+    origin_ = FaultOrigin::NONE;                              // a new lifecycle is a new fault episode
     if (!holds_period_) {                                     // the first endpoint of a live period establishes a fresh session
         if (auto acquired = node_.acquire(); !acquired) return acquired;
         holds_period_ = true;
@@ -100,6 +101,7 @@ core::Result<void> RemoteProxy::start() { return lifecycle(MessageType::START_RE
 core::Result<void> RemoteProxy::stop() { return lifecycle(MessageType::STOP_REQUEST); }
 
 core::Result<void> RemoteProxy::shutdown() {
+    origin_ = FaultOrigin::NONE;                              // leaving FAULT ends the episode
     core::Result<void> r = core::Result<void>::success();
     // With the link gone there is nobody to tell: the local endpoint is released (link loss is I4-006's policy).
     if (node_.session().state() == SessionState::CONNECTED) r = lifecycle(MessageType::SHUTDOWN_REQUEST);

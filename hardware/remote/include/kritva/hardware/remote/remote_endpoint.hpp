@@ -47,8 +47,19 @@ public:
         fault_ = std::move(fault);
     }
     [[nodiscard]] core::LifecycleState state() const { return state_ ? state_() : core::LifecycleState::UNKNOWN; }
-    /// Puts the endpoint into FAULT (only a live one can; the I3 enter_fault refuses others and notifies once).
-    void fault(const core::Error& cause) { if (fault_) fault_(cause); }
+    /// Puts a LIVE endpoint into FAULT and records why (once per fault episode; an endpoint that is not live is left alone, and
+    /// an origin is never overwritten while the endpoint stays FAULT). The I3 enter_fault notifies the fault listeners once.
+    void fault(const core::Error& cause, FaultOrigin origin) {
+        const core::LifecycleState s = state();
+        if (!fault_ || (s != core::LifecycleState::READY && s != core::LifecycleState::RUNNING)) return;
+        origin_ = origin;
+        fault_(cause);
+    }
+    /// NONE unless the endpoint is FAULT; then what the Nexus recorded, or LOCAL_FAILURE if it faulted by its own I3 rules.
+    [[nodiscard]] FaultOrigin origin() const {
+        if (state() != core::LifecycleState::FAULT) return FaultOrigin::NONE;
+        return origin_ == FaultOrigin::NONE ? FaultOrigin::LOCAL_FAILURE : origin_;
+    }
 
     /// The Edge's own error (code and message, unchanged), the local TIMEOUT or the link error.
     core::Result<void> configure(const core::Configuration& scoped);
@@ -65,6 +76,7 @@ private:
     std::vector<std::string> settings_;
     std::function<core::LifecycleState()> state_;
     std::function<void(const core::Error&)> fault_;
+    FaultOrigin origin_{FaultOrigin::NONE};
     bool holds_period_{false};
     bool cleanup_pending_{false};     ///< a shutdown happened while nobody was reachable: the Edge endpoint may still be live
 };

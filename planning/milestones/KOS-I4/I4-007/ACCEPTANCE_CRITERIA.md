@@ -1,15 +1,44 @@
 # I4-007 Acceptance Criteria
 
-- [ ] All requirements traced to I4-007 are implemented and evidenced.
-- [ ] I3 contracts remain unchanged.
-- [ ] Debug and Release builds pass.
-- [ ] Unit/integration/sanity tests pass.
-- [ ] Full KOS-I2 regression passes.
-- [ ] Full KOS-I3 regression passes.
-- [ ] ASan passes.
-- [ ] UBSan passes.
-- [ ] Applicable mutation/fault-injection checks pass.
+- [x] All requirements traced to I4-007 are implemented and evidenced.
+- [x] I3 contracts remain unchanged.
+- [x] Debug and Release builds pass.
+- [x] Unit/integration/sanity tests pass.
+- [x] Full KOS-I2 regression passes.
+- [x] Full KOS-I3 regression passes.
+- [x] ASan passes.
+- [x] UBSan passes.
+- [x] Applicable mutation/fault-injection checks pass.
 - [ ] HUMAN SAFETY REVIEW — OPEN. This is an independent human-owned gate. It is not completed by software implementation or automated verification. It blocks formal KOS-I4 closure and physical actuator deployment, but does not block subsequent software tasks.
-- [ ] Review checklist/evidence is complete.
-- [ ] One atomic commit SHA is recorded.
-- [ ] Core R1.0 source is unchanged.
+- [x] Review checklist/evidence is complete.
+- [x] One atomic commit: the commit whose subject is `KOS-I4 I4-007 implement runtime integration and diagnostics` (see `git log`; a SHA cannot be recorded inside its own commit).
+- [x] Core R1.0 source is unchanged.
+
+## Scope (architect ruling, constraints 1-16)
+
+Implemented here: the integration of the existing `RuntimeHost`, `DeviceManager`, `RemoteDevice`, `RemoteEndpoint` and `RemoteNode` through `LoopbackLink` (the one explicit same-process driver); read-only deterministic diagnostics of the Nexus side (`diagnose(RemoteNode)`) and, separately, of the Edge (`diagnose(EdgeHost)`) with sanitized `describe()` text; the explicit `FaultOrigin` recorded by the Nexus for each fault episode; configuration through the I2 loader (`link.*` timing read before connect, the full allow-list after discovery). Deferred by the architect: active observation of the Edge over the link (`observe_edge`), because it would give an apparently observational API a liveness side effect; CI Release/ASan/UBSan jobs (a separate task after I4-008); the demo (I4-008).
+
+## Evidence (I4-007)
+
+Deliverable: `hardware/remote/` `loopback_link`, `remote_diagnostics`, `edge_diagnostics`, `diagnostics_text`; `FaultOrigin`, `LinkLossKind` and the origin metadata in `RemoteNode`/`RemoteProxy`; read-only accessors `EdgeHost::registry()`/`now_ns()` and `RemoteSession::now_ns()`; tests `loopback_link_test`, `remote_diagnostics_test`, `runtime_remote_integration_test`, the extended `remote_hygiene_test`, and the rig `tests/hardware/support/stack_rig.hpp` (Application, RuntimeHost, DeviceManager, remote devices, LoopbackLink, transport, EdgeHost, mocks); architecture, RI and DR documents.
+
+| Constraint | Evidence |
+|---|---|
+| 1, 2: thin integration on the existing stack; no RemoteDeviceManager, Edge runtime, second lifecycle manager, registry or safety manager; RuntimeHost and Core unchanged | `git diff` of `runtime/`, `core/`, `hardware/abstraction`, `hardware/mock` and `hardware/transport` is empty; `test_the_runtime_host_runs_the_remote_devices_through_the_device_manager` runs configure, initialize, start, read, write, stop, shutdown and a second live period through `RuntimeHost` with the existing I2 `observe()` and I3 `diagnostics()`, with exact request counts (6 after connect and configure, then 6 for initialize with its fresh session, 4 for start) |
+| 3, 11: driving explicit; `RemoteNode::service()` the only production supervision entry; nothing hidden | `test_nothing_is_supervised_unless_somebody_drives_it` (ten virtual seconds, nobody drives: nothing changes; one `pump()` and everything is evaluated); `LoopbackLink` unit tests fix the order (clock, Edge poll, Nexus service: an answer the Edge sends in a step is read in the same step, a Nexus heartbeat in the next), exact consumption of time, the quantum, determinism; source scans forbid `LoopbackLink` from owning anything, being a Component/Device/Endpoint, having a clock, thread or sleep, or calling any lifecycle, reconnect or recovery operation, and forbid every Nexus source from referring to it |
+| 4, 6, 9, 12, 13: diagnostics observational, passive, snapshot-consistent, never induce liveness or recovery | `test_diagnostics_change_nothing_in_any_state` compares a fingerprint (the two texts, virtual time, next sequence, liveness time, transport pending, sent and delivered counts of both directions, the Edge's received frames, record count, every endpoint state on both sides) before and after 25 rounds of `diagnose` and `describe` in six states (before anything runs, running, time passed undriven, DEGRADED, DISCONNECTED with FAULT endpoints, after the Edge timed out); a source scan forbids in the diagnostics sources every call that drives, sends, reads a frame, changes a lifecycle or recovers; `test_nothing_recovers_by_itself_and_the_runtime_way_back_works` observes and diagnoses through three virtual seconds with no request sent and no reconnect, then recovers only by stop, shutdown, initialize, start |
+| 5: link records read-only | the snapshot holds copies; `test_the_returned_copies_cannot_reach_the_node` mutates a copy and the node's records and statistics are unchanged |
+| 7, 14: fault origins distinguishable and fixed per episode | `FaultOrigin` is recorded explicitly (not parsed); `test_each_origin_is_recorded_explicitly_with_its_own_reason` (LINK_LOST, SESSION_CLOSED, REMOTE_FAULT, LOCAL_FAILURE, NONE), `test_an_origin_is_fixed_for_its_episode...` (a later loss, close, fresh HELLO or more driving never changes it; shutdown and a new lifecycle start a new episode with its own record), `test_a_new_episode_does_not_inherit_the_previous_origin`, `test_the_proxy_keeps_the_origin_of_a_fault_that_exists`; the three reasons appear verbatim in health detail, record and text |
+| 8, 15: Edge authority versus the Nexus representation; no direct Edge inspection in Nexus production code | `test_the_edge_may_be_safe_while_the_nexus_does_not_know_yet` (Edge actuator STOPPED, Nexus proxy RUNNING and the runtime health HEALTHY until the Nexus is driven; no hidden synchronization); the Nexus diagnostics and the Edge diagnostics are separate headers, `RemoteNode` has no reference to an `EdgeHost` and the scans forbid it |
+| close() Nexus-local | `test_close_is_nexus_local_and_the_edge_stops_the_actuator_by_itself`: the proxies go FAULT with `session closed`, the Edge keeps its session and its running actuator for 299 ms and stops it at its own timeout; documented everywhere as Nexus-local |
+| FRL-001 through the runtime | `test_link_loss_reaches_the_runtime_event_log_once_per_endpoint`: exactly 4 ERROR events with the manager as source and one link record, the Edge safe at zero, the manager's health UNHEALTHY through the existing path, and 20 more rounds of driving, observation and diagnostics add nothing |
+| DR-002 | `test_the_text_is_sanitized_and_has_no_configuration_values`: hostile Nexus and Edge snapshots (control characters, quotes, forged lines in reasons, errors, capability names, device and endpoint names) cannot forge a line or open a quoted field; distinctive configuration values never appear in either text |
+| Configuration | `test_the_link_timing_is_validated_before_anything_is_sent` (an invalid timing is CONFIGURATION_ERROR with nothing on the link; a valid one is proposed in HELLO, accepted by the Edge, and governs heartbeats and the timeout on both sides), `test_the_i2_loader_rejects_typos_after_discovery` |
+
+- Build: clean Debug and Release, 0 warnings.
+- Regression: `ctest` 142/142 in Debug and Release (76 Core + 18 KOS-I2 + 21 KOS-I3 + 27 I4); `make check` PASS; `git diff --check` clean.
+- ASan and UBSan: all Edge, Nexus, diagnostics, loopback and runtime-integration tests clean. ASan-class bug found by the new tests before the gate: a dangling reference in the device snapshot helper (a temporary capability set), fixed.
+- Mutation: 45 mutants of the loopback, the diagnostics and their text sanitizing, the Edge and Nexus snapshots, the origin recording and lookup, and the episode rules. 36 caught by the first test set; 7 survivors exposed real gaps (the node statistics, the snapshot's virtual time, the Edge text's `sealed`, the Edge names' sanitizing, the device address, the quote sanitizing, the proxy's live guard) and are caught by new tests; the two resets of the origin at `initialize` and at `shutdown` are individually redundant (FAULT is left only by shutdown) and removing both together is caught. Two mutants of mine were invalid (one did not compile, one had a wrong pattern) and were redone.
+- Core R1.0, the I3 contracts, the mocks, the runtime and the transport are unchanged.
+
+**Known limitations.** Active observation of the Edge over the link is not available (deferred); the Nexus diagnostics show its representation only. `LOCAL_FAILURE` also covers an operation that failed because the link dropped during that very operation (the proxy was mid-request, so the node did not fault it). The link-loss record count includes sessions that ended while no endpoint was live (0 endpoints faulted). Supervision still runs only when driven.

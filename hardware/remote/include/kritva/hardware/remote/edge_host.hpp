@@ -126,6 +126,9 @@ public:
     /// Virtual time of the last frame accepted in the current session (any valid in-session frame).
     [[nodiscard]] std::uint64_t last_valid_frame_ns() const noexcept { return last_valid_frame_ns_; }
     [[nodiscard]] const EdgeStats& stats() const noexcept { return stats_; }
+    /// The served registry and the transport's virtual time now: reads, for diagnostics; they drive nothing.
+    [[nodiscard]] const DeviceRegistry& registry() const noexcept { return registry_; }
+    [[nodiscard]] std::uint64_t now_ns() const noexcept { return link_.now_ns(); }
     /// CONNECTED, DEGRADED (observation only) or DISCONNECTED (no session), evaluated at the current virtual time.
     [[nodiscard]] transport::SessionState link_state() const noexcept;
 

@@ -321,13 +321,25 @@ if(TARGET kritva_hardware_transport AND TARGET kritva_hardware_remote)
     target_link_libraries(kritva_remote_supervision_test PRIVATE kritva::hardware_remote kritva::hardware_mock)
     add_test(NAME kritva_remote_supervision_unit COMMAND kritva_remote_supervision_test)
 
+    add_executable(kritva_loopback_link_test hardware/unit/loopback_link_test.cpp)
+    target_link_libraries(kritva_loopback_link_test PRIVATE kritva::hardware_remote kritva::hardware_mock kritva::runtime)
+    add_test(NAME kritva_loopback_link_unit COMMAND kritva_loopback_link_test)
+
+    add_executable(kritva_remote_diagnostics_test hardware/unit/remote_diagnostics_test.cpp)
+    target_link_libraries(kritva_remote_diagnostics_test PRIVATE kritva::hardware_remote kritva::hardware_mock kritva::runtime)
+    add_test(NAME kritva_remote_diagnostics_unit COMMAND kritva_remote_diagnostics_test)
+
+    add_executable(kritva_runtime_remote_integration_test hardware/integration/runtime_remote_integration_test.cpp)
+    target_link_libraries(kritva_runtime_remote_integration_test PRIVATE kritva::hardware_remote kritva::hardware_mock kritva::runtime)
+    add_test(NAME kritva_runtime_remote_integration COMMAND kritva_runtime_remote_integration_test)
+
     add_executable(kritva_protocol_spec_consistency_test hardware/unit/protocol_spec_consistency_test.cpp)
     target_link_libraries(kritva_protocol_spec_consistency_test PRIVATE kritva::hardware_transport)
     add_test(NAME kritva_protocol_spec_consistency
         COMMAND kritva_protocol_spec_consistency_test ${CMAKE_SOURCE_DIR}/docs/architecture/KOS-I4_PROTOCOL.md)
 
     # Sanity: every public contract header compiles on its own.
-    set(KRITVA_I4_HEADERS transport/protocol.hpp transport/frame.hpp transport/codec.hpp transport/transport.hpp transport/simulated_transport.hpp transport/link_config.hpp remote/node.hpp remote/capability_dispatch.hpp remote/edge_host.hpp remote/topology.hpp remote/remote_session.hpp remote/remote_node.hpp remote/remote_endpoint.hpp)
+    set(KRITVA_I4_HEADERS transport/protocol.hpp transport/frame.hpp transport/codec.hpp transport/transport.hpp transport/simulated_transport.hpp transport/link_config.hpp remote/node.hpp remote/capability_dispatch.hpp remote/edge_host.hpp remote/topology.hpp remote/remote_session.hpp remote/remote_node.hpp remote/remote_endpoint.hpp remote/diagnostics_text.hpp remote/remote_diagnostics.hpp remote/edge_diagnostics.hpp remote/loopback_link.hpp)
     set(KRITVA_I4_HEADER_CHECKS "")
     foreach(header IN LISTS KRITVA_I4_HEADERS)
         string(REPLACE "/" "_" stem "${header}")

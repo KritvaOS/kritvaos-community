@@ -108,6 +108,59 @@ int main(int argc, char** argv) {
             }
         }
     }
+    // The Nexus diagnostics belong to the Nexus side too: no Edge object, and no loopback composition.
+    for (const std::string f : {"include/kritva/hardware/remote/remote_diagnostics.hpp", "src/remote_diagnostics.cpp"}) {
+        const std::string code = code_of(root + f);
+        for (const auto& token : nexus_forbidden) if (has(code, token)) { std::fprintf(stderr, "%s uses forbidden token '%s'\n", f.c_str(), token.c_str()); return 1; }
+    }
+    for (const auto& f : nexus_files) {
+        if (has(code_of(root + f), "loopback_link") || has(code_of(root + f), "LoopbackLink")) { std::fprintf(stderr, "%s depends on the loopback composition\n", f.c_str()); return 1; }
+    }
+
+    // Diagnostics are passive: no call that drives, sends, reads a frame, changes a lifecycle or a state, or recovers.
+    const std::vector<std::string> active_calls = {
+        "service(", "poll(", "advance(", "reopen(", "open(", "close(", "send(", "receive(", "initialize(", "start(", "stop(", "shutdown(",
+        "configure(", "connect(", "disconnect(", "retransmit", "enter_fault", "fault(", "acquire(", "release(", "lifecycle(", "write(", "read(", "observe(",
+        "set_handlers", "add_proxy", "clear(", "pop_back", "erase",
+    };
+    const std::vector<std::string> edge_side_forbidden = {
+        "RemoteNode", "RemoteSession", "remote_node.hpp", "remote_session.hpp", "RuntimeHost", "RuntimeManager", "DeviceManager", "device_manager.hpp",
+        "kritva/runtime/", "core/runtime", "mock_", "Mock", "<chrono>", "<thread>", "<mutex>", "<atomic>", "<random>", "<ctime>", "sleep", "steady_clock",
+        "system_clock", "clock_gettime", "<sys/socket.h>", "socket(", "std::thread", "std::async",
+    };
+    const std::vector<std::string> diagnostics_files = {
+        "include/kritva/hardware/remote/diagnostics_text.hpp", "include/kritva/hardware/remote/remote_diagnostics.hpp", "src/remote_diagnostics.cpp",
+        "include/kritva/hardware/remote/edge_diagnostics.hpp", "src/edge_diagnostics.cpp",
+    };
+    for (const auto& f : diagnostics_files) {
+        const std::string code = code_of(root + f);
+        for (const auto& token : active_calls) {
+            if (has(code, token)) { std::fprintf(stderr, "%s calls '%s': diagnostics must be passive\n", f.c_str(), token.c_str()); return 1; }
+        }
+        if (f.find("edge_diagnostics") != std::string::npos) {                       // the Edge diagnostics know no Nexus object
+            for (const auto& token : edge_side_forbidden) if (has(code, token)) { std::fprintf(stderr, "%s uses forbidden token '%s'\n", f.c_str(), token.c_str()); return 1; }
+        }
+    }
+    for (const auto& f : {"include/kritva/hardware/remote/diagnostics_text.hpp"}) {
+        const std::string code = code_of(root + f);
+        for (const auto& token : edge_side_forbidden) if (has(code, token)) { std::fprintf(stderr, "%s uses forbidden token '%s'\n", f, token.c_str()); return 1; }
+    }
+
+    // The LoopbackLink is a composition utility: it only advances the clock, polls the Edge and services the Nexus. It owns
+    // nothing, is no Component, Device or Endpoint, has no clock or thread, and makes no lifecycle, safety, reconnect or recovery decision.
+    const std::vector<std::string> loopback_files = {"include/kritva/hardware/remote/loopback_link.hpp", "src/loopback_link.cpp"};
+    const std::vector<std::string> loopback_forbidden = {
+        "RuntimeHost", "RuntimeManager", "DeviceManager", "device_manager.hpp", "kritva/runtime/", "core/runtime", "Component", ": public Endpoint", ": public Device",
+        "unique_ptr", "shared_ptr", "make_unique", "make_shared", "new ", "RemoteSession", "mock_", "Mock",
+        "initialize(", "start(", "stop(", "shutdown(", "configure(", "connect(", "disconnect(", "reopen(", "close(", "enter_fault", "fault(", "acquire(", "retransmit",
+        "<chrono>", "<thread>", "<mutex>", "<atomic>", "<random>", "<ctime>", "sleep", "steady_clock", "system_clock", "clock_gettime", "<sys/socket.h>", "socket(", "std::thread", "std::async",
+    };
+    for (const auto& f : loopback_files) {
+        const std::string code = code_of(root + f);
+        for (const auto& token : loopback_forbidden) {
+            if (has(code, token)) { std::fprintf(stderr, "%s uses forbidden token '%s'\n", f.c_str(), token.c_str()); return 1; }
+        }
+    }
     std::printf("remote_hygiene_test: PASS\n");
     return 0;
 }
