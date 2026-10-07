@@ -57,7 +57,8 @@ struct RemoteNodeDiagnostics {
 
 /// Deterministic text of a snapshot: the same snapshot always renders the same text. It contains identities, states,
 /// counters, fault origins and the sanitized reasons and error messages (control characters, DEL and double quotes replaced);
-/// no configuration value and no raw frame content is ever included. The reasons stay as they are: "link lost", "session
+/// no application configuration value (a setting sent to an endpoint, the content of a configuration file) and no raw frame
+/// content is ever included. The negotiated link timing is protocol and session state, not application configuration, and is shown. The reasons stay as they are: "link lost", "session
 /// closed" and "remote fault: <reason>".
 [[nodiscard]] std::string describe(const RemoteNodeDiagnostics& diagnostics);
 

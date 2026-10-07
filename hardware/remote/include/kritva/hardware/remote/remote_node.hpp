@@ -85,6 +85,10 @@ struct RemoteNodeStats {
     std::uint64_t fault_events_ignored{0};    ///< a FAULT_EVENT for an unknown, not live or already faulted proxy
 };
 
+/// The configuration of a RemoteNode: the two node ids, the link timing and the peer tick (see RemoteSessionConfig). The alias lets
+/// application code configure a node without naming the session layer, which is the node's own implementation detail.
+using RemoteNodeConfig = RemoteSessionConfig;
+
 class RemoteNode {
 public:
     RemoteNode(transport::Transport& link, RemoteSessionConfig config, RemoteSettings settings = {});

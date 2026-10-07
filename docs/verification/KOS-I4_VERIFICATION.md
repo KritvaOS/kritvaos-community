@@ -18,6 +18,7 @@ Run from a fresh clone/container before milestone closure. Any I2/I3 regression 
 | I4-004 | 3c535b6 | PASS, 0 warnings | 133/133 | PASS | 70 mutants: 56 caught first time, 8 survivors fixed with new tests, 6 equivalent |
 | I4-005 | a690520 | PASS, 0 warnings | 137/137 | PASS | 63 mutants: 51 caught first time, 11 survivors fixed with new tests, 1 equivalent |
 | I4-006 | 94aa01d | PASS, 0 warnings | 139/139 | PASS | 61 mutants: 56 caught first time, 2 survivors fixed with new tests, 3 equivalent |
-| I4-007 | subject `KOS-I4 I4-007 implement runtime integration and diagnostics` | PASS, 0 warnings | 142/142 | PASS | 45 mutants: 36 caught first time, 7 survivors fixed with new tests, 2 individually redundant (jointly caught) |
+| I4-007 | cd51be8 | PASS, 0 warnings | 142/142 | PASS | 45 mutants: 36 caught first time, 7 survivors fixed with new tests, 2 individually redundant (jointly caught) |
+| I4-008 | subject `KOS-I4 I4-008 implement nexus edge reference demo` | PASS, 0 warnings | 145/145 | PASS | 20 end-to-end breaks of the production code: all caught after strengthening the demo (3 missed first) |
 
 Per-task detail is in `planning/milestones/KOS-I4/I4-00x/ACCEPTANCE_CRITERIA.md`.

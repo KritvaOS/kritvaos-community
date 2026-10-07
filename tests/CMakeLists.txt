@@ -362,3 +362,21 @@ if(TARGET kritva_hardware_transport AND TARGET kritva_hardware_remote)
         message(FATAL_ERROR "kritva_hardware_remote must depend only on kritva::hardware and kritva::hardware_transport (found: ${KRITVA_REMOTE_LINKS})")
     endif()
 endif()
+
+# ------------------------------------------------------------------------------
+# KOS-I4 Nexus-Edge reference demo (I4-008)
+# ------------------------------------------------------------------------------
+if(TARGET kritva_nexus_edge_demo_lib)
+    add_executable(kritva_nexus_edge_demo_test hardware/integration/nexus_edge_demo_test.cpp)
+    target_link_libraries(kritva_nexus_edge_demo_test PRIVATE kritva_nexus_edge_demo_lib)
+    add_test(NAME kritva_nexus_edge_demo_system COMMAND kritva_nexus_edge_demo_test)
+
+    add_executable(kritva_nexus_edge_demo_hygiene_test hardware/unit/nexus_edge_demo_hygiene_test.cpp)
+    add_test(NAME kritva_nexus_edge_demo_hygiene COMMAND kritva_nexus_edge_demo_hygiene_test ${CMAKE_SOURCE_DIR})
+
+    add_test(NAME kritva_nexus_edge_demo_sanity
+        COMMAND ${CMAKE_COMMAND} -DDEMO_EXE=$<TARGET_FILE:kritva_nexus_edge_demo>
+                -DDEMO_CONFIG=${CMAKE_SOURCE_DIR}/examples/nexus_edge_demo/nexus_edge_demo.conf
+                -DDEMO_CLEAN_CONFIG=${CMAKE_SOURCE_DIR}/examples/nexus_edge_demo/nexus_edge_demo_clean.conf
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/hardware/sanity/run_nexus_edge_demo_sanity.cmake)
+endif()
