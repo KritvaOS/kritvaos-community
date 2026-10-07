@@ -4,6 +4,7 @@
 |---|---|
 | KOS-I2 | IMPLEMENTED / predecessor baseline |
 | KOS-I3 | IMPLEMENTED; audit and re-audit remediation complete; **HUMAN SAFETY REVIEW REQUIRED — OPEN** |
+| KOS-I4 | SOFTWARE IMPLEMENTATION COMPLETE (I4-001..I4-008, architect-accepted); **HUMAN SAFETY REVIEW — OPEN**; KOS-CI-001 deferred |
 
 ## KOS-I2 Task Commits
 
@@ -43,3 +44,27 @@
 | Human safety review: `MotorCommand`, motor limits, fault-to-zero behavior, velocity command semantics, mock safety behavior, any future mapping to physical actuator control | **OPEN: not reviewed by a human** |
 
 KOS-I3 is not fully closed until the owner signs off the safety review.
+
+## KOS-I4 Task Commits
+
+| Task | Commit |
+|---|---|
+| I4-001 | d2f8936 |
+| I4-002 | 52218f4 (after 15c1781) |
+| I4-003 | c40fbb2 |
+| I4-004 | 3c535b6 |
+| I4-005 | a690520 |
+| I4-006 | 94aa01d |
+| I4-007 | cd51be8 |
+| I4-008 | 79f4daf |
+
+## KOS-I4 closure gates
+
+| Gate | Status |
+|---|---|
+| Software acceptance (8 tasks, architect review) | PASS |
+| Milestone acceptance record (`planning/milestones/KOS-I4/ACCEPTANCE_CRITERIA.md`) | Software items checked with evidence; the safety gate is listed separately and left unchecked |
+| CI | `ci.yml` (Debug build and full test suite) and the source-header check pass on every I4 commit; Release, ASan and UBSan are local evidence only; **KOS-CI-001 (Release/ASan/UBSan CI) remains deferred** |
+| Human safety review: the I4 actuator write paths (Edge limit validation, duplicate/replay protection, heartbeat-timeout stop, fault-to-safe-state) | **OPEN: not reviewed by a human** |
+
+KOS-I4 is not formally closed until the owner signs off the safety review. Physical actuator deployment remains blocked by that gate and by the independent, still OPEN KOS-I3 safety review.

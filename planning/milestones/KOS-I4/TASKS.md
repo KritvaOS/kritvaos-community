@@ -17,17 +17,19 @@ Strictly sequential; one atomic commit per task.
 
 **I4-001 gate:** I4-002 does not start until `docs/architecture/KOS-I4_PROTOCOL.md` and the I4-001 contract headers are review-clean (architect review).
 
-**Commit format:** `KOS-I4 I4-00N <imperative description>`; no `Co-Authored-By` trailer.
+**Commit format:** `KOS-I4 I4-00N <imperative description>`; the `Co-Authored-By` trailer was omitted through I4-007 (cd51be8) and is used from I4-008 onward, as authorised by the user.
 
 ## Status
 
 | Task | Status |
 |---|---|
 | I4-001 | Done; architect review APPROVED (d2f8936) |
-| I4-002 | Done (software); landed commit under architect review |
-| I4-003 | Done (software); landed commit under architect review |
-| I4-004 | Done (software); landed commit under architect review; HUMAN SAFETY REVIEW OPEN |
-| I4-005 | Done (software); landed commit under architect review; HUMAN SAFETY REVIEW OPEN |
-| I4-006 | Done (software); landed commit under architect review; HUMAN SAFETY REVIEW OPEN |
-| I4-007 | Done (software); landed commit under architect review; HUMAN SAFETY REVIEW OPEN |
-| I4-008 | Done (software); landed commit under architect review; HUMAN SAFETY REVIEW OPEN |
+| I4-002 | Done (software); architect PASS (52218f4) |
+| I4-003 | Done (software); architect PASS (c40fbb2) |
+| I4-004 | Done (software); architect PASS (3c535b6); HUMAN SAFETY REVIEW OPEN |
+| I4-005 | Done (software); architect PASS (a690520); HUMAN SAFETY REVIEW OPEN |
+| I4-006 | Done (software); architect PASS (94aa01d); HUMAN SAFETY REVIEW OPEN |
+| I4-007 | Done (software); architect PASS (cd51be8); HUMAN SAFETY REVIEW OPEN |
+| I4-008 | Done (software); architect PASS (79f4daf); HUMAN SAFETY REVIEW OPEN |
+
+**KOS-I4 software implementation complete.** The human safety review is OPEN, as is the independent KOS-I3 review. KOS-CI-001 (Release/ASan/UBSan CI) is deferred.

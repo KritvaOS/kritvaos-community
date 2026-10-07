@@ -1,2 +1,3 @@
 
 - I4-008: the Nexus-Edge reference demo `kritva_nexus_edge_demo`: the whole production path from the RuntimeHost to mock hardware, with the Edge as the actuator-safety authority; discovery, runtime configuration, initialize and start, reads and writes, observation and diagnostics, heartbeats, hostile traffic, link loss with the Edge safe stop and the Nexus fault visibility, no automatic recovery, explicit recovery and a second live period; a source scan proving it does not bypass the production path. Human safety review OPEN.
+- Closure: KOS-I4 software implementation complete (I4-001..I4-008 architect-accepted, last 79f4daf). Human safety review OPEN; KOS-CI-001 deferred.
