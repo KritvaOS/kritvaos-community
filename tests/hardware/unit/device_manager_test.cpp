@@ -89,8 +89,8 @@ static void test_deterministic_order() {                             // DER-405,
 }
 
 static void test_registry_closes_at_initialize() {                   // DER-206
+    Device late(DeviceInfo::create(DeviceId{3}, "late").value());    // declared before the rig: a registered Device must outlive the manager
     Rig r;
-    Device late(DeviceInfo::create(DeviceId{3}, "late").value());
     KRITVA_CHECK(r.manager.register_device(late).has_value());       // still open before initialize
     r.run_up();
     Device later(DeviceInfo::create(DeviceId{4}, "later").value());
