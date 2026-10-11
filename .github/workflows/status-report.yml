@@ -1,0 +1,54 @@
+#==============================================================================
+# Copyright (c) 2026 KritvaOS
+# SPDX-License-Identifier: Apache-2.0
+#
+# File        : status-report.yml
+# Description : GitHub Actions validation of the program status report
+#
+# Component   : Infrastructure
+# Module      : Program Status Reporting
+# Layer       : CI
+#
+# Requirements: kritva-program decisions D-009, D-011, D-013
+# API         : GitHub Actions workflow
+#
+# Author      : KritvaOS
+# Created     : 11-10-2026
+#==============================================================================
+
+name: Status Report Check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  status-report-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install schema validator
+        run: python3 -m pip install jsonschema
+      - name: Generator regression tests
+        run: python3 -m unittest scripts/test_gen_status.py
+      - name: Status facts match planning records
+        run: python3 scripts/gen_status.py --check-facts
+      - name: Validate status.json against schema 2.0 (vendored copy)
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          import jsonschema
+          schema = json.load(open("status/status.schema.json"))
+          report = json.load(open("status/status.json"))
+          jsonschema.Draft202012Validator(schema).validate(report)
+          assert report["schema_version"] == "2.0", "unsupported schema_version"
+          print("status.json valid; tasks:", len(report["tasks"]))
+          PY
