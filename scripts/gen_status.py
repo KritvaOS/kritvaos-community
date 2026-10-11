@@ -146,14 +146,19 @@ def source_info(root):
 
 def build(root, updated_at):
     source, sync, dirty_unchecked = source_info(root)
-    tasks = []
+    tasks, seen_ids = [], set()
     for ms in MILESTONES:
         tpath = root / "planning" / "milestones" / ms / "TASKS.md"
         rows = parse_tasks(tpath)
         if not rows:
             raise ValueError(f"{tpath}: no task rows found")
         for tid in sorted(rows):
+            if tid in seen_ids:
+                raise ValueError(f"task {tid} appears in more than one milestone")
+            seen_ids.add(tid)
             acc = f"planning/milestones/{ms}/{tid}/ACCEPTANCE_CRITERIA.md"
+            if not (root / acc).is_file():
+                raise ValueError(f"evidence target missing for {tid}: {acc}")
             tasks.append({
                 "task_id": tid,
                 "execution": execution(rows[tid]),

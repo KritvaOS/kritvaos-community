@@ -68,6 +68,23 @@ class CommittedReport(unittest.TestCase):
 
 
 class Synthetic(unittest.TestCase):
+    def test_every_evidence_target_exists(self):
+        doc, _ = gen_status.build(ROOT, "2026-10-11T00:00:00Z")
+        for t in doc["tasks"]:
+            for e in t["evidence"]:
+                self.assertTrue((ROOT / e["uri"]).is_file(), e["uri"])
+
+    def test_missing_evidence_target_fails(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as d:
+            r = Path(d)
+            shutil.copytree(ROOT / "planning", r / "planning")
+            (r / ".git" / "refs" / "heads").mkdir(parents=True)
+            (r / ".git" / "refs" / "heads" / "main").write_text("a" * 40)
+            (r / "planning/milestones/KOS-I2/I2-001/ACCEPTANCE_CRITERIA.md").unlink()
+            with self.assertRaises(ValueError):
+                gen_status.build(r, "2026-10-11T00:00:00Z")
+
     def test_status_column_table(self):
         rows = parse_text("| Task | Status |\n|---|---|\n| I2-001 | Runtime | Done |\n")
         self.assertEqual(rows, {"I2-001": "Done"})

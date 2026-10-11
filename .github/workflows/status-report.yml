@@ -18,6 +18,10 @@
 
 name: Status Report Check
 
+concurrency:
+  group: status-report-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
   pull_request:
@@ -36,11 +40,13 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install schema validator
-        run: python3 -m pip install jsonschema
+        run: python3 -m pip install jsonschema==4.26.0
       - name: Generator regression tests
         run: python3 -m unittest scripts/test_gen_status.py
       - name: Status facts match planning records
         run: python3 scripts/gen_status.py --check-facts
+      - name: Vendored schema matches recorded hash
+        run: cd status && sha256sum -c status.schema.json.sha256
       - name: Validate status.json against schema 2.0 (vendored copy)
         run: |
           python3 - <<'PY'
