@@ -1,0 +1,370 @@
+{
+  "schema_version": "2.0",
+  "workstream_id": "COMMUNITY",
+  "repo": "KritvaOS/kritvaos-community",
+  "source": {
+    "branch": "main",
+    "commit": "da9346d8f758d7d59fbf9ba15462eef1b9cd1446",
+    "tag": null
+  },
+  "tasks": [
+    {
+      "task_id": "I2-001",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I2/I2-001/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I2-002",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I2/I2-002/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I2-003",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I2/I2-003/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I2-004",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I2/I2-004/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I2-005",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I2/I2-005/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I2-006",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I2/I2-006/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I3-001",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I3/I3-001/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I3-002",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I3/I3-002/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I3-003",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I3/I3-003/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I3-004",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I3/I3-004/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I3-005",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I3/I3-005/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I3-006",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I3/I3-006/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I3-007",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I3/I3-007/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I4-001",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I4/I4-001/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done; architect review APPROVED (d2f8936)'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I4-002",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I4/I4-002/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done (software); architect PASS (52218f4)'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I4-003",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I4/I4-003/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done (software); architect PASS (c40fbb2)'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I4-004",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I4/I4-004/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done (software); architect PASS (3c535b6); HUMAN SAFETY REVIEW OPEN'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I4-005",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I4/I4-005/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done (software); architect PASS (a690520); HUMAN SAFETY REVIEW OPEN'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I4-006",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I4/I4-006/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done (software); architect PASS (94aa01d); HUMAN SAFETY REVIEW OPEN'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I4-007",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I4/I4-007/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done (software); architect PASS (cd51be8); HUMAN SAFETY REVIEW OPEN'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    },
+    {
+      "task_id": "I4-008",
+      "execution": "COMPLETE",
+      "git_sync": "COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-I4/I4-008/ACCEPTANCE_CRITERIA.md",
+          "description": "Task acceptance criteria record; planning status text: 'Done (software); architect PASS (79f4daf); HUMAN SAFETY REVIEW OPEN'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-11T12:00:00Z"
+}
