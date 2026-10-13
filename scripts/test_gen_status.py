@@ -72,6 +72,9 @@ class Synthetic(unittest.TestCase):
         doc, _ = gen_status.build(ROOT, "2026-10-11T00:00:00Z")
         for t in doc["tasks"]:
             for e in t["evidence"]:
+                if e["uri"].startswith("https://"):  # CI run entry: validated by load_ci_evidence, not a file
+                    self.assertTrue(e["commit"] and e["ci_run"], e["uri"])
+                    continue
                 self.assertTrue((ROOT / e["uri"]).is_file(), e["uri"])
 
     def test_missing_evidence_target_fails(self):
@@ -109,6 +112,66 @@ class Synthetic(unittest.TestCase):
     def test_no_rows_fails(self):
         with self.assertRaises(ValueError):
             parse_text("# nothing here\n")
+
+
+class CiEvidence(unittest.TestCase):
+    A, B = "a" * 40, "b" * 40
+    URL = "https://github.com/KritvaOS/kritvaos-community/actions/runs/123"
+
+    def entry(self, **kw):
+        e = {"commit": self.A, "task_commit": self.A, "ci_run": 123, "url": self.URL, "workflow": "KritvaOS CI",
+             "result": "PASS", "kind": "OWN"}
+        e.update(kw)
+        return e
+
+    def repo_with(self, entries):
+        import json
+        import shutil
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        r = Path(d.name)
+        shutil.copytree(ROOT / "planning", r / "planning")
+        (r / ".git" / "refs" / "heads").mkdir(parents=True)
+        (r / ".git" / "refs" / "heads" / "main").write_text("a" * 40)
+        if entries is not None:
+            (r / "status").mkdir()
+            (r / "status" / "evidence.json").write_text(json.dumps({"entries": entries}))
+        return r
+
+    def test_no_file_means_no_ci_evidence(self):
+        doc, _ = gen_status.build(self.repo_with(None), "2026-10-11T00:00:00Z")
+        self.assertTrue(all(len(t["evidence"]) == 1 and t["evidence"][0]["commit"] is None for t in doc["tasks"]))
+
+    def test_valid_entry_is_emitted_as_commit_bound_pass(self):
+        doc, _ = gen_status.build(self.repo_with({"I2-001": self.entry()}), "2026-10-11T00:00:00Z")
+        t = next(t for t in doc["tasks"] if t["task_id"] == "I2-001")
+        self.assertEqual(len(t["evidence"]), 2)
+        ev = t["evidence"][1]
+        self.assertEqual((ev["commit"], ev["ci_run"], ev["result"], ev["uri"]), (self.A, "123", "PASS", self.URL))
+        self.assertEqual(sum(1 for x in doc["tasks"] if len(x["evidence"]) == 2), 1)
+
+    def test_bad_entries_are_rejected(self):
+        bad = [("I9-999", self.entry()), ("I2-001", self.entry(result="FAIL")),
+               ("I2-001", self.entry(commit="abc123")), ("I2-001", self.entry(ci_run=124)),
+               ("I2-001", self.entry(url="https://example.com/runs/123")),
+               ("I2-001", self.entry(kind="GUESS")), ("I2-001", self.entry(kind="OWN", commit=self.B)),
+               ("I2-001", self.entry(workflow=""))]
+        for tid, e in bad:
+            with self.assertRaises(ValueError, msg=(tid, e)):
+                gen_status.build(self.repo_with({tid: e}), "2026-10-11T00:00:00Z")
+
+    def test_milestone_evidence_may_be_on_a_later_commit(self):
+        doc, _ = gen_status.build(self.repo_with({"I2-001": self.entry(kind="MILESTONE", commit=self.B)}),
+                                  "2026-10-11T00:00:00Z")
+        self.assertEqual(next(t for t in doc["tasks"] if t["task_id"] == "I2-001")["evidence"][1]["commit"], self.B)
+
+    def test_committed_evidence_file_matches_report(self):
+        import json
+        if not (ROOT / "status" / "evidence.json").is_file():
+            self.skipTest("no evidence file")
+        doc, _ = gen_status.build(ROOT, "2026-10-11T00:00:00Z")
+        n = len(json.loads((ROOT / "status" / "evidence.json").read_text())["entries"])
+        self.assertEqual(sum(1 for t in doc["tasks"] if len(t["evidence"]) == 2), n)
 
 
 if __name__ == "__main__":

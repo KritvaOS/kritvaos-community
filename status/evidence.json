@@ -1,0 +1,195 @@
+{
+  "_note": "Owner-curated CI evidence per task (generated from kritva-program v2/tracking/evidence_map_proposal.json, reviewed by the owner). Read by scripts/gen_status.py. A run here is a FACT about a commit; credit is still decided centrally.",
+  "schema": "1.0",
+  "entries": {
+    "I2-001": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "150d21161ce22676a23c76adbc5758222421f948"
+    },
+    "I2-002": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "e2851fdae3229e7a0139841ee1c099dab2ad218d"
+    },
+    "I2-003": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "ae0de753d1e240a71da9e1411efc30cbfe9a109e"
+    },
+    "I2-004": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "bfa2b29aee7fcfcd34bf9b870b6249e556e32333"
+    },
+    "I2-005": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "e8ad7937366455c758c9cd0add35fb17d8593b3c"
+    },
+    "I2-006": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "69521ef3c164847e8956ef509d2f8f6a308f24b1"
+    },
+    "I3-001": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "39780ccb8f93719471ee982299f6f43f2cee6196"
+    },
+    "I3-002": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "a7e08e518257d657ae0b1a1ac8696241cc8844d2"
+    },
+    "I3-003": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "97ab51870a122019a80acf7507bd916a4bef3a3b"
+    },
+    "I3-004": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "f98067542476258b3e346353115bf663760b5491"
+    },
+    "I3-005": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "cd1a35c85f2bc9e2680f0c3ce80be524a1fc15ce"
+    },
+    "I3-006": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "46b91fabac8bd4a9df00797ca23313717127c325"
+    },
+    "I3-007": {
+      "commit": "8256ba331f4e09472fa6afc09dadef5ddabdc032",
+      "ci_run": 38158709895,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/38158709895",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "MILESTONE",
+      "task_commit": "d8cd3150867a7e71111579a9cac6d37a5832731e"
+    },
+    "I4-001": {
+      "commit": "d2f893622db2479efe37ca8bbbdcab37d8f151c3",
+      "ci_run": 37253855540,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/37253855540",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "OWN",
+      "task_commit": "d2f893622db2479efe37ca8bbbdcab37d8f151c3"
+    },
+    "I4-002": {
+      "commit": "52218f484f29ea58813b848008d187aeab98a0bf",
+      "ci_run": 37256868535,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/37256868535",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "OWN",
+      "task_commit": "52218f484f29ea58813b848008d187aeab98a0bf"
+    },
+    "I4-003": {
+      "commit": "c40fbb23afacab27341c5e8f0d35e3523ebbaf4a",
+      "ci_run": 37347653023,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/37347653023",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "OWN",
+      "task_commit": "c40fbb23afacab27341c5e8f0d35e3523ebbaf4a"
+    },
+    "I4-004": {
+      "commit": "3c535b64ebae626065032e7315e679e474f6853b",
+      "ci_run": 37405212290,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/37405212290",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "OWN",
+      "task_commit": "3c535b64ebae626065032e7315e679e474f6853b"
+    },
+    "I4-005": {
+      "commit": "a6905207441abdc13ec6238272e7681093c50180",
+      "ci_run": 37407633177,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/37407633177",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "OWN",
+      "task_commit": "a6905207441abdc13ec6238272e7681093c50180"
+    },
+    "I4-006": {
+      "commit": "94aa01d8ed99561acf77020257e6c517b15a369d",
+      "ci_run": 37497496804,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/37497496804",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "OWN",
+      "task_commit": "94aa01d8ed99561acf77020257e6c517b15a369d"
+    },
+    "I4-007": {
+      "commit": "cd51be85152ef6014796d1856fb0e7e962e28ccf",
+      "ci_run": 37507901354,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/37507901354",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "OWN",
+      "task_commit": "cd51be85152ef6014796d1856fb0e7e962e28ccf"
+    },
+    "I4-008": {
+      "commit": "79f4daff61ec661ace40a3c7ea0304c68f1b7ce9",
+      "ci_run": 37561636952,
+      "url": "https://github.com/KritvaOS/kritvaos-community/actions/runs/37561636952",
+      "workflow": "KritvaOS CI",
+      "result": "PASS",
+      "kind": "RERUN",
+      "task_commit": "79f4daff61ec661ace40a3c7ea0304c68f1b7ce9"
+    }
+  }
+}

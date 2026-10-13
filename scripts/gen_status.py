@@ -23,10 +23,11 @@ Reports FACTS only, derived from this repo's own planning records:
   planning/milestones/<KOS-Ix>/<task>/ACCEPTANCE_CRITERIA.md  evidence pointer
   git (or .git/refs when git is unavailable)  source commit and sync state
 It never reports review or acceptance: those are decided centrally in
-kritva-program (v2/tracking/approvals.json). Evidence entries carry no
-`commit`, `ci_run` or `report_sha256` because the planning records only hold
-short SHAs and no CI run IDs; the central consolidator therefore grants no
-progress credit until real, commit-bound evidence is added.
+kritva-program (v2/tracking/approvals.json). The ACCEPTANCE_CRITERIA entry carries no
+`commit`, `ci_run` or `report_sha256`: planning records only hold short SHAs. Commit-bound CI evidence
+comes from status/evidence.json (owner-curated, validated here, see load_ci_evidence) and is emitted as a
+second evidence entry per task. Without that file, or for a task not listed in it, the central
+consolidator grants no progress credit.
 
 Field semantics (kept deliberately conservative):
   * execution: TASKS.md "Done" means implementation done. It does NOT mean
@@ -66,6 +67,10 @@ REPO = "KritvaOS/kritvaos-community"
 MILESTONES = ["KOS-I2", "KOS-I3", "KOS-I4"]
 ROW = re.compile(r"^\|\s*(I\d-\d{3})\s*\|(.*)\|\s*$")
 SHA = re.compile(r"^[0-9a-f]{40}$")
+RUN_URL = re.compile(r"^https://github\.com/KritvaOS/kritvaos-community/actions/runs/(\d+)$")
+KINDS = {"OWN": "run on the task's own commit",
+         "RERUN": "re-run of a run on the task's own commit",
+         "MILESTONE": "run on a later commit; accepted as of that commit"}
 
 
 STATUS = re.compile(r"^(done|in progress|not started|blocked)", re.I)
@@ -144,6 +149,43 @@ def source_info(root):
     return {"branch": "main", "commit": head, "tag": None}, sync, dirty is None
 
 
+def load_ci_evidence(root, known_tasks, executions):
+    """Validate status/evidence.json and return {task_id: evidence entry}. Missing file means no CI evidence."""
+    path = root / "status" / "evidence.json"
+    if not path.is_file():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        entries = raw["entries"]
+    except (ValueError, KeyError, TypeError) as e:
+        raise ValueError(f"{path}: unreadable ({e})")
+    out = {}
+    for tid, e in entries.items():
+        where = f"{path}: {tid}"
+        if tid not in known_tasks:
+            raise ValueError(f"{where}: unknown task")
+        if executions[tid] != "COMPLETE":
+            raise ValueError(f"{where}: has CI evidence but the task is not Done in planning")
+        if not SHA.match(str(e.get("commit", ""))) or not SHA.match(str(e.get("task_commit", ""))):
+            raise ValueError(f"{where}: commit and task_commit must be full 40-hex SHAs")
+        m = RUN_URL.match(str(e.get("url", "")))
+        if not m or str(e.get("ci_run")) != m.group(1):
+            raise ValueError(f"{where}: url must be this repo's Actions run URL ending in ci_run")
+        if e.get("result") != "PASS":
+            raise ValueError(f"{where}: result must be PASS (record only successful runs)")
+        if e.get("kind") not in KINDS:
+            raise ValueError(f"{where}: kind must be one of {sorted(KINDS)}")
+        if e["kind"] in ("OWN", "RERUN") and e["commit"] != e["task_commit"]:
+            raise ValueError(f"{where}: {e['kind']} evidence must be on the task's own commit")
+        if not e.get("workflow"):
+            raise ValueError(f"{where}: workflow name required")
+        out[tid] = {
+            "type": "software", "uri": e["url"],
+            "description": f"{e['workflow']} run {e['ci_run']} PASS on {e['commit'][:7]} ({KINDS[e['kind']]})",
+            "commit": e["commit"], "ci_run": str(e["ci_run"]), "report_sha256": None, "result": "PASS"}
+    return out
+
+
 def build(root, updated_at):
     source, sync, dirty_unchecked = source_info(root)
     tasks, seen_ids = [], set()
@@ -171,6 +213,10 @@ def build(root, updated_at):
                     "commit": None, "ci_run": None, "report_sha256": None, "result": None,
                 }],
             })
+    ci = load_ci_evidence(root, seen_ids, {t["task_id"]: t["execution"] for t in tasks})
+    for t in tasks:
+        if t["task_id"] in ci:
+            t["evidence"].append(ci[t["task_id"]])
     doc = {"schema_version": "2.0", "workstream_id": WORKSTREAM_ID, "repo": REPO,
            "source": source, "tasks": tasks, "updated_at": updated_at}
     return doc, dirty_unchecked
