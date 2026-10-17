@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#==============================================================================
+# Copyright (c) 2026 KritvaOS
+# SPDX-License-Identifier: Apache-2.0
+#
+# File        : commit-msg
+# Description : Rejects commit messages that carry AI session trailers or links
+#
+# Component   : Infrastructure
+# Module      : Repository Security Controls
+# Layer       : Development
+#
+# Requirements: N/A - security control (kritva-program decision D-032 follow-up)
+# API         : Git commit-msg hook
+#
+# Author      : KritvaOS
+# Created     : 17-10-2026
+#==============================================================================
+
+set -e
+python3 scripts/security/check_commit_messages.py --file "$1"
