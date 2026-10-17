@@ -1,41 +1,13 @@
-# Kritva Actuator - code owners (EXT-AUD-015)
-# Proprietary and confidential. Copyright (c) 2026 Kritvaos.
+# KritvaOS Community - code owners (D-035, D-040)
+# Copyright (c) 2026 KritvaOS. Licensed under Apache-2.0 (see LICENSE).
 #
-# Owners are requested for review automatically. Combine with branch protection on
-# `main` (require PR, require code-owner review, require the docs-checks status) so
-# that the independent-review rule (ACT-DEC-014) is enforced by the repository.
-#
-# ACTION: replace the placeholder handles below with the real GitHub accounts or
-# teams of each role. Until then, everything defaults to the repository owner.
-#   @dineshannayya                  -> Project Lead (current repository owner)
-#   <mechanical-intern>             -> Mechanical Intern
-#   <electronics-intern>            -> Electronics/Embedded Intern
-#   <mech-reviewer>                 -> Independent Mechanical Reviewer
-#   <elec-fw-reviewer>              -> Independent Electrical/Firmware Reviewer
+# Owners are requested for review automatically. "Require review from Code Owners"
+# is enabled in the main branch ruleset (owner statement, D-040).
+# Replace or add accounts or teams here when more reviewers join; an independent
+# reviewer for safety-sensitive paths is a program decision (D-025).
 
-*                               @dineshannayya
+*                       @dineshannayya
 
-/requirements/                  @dineshannayya
-/planning/                      @dineshannayya
-/mechanical/                    @dineshannayya
-/docs/mechanical/               @dineshannayya
-/embedded/                      @dineshannayya
-/docs/electronics/              @dineshannayya
-/.gitmodules                    @dineshannayya
-/scripts/                       @dineshannayya
-/results/                       @dineshannayya
-/docs/firmware/                 @dineshannayya
-/communication/                 @dineshannayya
-/docs/interfaces/               @dineshannayya
-/software/                      @dineshannayya
-/audit/                         @dineshannayya
-/.github/                       @dineshannayya
-/LICENSE                        @dineshannayya
-
-# Submodule paths (mechanical/actuator-s|m|l, embedded/kritva-actuator-embedded) are gitlinks: the parent
-# owner reviews every pointer bump. Content inside each child is governed by that child's own
-# .github/CODEOWNERS (external audit 2026-10-16, finding 6).
-/mechanical/actuator-s          @dineshannayya
-/mechanical/actuator-m          @dineshannayya
-/mechanical/actuator-l          @dineshannayya
-/embedded/kritva-actuator-embedded @dineshannayya
+/.github/               @dineshannayya
+/SECURITY.md            @dineshannayya
+/LICENSE                @dineshannayya
