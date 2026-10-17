@@ -20,10 +20,10 @@ Public disclosure before a fix is available can increase risk to users and deplo
 
 ## 3. Reporting a Vulnerability
 
-Until a dedicated private security reporting mechanism is established, security researchers should contact the project maintainers privately using the security contact published in the repository or the project's GitHub Security Advisory mechanism, if enabled.
+Please report vulnerabilities privately by email to the security contact below. If GitHub private vulnerability reporting is enabled for this repository (Security tab, "Report a vulnerability"), you may use it instead.
 
 **Security contact:**  
-`<SECURITY_EMAIL_TO_BE_DEFINED>`
+`dinesh@kritvaos.in`
 
 When reporting a vulnerability, please provide:
 
