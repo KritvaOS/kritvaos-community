@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # File        : commit-message-check.yml
-# Description : GitHub Actions check that new commits carry no AI session trailers
+# Description : GitHub Actions check of commit messages: no AI session trailers, and the D-053 commit format
 #
 # Component   : Infrastructure
 # Module      : Repository Security Controls
@@ -35,7 +35,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Test the commit message checker
+      - name: Test the commit checkers
         run: python3 -m unittest discover -s tests/commit_message_check -v
       - name: Check commits in this pull request
         run: python3 scripts/security/check_commit_messages.py --range "origin/${{ github.base_ref }}..HEAD"
+      - name: Check the commit format (D-053, adopted under D-061)
+        run: python3 scripts/security/check_commit_format.py --range "origin/${{ github.base_ref }}..HEAD"
