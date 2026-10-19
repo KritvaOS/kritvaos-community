@@ -23,7 +23,7 @@ Created     : 19-10-2026
 | Repository | `KritvaOS/kritvaos-community` |
 | Repository Type | Platform integration (application runtime, hardware abstraction and remote layer; parent of the `core` submodule) |
 | Visibility Class | Not yet decided (D-039 in kritva-program recommends PRIVATE; the Apache-2.0 licence would permit a public release, so a public release needs an owner exception and a release review) |
-| GitHub Setting | PUBLIC (temporary, D-028 and D-037 in kritva-program; the setting is attested by the owner and was not verified from this README) |
+| GitHub Setting | PUBLIC, temporary (D-028 and D-037 in kritva-program own the temporary exposure and its return plan); OWNER-ATTESTED, UNVERIFIED: no independent check of the setting and no verification date is recorded here |
 | Lifecycle Status | ACTIVE (pre-alpha) |
 | Repository Owner | Project owner (role; see section 15) |
 | Security Owner | Security Owner role ([SECURITY.md](SECURITY.md)) |
@@ -109,11 +109,11 @@ Labels: INPUT is edited by hand and read by a tool or review; GENERATED is writt
 The toolchain definition is [toolchain/VERSIONS.yaml](toolchain/VERSIONS.yaml); `python3 scripts/check_toolchain.py --profile ci --strict` checks an environment against it. Development follows [AGENTS.md](AGENTS.md): read the architecture and requirements first, keep to the owning repository's boundaries, and do not change the Core pointer unless explicitly asked.
 
 ```bash
-git clone --recurse-submodules https://github.com/KritvaOS/kritvaos-community
+git clone --recurse-submodules https://github.com/KritvaOS/kritvaos-community   # modify: creates a local working copy
 cd kritvaos-community
-cmake --preset debug
-cmake --build build/debug
-ctest --test-dir build/debug --output-on-failure
+cmake --preset debug                                                           # generate: writes build configuration under build/debug
+cmake --build build/debug                                                      # modify: writes build outputs under build/debug
+ctest --test-dir build/debug --output-on-failure                               # check: runs the host test suite
 ```
 
 If the clone was made without submodules, run `make submodules` (or `git submodule update --init`) first; the build needs the `core` submodule. The other presets are `release`, `asan` and `ubsan`; see [CMakePresets.json](CMakePresets.json).
@@ -122,7 +122,7 @@ If the clone was made without submodules, run `make submodules` (or `git submodu
 
 | Dependency | Direction | Kind | Contract | State |
 |---|---|---|---|---|
-| kritva-core | upstream | Git submodule (`core`) and CMake source dependency | The public API and compatibility contract of Core | Configured in `.gitmodules`; a pointer is recorded; CI checks it out recursively; its content is verified only by the tests that build against it |
+| kritva-core | upstream | Git submodule (`core`) and CMake source dependency | The public API and compatibility contract of Core | Configured in `.gitmodules`; a pointer is recorded (this README does not name the commit and does not claim the pinned commit was independently verified); CI checks the submodule out recursively and builds against it |
 | Platform contracts of Core | upstream | Core defines the platform contracts; this repository supplies the runtime and mock and simulated implementations | `core/include/kritva/core/platform/` | Contracts exist upstream; only simulated and mock implementations exist here; no real platform adapter is verified here |
 | Third-party libraries | upstream | see [toolchain/VERSIONS.yaml](toolchain/VERSIONS.yaml) | The toolchain definition | Not listed individually here |
 | kritva-program | upstream | governance and status | status schema 2.0 ([status/README.md](status/README.md)) | planning-only reporting; no program credit |
@@ -144,13 +144,13 @@ The current milestone pointer is [planning/README.md](planning/README.md), which
 
 ## 9. Tasks and Acceptance Criteria
 
-- **Where tasks live.** The `TASKS.md` of each milestone under [planning/milestones/](planning/milestones/) (21 tasks: I2-001 to I2-006, I3-001 to I3-007 and I4-001 to I4-008); [planning/TASKS.md](planning/TASKS.md) is the general list.
+- **Where tasks live.** The `TASKS.md` of each milestone under [planning/milestones/](planning/milestones/) (task IDs I2-xxx, I3-xxx and I4-xxx; the count is not copied here because it goes stale); [planning/TASKS.md](planning/TASKS.md) is the general list.
 - **Acceptance.** Each milestone folder holds its `ACCEPTANCE_CRITERIA.md`, `REVIEW_CHECKLIST.md` and test plan. The safety gates are listed separately and left unchecked until a human signs them off.
 - Work is not accepted because code compiles, a commit or merged pull request exists, a test passes locally or a milestone says "Done". Public API changes, boundary changes, safety and security behaviour, real-time guarantees and major dependency changes need human review ([AGENTS.md](AGENTS.md)).
 
 ## 10. Status Reporting and Program Integration
 
-`status/status.json` (schema 2.0, workstream COMMUNITY) is generated by `scripts/gen_status.py`; never edit it by hand. It reports the 21 tasks above. This repository reports facts only and earns no program credit; credit comes only from the baseline, approvals and evidence recorded in kritva-program ([status/README.md](status/README.md)).
+`status/status.json` (schema 2.0, workstream COMMUNITY) is generated by `scripts/gen_status.py`; never edit it by hand. It reports the tasks listed in those milestone files (no count is copied here). This repository reports facts only and earns no program credit; credit comes only from the baseline, approvals and evidence recorded in kritva-program ([status/README.md](status/README.md)).
 
 | Dimension | Source record | Authority |
 |---|---|---|
@@ -173,7 +173,7 @@ CI runs five workflows. `make check` is a local command and is not the same as C
 | `commit-message-check` | pull requests | the commit checker's tests, and the checker on the pull request's commits (rejects session trailers and links only) |
 | `secret-scan` | push; pull requests; manual dispatch | gitleaks |
 
-The planning record says Release, ASan and UBSan results were local evidence only (KOS-CI-001 deferred); `ci.yml` now contains the matrix, and whether those jobs run green is reported by CI, not by this README.
+The planning record says Release, ASan and UBSan results were local evidence only and that KOS-CI-001 (Release, ASan and UBSan in CI) is deferred. `ci.yml` now defines that matrix, but a workflow definition is not a passing run and not an accepted gate: whether the jobs pass is reported by CI, and whether KOS-CI-001 is closed is a planning-record and owner decision. Until the planning record is updated, treat KOS-CI-001 as deferred.
 
 | Command | Effect | Notes |
 |---|---|---|
@@ -185,11 +185,11 @@ The planning record says Release, ASan and UBSan results were local evidence onl
 | `make submodules` | modify (fetches the `core` submodule) | needs network |
 | `make clean` | modify (deletes local generated artefacts) | local only |
 
-There is no `make build` or `make test`: build and test use the CMake presets shown in section 6. A passing check shows that the code builds and the host tests and records agree with each other. It does not show that the design is right, that a gate is closed, that the runtime meets a real-time requirement or that a robot using it is safe. No hardware, real-time or physical test exists here.
+There is no `make build` or `make test`: build and test use the CMake presets shown in section 6. A passing `make check` confirms only that the source-header check passed: it does not build or test the code, run the status checks or run any other CI workflow. Passing CI shows that the workflows' own commands passed on that commit. It does not show that the design is right, that a gate is closed, that the runtime meets a real-time requirement or that a robot using it is safe. No hardware, real-time or physical test exists here.
 
 ## 12. Git Workflow and Review
 
-Controlling statement: [AGENTS.md](AGENTS.md) section 15 (D-053 form): `type(scope): summary` with one `Task:` or `Tasks:` footer, small logical commits and a merge-commit merge. [CONTRIBUTING.md](CONTRIBUTING.md) section 20 gives plain sentence examples (for example "Add Core lifecycle state API") that do not use that form; the two are not reconciled and the owner decides which stands. CI enforces only that a commit carries no `Claude-Session:` trailer or session link (`commit-message-check`); the subject form is not checked by CI. The local checker `scripts/security/check_commit_format.py` is advisory. The Kritva commit standard in kritva-program (D-053) is NOT formally adopted here (PD-019). Work on a branch and open a pull request; do not push to `main`, force-push a shared branch or rewrite history without the owner's explicit approval. `main` is protected by a ruleset that requires `secret-scan`, `commit-message-check` and Code Owner review (owner statement, D-040; not independently verified); with one owner the PR author cannot self-approve, so use the owner bypass or a second reviewer. Submodule changes are committed in the submodule's own repository, and this repository's pointer is not changed unless explicitly requested.
+Controlling statement: [AGENTS.md](AGENTS.md), the section titled "Program Governance Rules" (numbered 15; the earlier section 15, "API-First Engineering", is a different section) gives the D-053 form: `type(scope): summary` with one `Task:` or `Tasks:` footer, small logical commits and a merge-commit merge. [CONTRIBUTING.md](CONTRIBUTING.md) section 20 gives plain sentence examples (for example "Add Core lifecycle state API") that do not use that form; the two are not reconciled and the owner decides which stands. CI enforces only that a commit carries no `Claude-Session:` trailer or session link (`commit-message-check`); the subject form is not checked by CI. The local checker `scripts/security/check_commit_format.py` is advisory. The Kritva commit standard in kritva-program (D-053) is NOT formally adopted here (PD-019). Work on a branch and open a pull request; do not push to `main`, force-push a shared branch or rewrite history without the owner's explicit approval. `main` is protected by a ruleset that requires `secret-scan`, `commit-message-check` and Code Owner review (owner statement, D-040; not independently verified); with one owner the PR author cannot self-approve, so use the owner bypass or a second reviewer. Submodule changes are committed in the submodule's own repository, and this repository's pointer is not changed unless explicitly requested.
 
 ## 13. Safety and Security
 
