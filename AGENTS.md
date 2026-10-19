@@ -1322,3 +1322,7 @@ These rules apply in addition to everything above and follow the program's gover
 - `status/status.json` is a generated planning report. Regenerate it, do not edit it by hand. Repository edits never create program credit: credit comes only from the baseline, approvals and evidence recorded in `KritvaOS/kritva-program`.
 - Program decisions are recorded in `KritvaOS/kritva-program` (`v2/DECISIONS.md`). Dinesh decides; AI advice is advisory.
 - `main` requires `secret-scan`, `commit-message-check` and Code Owner review (owner statement, D-040; not independently verified). With one owner the PR author cannot self-approve: use the owner bypass or a second reviewer.
+
+## 16. README changes
+
+Run `make check-readme` after editing README.md. It is a structural check only (metadata fields, topic headings, relative links, placeholders); it does not show that the content is accurate, so review the content against the repository as well.
