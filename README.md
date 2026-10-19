@@ -15,15 +15,15 @@ Created     : 19-10-2026
 
 # KritvaOS Community
 
-> The integration repository of the KritvaOS Open Robotic Computing Platform: it assembles the Kritva Core submodule, the KOS-I2 application runtime, the KOS-I3 hardware abstraction with mock devices and the KOS-I4 remote (Nexus and Edge) layer, all as software verified on a host computer. It is pre-alpha. The visibility class of this repository is not yet decided (D-039 recommends private).
+> The integration repository of the KritvaOS Open Robotic Computing Platform: it assembles the Kritva Core submodule, the KOS-I2 application runtime, the KOS-I3 hardware abstraction with mock devices and the KOS-I4 remote (Nexus and Edge) layer, all as software verified on a host computer. It is pre-alpha. The visibility class of this repository is PUBLIC (D-063).
 
 | Property | Value |
 |---|---|
 | Project | KritvaOS |
 | Repository | `KritvaOS/kritvaos-community` |
 | Repository Type | Platform integration (application runtime, hardware abstraction and remote layer; parent of the `core` submodule) |
-| Visibility Class | Not yet decided (D-039 in kritva-program recommends PRIVATE; the Apache-2.0 licence would permit a public release, so a public release needs an owner exception and a release review) |
-| GitHub Setting | PUBLIC, temporary (D-028 and D-037 in kritva-program own the temporary exposure and its return plan); OWNER-ATTESTED, UNVERIFIED: no independent check of the setting and no verification date is recorded here |
+| Visibility Class | PUBLIC (owner decision D-063 in kritva-program; it is an exception to the D-039 recommendation of PRIVATE, and no release review is recorded) |
+| GitHub Setting | PUBLIC, the same as the class (D-063 in kritva-program keeps this repository public and takes it out of the return-to-private plan); OWNER-ATTESTED, UNVERIFIED: no independent check of the setting and no verification date is recorded here |
 | Lifecycle Status | ACTIVE (pre-alpha) |
 | Repository Owner | Project owner (role; see section 15) |
 | Security Owner | Security Owner role ([SECURITY.md](SECURITY.md)) |
@@ -163,14 +163,15 @@ A run recorded in the evidence file is a fact about a commit, not acceptance. A 
 
 ## 11. Build, Test, Regression and Validation
 
-CI runs five workflows. `make check` is a local command and is not the same as CI.
+CI runs six workflows. `make check` is a local command and is not the same as CI.
 
 | Workflow | Trigger | What it runs |
 |---|---|---|
 | `KritvaOS CI` (`ci.yml`) | push and pull request on `main`, `master`, `develop` | Toolchain validation in the development container; a Debug build and `ctest`; a matrix of the `release`, `asan` and `ubsan` presets (build and `ctest`); the source-header check |
 | `Source Header Check` | every push and pull request | `python3 scripts/lint/check_source_headers.py --mode tracked --strict` |
 | `Status Report Check` | every push and pull request | the status generator tests, `gen_status.py --check-facts` and the schema checksum |
-| `commit-message-check` | pull requests | the commit checker's tests, and the checker on the pull request's commits (rejects session trailers and links only) |
+| `commit-message-check` | pull requests | the unit tests of both commit checkers, then `check_commit_messages.py` on the commits in the pull request (rejects session trailers and links) and `check_commit_format.py` on the same commits (the D-053 form; blocking since D-061) |
+| `readme-check` | pull requests; push to `main` | the README checker's unit tests, then `python3 scripts/check_readme.py README.md` (structure, metadata and local links only; not a required check yet, D-067) |
 | `secret-scan` | push; pull requests; manual dispatch | gitleaks |
 
 The planning record says Release, ASan and UBSan results were local evidence only and that KOS-CI-001 (Release, ASan and UBSan in CI) is deferred. `ci.yml` now defines that matrix, but a workflow definition is not a passing run and not an accepted gate: whether the jobs pass is reported by CI, and whether KOS-CI-001 is closed is a planning-record and owner decision. Until the planning record is updated, treat KOS-CI-001 as deferred.
@@ -189,7 +190,7 @@ There is no `make build` or `make test`: build and test use the CMake presets sh
 
 ## 12. Git Workflow and Review
 
-Controlling statement: [AGENTS.md](AGENTS.md), the section titled "Program Governance Rules" (numbered 15; the earlier section 15, "API-First Engineering", is a different section) gives the D-053 form: `type(scope): summary` with one `Task:` or `Tasks:` footer, small logical commits and a merge-commit merge. [CONTRIBUTING.md](CONTRIBUTING.md) section 20 gives plain sentence examples (for example "Add Core lifecycle state API") that do not use that form; the two are not reconciled and the owner decides which stands. CI enforces only that a commit carries no `Claude-Session:` trailer or session link (`commit-message-check`); the subject form is not checked by CI. The local checker `scripts/security/check_commit_format.py` is advisory. The Kritva commit standard in kritva-program (D-053) is NOT formally adopted here (PD-019). Work on a branch and open a pull request; do not push to `main`, force-push a shared branch or rewrite history without the owner's explicit approval. `main` is protected by a ruleset that requires `secret-scan`, `commit-message-check` and Code Owner review (owner statement, D-040; not independently verified); with one owner the PR author cannot self-approve, so use the owner bypass or a second reviewer. Submodule changes are committed in the submodule's own repository, and this repository's pointer is not changed unless explicitly requested.
+Controlling statement: [AGENTS.md](AGENTS.md), section 48, "Program Governance Rules" gives the D-053 form: `type(scope): summary` with one `Task:` or `Tasks:` footer, small logical commits and a merge-commit merge. [CONTRIBUTING.md](CONTRIBUTING.md) section 20 gives the same rule (D-062). The owner adopted the Kritva commit standard in this repository (D-061, the community part of PD-019): the `commit-message-check` workflow runs `scripts/security/check_commit_format.py` on every commit in a pull request, together with the `Claude-Session:` trailer and session-link check. Work on a branch and open a pull request; do not push to `main`, force-push a shared branch or rewrite history without the owner's explicit approval. `main` is protected by a ruleset that requires `secret-scan`, `commit-message-check` and Code Owner review (owner statement, D-040; not independently verified); with one owner the PR author cannot self-approve, so use the owner bypass or a second reviewer. Submodule changes are committed in the submodule's own repository, and this repository's pointer is not changed unless explicitly requested.
 
 ## 13. Safety and Security
 
@@ -223,4 +224,4 @@ The build version is set in [CMakeLists.txt](CMakeLists.txt) (0.1.0) and the rel
 
 ## 17. License
 
-Apache License 2.0 for the code in this repository. Copyright (c) 2026 KritvaOS. See [LICENSE](LICENSE) and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and licensing terms. The documents in the repository do not agree on the long-term licensing intent for future components ([.github/README.md](.github/README.md) states that the Community edition stays Apache-2.0, while [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md) says future components may use other terms); only the licence file governs, and the owner decides which statement stands.
+Apache License 2.0 for the code in this repository. Copyright (c) 2026 KritvaOS. See [LICENSE](LICENSE) and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and licensing terms. The owner confirmed Apache-2.0 as the licence of this repository (program decision D-064). The documents say the same without the word "permanently": [.github/README.md](.github/README.md) and [CONTRIBUTING.md](CONTRIBUTING.md) state the Apache-2.0 licence, and [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md) (REFERENCE) says that future components outside this repository may be licensed differently. That is a statement of intent, not a licence term; only the licence file governs.

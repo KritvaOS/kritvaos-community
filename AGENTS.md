@@ -1311,18 +1311,18 @@ And the primary architectural objective is:
 
 Kritva connects Physical AI to the physical world.
 
-## 15. Program Governance Rules
+## 48. Program Governance Rules
 
 These rules apply in addition to everything above and follow the program's governance (D-035, D-040).
 
 - Never commit credentials, tokens, private keys or production data. Use obviously fake values in examples. The `secret-scan` workflow runs on every push and pull request; do not add allowlist entries to silence it, propose them to the owner.
 - Do not add `Claude-Session:` or session-URL trailers to commit messages or pull request descriptions; `commit-message-check` rejects them. A `Co-Authored-By:` line is allowed.
-- Commit and PR standard (kritva-program D-053, v2/planning/ACCEPTANCE_STANDARD.md section 4): `type(scope): summary` (types feat, fix, docs, refactor, test, build, ci, chore, perf, revert, security) with one `Task:` or `Tasks:` footer, `Tasks: None (reason)` only on a docs or chore commit that implements no task; the merge method is a merge commit; PR text follows `.github/PULL_REQUEST_TEMPLATE.md`. Check with `python3 scripts/security/check_commit_format.py --range origin/main..HEAD`. This repository has not adopted the format in CI yet (PD-019), so the check is advisory here.
+- Commit and PR standard (kritva-program D-053, v2/planning/ACCEPTANCE_STANDARD.md section 4): `type(scope): summary` (types feat, fix, docs, refactor, test, build, ci, chore, perf, revert, security) with one `Task:` or `Tasks:` footer, `Tasks: None (reason)` only on a docs or chore commit that implements no task; the merge method is a merge commit; PR text follows `.github/PULL_REQUEST_TEMPLATE.md`. Check with `python3 scripts/security/check_commit_format.py --range origin/main..HEAD`. This repository adopted the format under D-061: `commit-message-check` runs this check on every pull request.
 - Work on a branch and open a pull request; do not push to `main`, force-push shared branches or rewrite history without the owner's explicit approval.
 - `status/status.json` is a generated planning report. Regenerate it, do not edit it by hand. Repository edits never create program credit: credit comes only from the baseline, approvals and evidence recorded in `KritvaOS/kritva-program`.
 - Program decisions are recorded in `KritvaOS/kritva-program` (`v2/DECISIONS.md`). Dinesh decides; AI advice is advisory.
 - `main` requires `secret-scan`, `commit-message-check` and Code Owner review (owner statement, D-040; not independently verified). With one owner the PR author cannot self-approve: use the owner bypass or a second reviewer.
 
-## 16. README changes
+## 49. README changes
 
 Run `make check-readme` after editing README.md. It is a structural check only (metadata fields, topic headings, relative links, placeholders); it does not show that the content is accurate, so review the content against the repository as well.

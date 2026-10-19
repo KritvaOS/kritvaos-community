@@ -1801,7 +1801,7 @@ The Apache License 2.0 permits use, modification, distribution, and integration 
 
 Kritva is currently being developed as a public project during the early architecture, experimentation, and technology-validation phase.
 
-The current Apache-2.0 license applies to code explicitly released under it.
+The current Apache-2.0 license applies to code explicitly released under it. Owner decision D-064 confirms Apache-2.0 as the licence of the kritvaos-community repository; the statement below about future components concerns components outside it.
 
 As the platform evolves, future components, hardware integrations, services, separately developed technologies, proprietary AI capabilities, or silicon IP may use different licensing or commercial models where appropriate.
 
