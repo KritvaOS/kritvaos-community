@@ -1,0 +1,41 @@
+#==============================================================================
+# Copyright (c) 2026 KritvaOS
+# SPDX-License-Identifier: Apache-2.0
+#
+# File        : readme-check.yml
+# Description : GitHub Actions check of README.md against the Kritva README standard
+#
+# Component   : Infrastructure
+# Module      : Repository Security Controls
+# Layer       : Development
+#
+# Requirements: N/A - documentation check (kritva-program decision D-067)
+# API         : GitHub Actions workflow
+#
+# Author      : KritvaOS
+# Created     : 19-10-2026
+#==============================================================================
+
+name: readme-check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  readme-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Test the README checker
+        run: python3 -m unittest discover -s tests/readme_check -v
+      - name: Check README.md against the Kritva README standard
+        run: python3 scripts/check_readme.py README.md

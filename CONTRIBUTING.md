@@ -8,7 +8,7 @@ KritvaOS Community is intended to be the permanent open-source foundation of the
 
 KritvaOS Community source code is licensed under the **Apache License, Version 2.0**.
 
-The Community license is intended to remain Apache-2.0 permanently.
+The Community license is Apache-2.0 (owner decision D-064).
 
 See `LICENSE`.
 
@@ -277,16 +277,25 @@ A meaningful pull request should describe:
 
 ## 20. Commit Guidelines
 
-Use concise, descriptive commit messages.
+Commit messages follow the Kritva commit standard (kritva-program decision D-053, adopted here by D-061 and D-062). The controlling text is [AGENTS.md](AGENTS.md), section 48.
+
+- Header: `type(scope): summary`, at most 90 characters. Types: feat, fix, docs, refactor, test, build, ci, chore, perf, revert, security.
+- One footer line: `Task: <ID>` or `Tasks: <ID>, <ID>`. A docs or chore commit that implements no task uses `Tasks: None (reason)`.
+- Do not add a `Claude-Session:` trailer or a claude.ai session link. A `Co-Authored-By:` line is allowed.
+- Check your commits with `python3 scripts/security/check_commit_format.py --range origin/main..HEAD`; the `commit-message-check` workflow runs the same check.
 
 Examples:
 
 ```text
-Add Core lifecycle state API
-Add Core Result error propagation
-Add configuration parameter model
-Fix timestamp comparison semantics
-Add capability contract tests
+feat(core): add lifecycle state API
+
+Task: <task ID from the planning records>
+```
+
+```text
+docs(readme): correct the build command
+
+Tasks: None (record correction)
 ```
 
 Avoid messages such as:
@@ -298,6 +307,7 @@ update
 test
 misc
 ```
+
 
 ## 21. Review Responsibilities
 

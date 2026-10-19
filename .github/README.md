@@ -6,7 +6,7 @@ KritvaOS Community is the open-source foundation of the **KritvaOS Open Robotic 
 
 KritvaOS provides a common architecture connecting robotic intelligence, real-time software, distributed compute, hardware interfaces, simulation, and physical robotic systems.
 
-**KritvaOS Community remains Apache License 2.0 licensed permanently.**
+**KritvaOS Community is licensed under the Apache License 2.0.**
 
 ## Vision
 
@@ -53,9 +53,9 @@ It provides:
 
 Community components are licensed under **Apache License 2.0**.
 
-### Permanent Community License
+### Community License
 
-KritvaOS Community is intended to remain Apache-2.0 licensed permanently. The Community codebase is not intended to be converted into a proprietary or source-available license as part of the normal evolution of the project.
+The licence of KritvaOS Community is Apache-2.0 (owner decision D-064). Future components outside this repository may be licensed differently and will state their own terms.
 
 ## KritvaOS Enterprise
 
