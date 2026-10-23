@@ -38,7 +38,7 @@ This README follows the Kritva README standard (`v2/planning/standards/README_ST
 
 ## Community Overview Video
 
-[![Kritva Community Overview video](Kritva_Community_YouTube_Thumbnail.png)](https://www.youtube.com/watch?v=rQcDzfT_VqM)
+[![Kritva Community Overview video](docs/images/Kritva_Community_YouTube_Thumbnail.png)](https://www.youtube.com/watch?v=rQcDzfT_VqM)
 
 An eight-minute narrated introduction to Kritva Community: the opportunity, the modular building blocks (Core, Sense, Mind, Motion, Skill, Sim and SDK), the Nexus and Edge computing platforms, and how to contribute. Watch it on [YouTube](https://www.youtube.com/watch?v=rQcDzfT_VqM).
 
