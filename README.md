@@ -36,6 +36,12 @@ Created     : 19-10-2026
 
 This README follows the Kritva README standard (`v2/planning/standards/README_STANDARD.md` in [kritva-program](https://github.com/KritvaOS/kritva-program)). It is a navigation map; the documents it links own the detail. The long vision text that used to be the README is kept as [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md); it describes intent, not implemented state.
 
+## Community Overview Video
+
+[![Kritva Community Overview video](docs/images/Kritva_Community_YouTube_Thumbnail.png)](https://www.youtube.com/watch?v=rQcDzfT_VqM)
+
+An eight-minute narrated introduction to Kritva Community: the opportunity, the modular building blocks (Core, Sense, Mind, Motion, Skill, Sim and SDK), the Nexus and Edge computing platforms, and how to contribute. Watch it on [YouTube](https://www.youtube.com/watch?v=rQcDzfT_VqM).
+
 ## 1. Purpose and Scope
 
 Kritva is intended to be an open, hardware-aware robotic computing platform that connects Physical AI to physical action. This repository is where the platform's software parts are assembled and exercised together. It holds the application runtime, the hardware abstraction, mock devices, the transport and remote layer, examples, tests, the toolchain definition and the planning records for the KOS-I2, KOS-I3 and KOS-I4 milestones.
