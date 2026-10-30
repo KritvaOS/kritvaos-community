@@ -20,6 +20,18 @@
 # Project Configuration
 #------------------------------------------------------------------------------
 
+# Kritva Makefile standard (kritva-program v2/planning/standards/MAKEFILE_STANDARD.md): `make` or `make help` lists the targets.
+# A target is documented by `name: ## text` on its rule line; `##@ Name` starts a help group.
+# An unimplemented gate exits 3 (NOT_IMPLEMENTED). It is never a pass.
+.DEFAULT_GOAL := help
+.PHONY: help
+
+##@ Help
+help: ## Show this list
+	@awk 'BEGIN { FS = ":.*##"; printf "\nUsage: make <target> [VAR=value ...]\n" } \
+	  /^##@/ { g = substr($$0, 5); next } \
+	  /^[a-zA-Z0-9_.-]+:[^=].*##/ { if (g != "") { printf "\n%s\n", g; g = "" }; sub(/^ +/, "", $$2); printf "  %-24s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
 PROJECT_NAME := kritvaos-community
 
 SCRIPT_DIR := scripts
@@ -33,28 +45,16 @@ HEADER_CHECKER := $(SCRIPT_DIR)/lint/check_source_headers.py
 # Default Target
 #------------------------------------------------------------------------------
 
-.DEFAULT_GOAL := help
-
 #------------------------------------------------------------------------------
 # Help
 #
 # Targets containing "##" are automatically displayed by "make help".
 #------------------------------------------------------------------------------
 
-.PHONY: help
-
-help: ## Show available development commands
-	@echo ""
-	@echo "KritvaOS Community - Development Commands"
-	@echo "=========================================="
-	@echo ""
-	@grep -E '^[a-zA-Z0-9_-]+:.*##' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS=":.*## "}; {printf "  %-22s %s\n", $$1, $$2}'
-	@echo ""
-
 #------------------------------------------------------------------------------
 # Repository Information
 #------------------------------------------------------------------------------
+##@ Repository Information
 
 .PHONY: info
 
@@ -73,6 +73,7 @@ info: ## Show repository information
 # Validate all tracked source/config files using the centralized KritvaOS
 # source-header policy.
 #------------------------------------------------------------------------------
+##@ Source Header Check
 
 .PHONY: header-check
 
@@ -86,6 +87,7 @@ header-check: ## Validate KritvaOS source headers
 # Structural check of README.md only (metadata, topics, relative links,
 # placeholders). A PASS does not show that the content is accurate.
 #------------------------------------------------------------------------------
+##@ README standard check
 
 .PHONY: check-readme
 
@@ -101,6 +103,7 @@ check-readme: ## Structural check of README.md against the Kritva README standar
 #
 # This repository intentionally does not maintain the checker regression suite.
 #------------------------------------------------------------------------------
+##@ Test Source Header Checker
 
 .PHONY: header-check-version
 
@@ -111,6 +114,7 @@ header-check-version: ## Show installed source-header checker version
 #------------------------------------------------------------------------------
 # Git Status
 #------------------------------------------------------------------------------
+##@ Git Status
 
 .PHONY: status
 
@@ -120,6 +124,7 @@ status: ## Show Git repository status
 #------------------------------------------------------------------------------
 # Git Branch
 #------------------------------------------------------------------------------
+##@ Git Branch
 
 .PHONY: branch
 
@@ -131,6 +136,7 @@ branch: ## Show current Git branch
 #
 # Initialize and update all KritvaOS repository submodules.
 #------------------------------------------------------------------------------
+##@ Submodules
 
 .PHONY: submodules
 
@@ -141,6 +147,7 @@ submodules: ## Initialize and update Git submodules
 #------------------------------------------------------------------------------
 # Submodule Status
 #------------------------------------------------------------------------------
+##@ Submodule Status
 
 .PHONY: submodule-status
 
@@ -155,6 +162,7 @@ submodule-status: ## Show Git submodule status
 # Keep this target lightweight. Component repositories such as kritva-core
 # perform their own build and unit-test validation.
 #------------------------------------------------------------------------------
+##@ Repository Validation
 
 .PHONY: check
 
@@ -165,6 +173,7 @@ check: header-check ## Run all community repository checks
 #------------------------------------------------------------------------------
 # Git Configuration
 #------------------------------------------------------------------------------
+##@ Git Configuration
 
 .PHONY: git-hooks
 
@@ -178,6 +187,7 @@ git-hooks: ## Show configured Git hooks path
 # Community repository normally has no build artifacts. This target removes
 # common local/generated directories only when they exist.
 #------------------------------------------------------------------------------
+##@ Clean
 
 .PHONY: clean
 
@@ -190,6 +200,7 @@ clean: ## Remove local generated artifacts
 #------------------------------------------------------------------------------
 # Development Environment
 #------------------------------------------------------------------------------
+##@ Development Environment
 
 .PHONY: environment
 
@@ -213,6 +224,7 @@ environment: ## Show development environment information
 #------------------------------------------------------------------------------
 # Repository Structure
 #------------------------------------------------------------------------------
+##@ Repository Structure
 
 .PHONY: tree
 
@@ -227,6 +239,7 @@ tree: ## Show repository structure
 #------------------------------------------------------------------------------
 # Documentation
 #------------------------------------------------------------------------------
+##@ Documentation
 
 .PHONY: docs
 
@@ -246,6 +259,7 @@ docs: ## Show documentation locations
 #
 # Recommended command before opening a pull request.
 #------------------------------------------------------------------------------
+##@ Pull Request Preparation
 
 .PHONY: pre-pr
 
@@ -256,3 +270,45 @@ pre-pr: check status ## Run checks and show repository status
 #------------------------------------------------------------------------------
 # End
 #------------------------------------------------------------------------------
+##@ End
+
+##@ Gates (unimplemented gates exit 3)
+define not_implemented
+	@echo "NOT_IMPLEMENTED: $(1) has no tests yet; this is not a pass"; exit 3
+endef
+
+.PHONY: lint
+lint: ## Static analysis and lint (NOT_IMPLEMENTED: exits 3)
+	$(call not_implemented,lint)
+
+.PHONY: test-unit
+test-unit: ## Unit tests (NOT_IMPLEMENTED: exits 3)
+	$(call not_implemented,test-unit)
+
+.PHONY: test-integration
+test-integration: ## Integration tests (NOT_IMPLEMENTED: exits 3)
+	$(call not_implemented,test-integration)
+
+.PHONY: test-regression
+test-regression: ## Regression tests (NOT_IMPLEMENTED: exits 3)
+	$(call not_implemented,test-regression)
+
+.PHONY: test
+test: ## All tests (NOT_IMPLEMENTED: exits 3)
+	$(call not_implemented,test)
+
+.PHONY: acceptance
+acceptance: ## Acceptance gate (NOT_IMPLEMENTED: exits 3)
+	$(call not_implemented,acceptance)
+
+.PHONY: docs-check
+docs-check: ## Documentation link and structure check (NOT_IMPLEMENTED: exits 3)
+	$(call not_implemented,docs-check)
+
+##@ Git
+.PHONY: git_sync
+git_sync: ## Switch to main, fast-forward from origin, prune, delete merged local branches
+	@git switch main
+	@git pull --ff-only --prune
+	@git branch --format='%(refname:short)' | grep -vx main | xargs -r git branch -d
+	@git log --oneline -3
