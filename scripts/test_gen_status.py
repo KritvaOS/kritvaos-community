@@ -49,13 +49,30 @@ class RealFiles(unittest.TestCase):
             self.assertTrue(text.lower().startswith("done"), (tid, text))
             self.assertNotIn("Safety-relevant", text)
 
-    def test_build_emits_21_unique_tasks_and_no_acceptance_fields(self):
+    def test_build_emits_22_unique_tasks_and_no_acceptance_fields(self):
         doc, _ = gen_status.build(ROOT, "2026-10-11T00:00:00Z")
         ids = [t["task_id"] for t in doc["tasks"]]
-        self.assertEqual(len(ids), 21)
-        self.assertEqual(len(set(ids)), 21)
+        self.assertEqual(len(ids), 22)
+        self.assertEqual(len(set(ids)), 22)
         for t in doc["tasks"]:
             self.assertEqual(set(t), {"task_id", "execution", "git_sync", "readiness", "evidence"})
+
+
+class M0Task(unittest.TestCase):
+    TID = "KOS-COMMUNITY-M0-001"
+
+    def test_m0_task_is_in_progress_and_has_no_ci_evidence(self):
+        rows = gen_status.parse_tasks(ROOT / "planning" / "milestones" / "KOS-M0" / "TASKS.md")
+        self.assertEqual(list(rows), [self.TID])
+        doc, _ = gen_status.build(ROOT, "2026-10-11T00:00:00Z")
+        t = next(x for x in doc["tasks"] if x["task_id"] == self.TID)
+        self.assertEqual(t["execution"], "IN_PROGRESS")
+        self.assertEqual(len(t["evidence"]), 1)
+        self.assertIsNone(t["evidence"][0]["commit"])
+
+    def test_m0_row_parses_with_status_in_last_cell(self):
+        rows = parse_text("| KOS-COMMUNITY-M0-001 | Title | PD-017 | In progress (pending) |\n")
+        self.assertEqual(rows, {self.TID: "In progress (pending)"})
 
 
 class CommittedReport(unittest.TestCase):

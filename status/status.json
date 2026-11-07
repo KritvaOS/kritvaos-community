@@ -4,14 +4,14 @@
   "repo": "KritvaOS/kritvaos-community",
   "source": {
     "branch": "main",
-    "commit": "27ed9615756721d86cd602f7caa8fc056a633f7e",
+    "commit": "bd9d84c4f5ec471418338499c34df38f95e56332",
     "tag": null
   },
   "tasks": [
     {
       "task_id": "I2-001",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -37,7 +37,7 @@
     {
       "task_id": "I2-002",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -63,7 +63,7 @@
     {
       "task_id": "I2-003",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -89,7 +89,7 @@
     {
       "task_id": "I2-004",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -115,7 +115,7 @@
     {
       "task_id": "I2-005",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -141,7 +141,7 @@
     {
       "task_id": "I2-006",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -167,7 +167,7 @@
     {
       "task_id": "I3-001",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -193,7 +193,7 @@
     {
       "task_id": "I3-002",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -219,7 +219,7 @@
     {
       "task_id": "I3-003",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -245,7 +245,7 @@
     {
       "task_id": "I3-004",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -271,7 +271,7 @@
     {
       "task_id": "I3-005",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -297,7 +297,7 @@
     {
       "task_id": "I3-006",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -323,7 +323,7 @@
     {
       "task_id": "I3-007",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -349,7 +349,7 @@
     {
       "task_id": "I4-001",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -375,7 +375,7 @@
     {
       "task_id": "I4-002",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -401,7 +401,7 @@
     {
       "task_id": "I4-003",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -427,7 +427,7 @@
     {
       "task_id": "I4-004",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -453,7 +453,7 @@
     {
       "task_id": "I4-005",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -479,7 +479,7 @@
     {
       "task_id": "I4-006",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -505,7 +505,7 @@
     {
       "task_id": "I4-007",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -531,7 +531,7 @@
     {
       "task_id": "I4-008",
       "execution": "COMPLETE",
-      "git_sync": "SYNCED",
+      "git_sync": "NOT_COMMITTED",
       "readiness": "IMPLEMENTABLE",
       "evidence": [
         {
@@ -553,7 +553,24 @@
           "result": "PASS"
         }
       ]
+    },
+    {
+      "task_id": "KOS-COMMUNITY-M0-001",
+      "execution": "IN_PROGRESS",
+      "git_sync": "NOT_COMMITTED",
+      "readiness": "IMPLEMENTABLE",
+      "evidence": [
+        {
+          "type": "software",
+          "uri": "planning/milestones/KOS-M0/KOS-COMMUNITY-M0-001/ACCEPTANCE_CRITERIA.md",
+          "description": "Criteria reference only (not completion proof); planning status text: 'In progress (SECURITY.md contact named; mailbox test not yet recorded, see `planning/PD-017-SECURITY-MAILBOX-TEST.md`)'",
+          "commit": null,
+          "ci_run": null,
+          "report_sha256": null,
+          "result": null
+        }
+      ]
     }
   ],
-  "updated_at": "2026-10-30T02:21:00Z"
+  "updated_at": "2026-11-07T17:48:43Z"
 }
