@@ -64,8 +64,8 @@ from pathlib import Path
 
 WORKSTREAM_ID = "COMMUNITY"
 REPO = "KritvaOS/kritvaos-community"
-MILESTONES = ["KOS-I2", "KOS-I3", "KOS-I4"]
-ROW = re.compile(r"^\|\s*(I\d-\d{3})\s*\|(.*)\|\s*$")
+MILESTONES = ["KOS-I2", "KOS-I3", "KOS-I4", "KOS-M0"]  # KOS-M0: V2-M0 governance task (baseline v11, D-117)
+ROW = re.compile(r"^\|\s*(I\d-\d{3}|KOS-COMMUNITY-M0-\d{3})\s*\|(.*)\|\s*$")
 SHA = re.compile(r"^[0-9a-f]{40}$")
 RUN_URL = re.compile(r"^https://github\.com/KritvaOS/kritvaos-community/actions/runs/(\d+)$")
 KINDS = {"OWN": "run on the task's own commit",
