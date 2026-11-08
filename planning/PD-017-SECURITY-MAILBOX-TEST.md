@@ -1,6 +1,6 @@
 # PD-017: security mailbox test record (V2-M0, kritvaos-community)
 
-Status: TEMPLATE, TEST NOT YET RECORDED.
+Status: WAIVED by the owner (program decision D-119, 2026-11-08). The test was not performed and no result is recorded below.
 Program record: PD-017 in kritva-program `v2/planning/PENDING_DECISIONS.md`. Readiness check: `security_policy` (OPEN until this record is complete).
 Related: SECURITY.md names the security contact and GitHub private vulnerability reporting; D-068 records the Security Owner's statement that the route was tested on 18 October 2026. That statement is not evidence; this record replaces it with a dated test.
 
@@ -28,8 +28,8 @@ This file records evidence only. It does not edit the protected `SECURITY.md`, a
 
 ## Outcome
 
-Outcome: PENDING (PASS only if both the mailbox test and the private reporting check are yes)
-Recorded by: ____
-Date: ____
+Outcome: WAIVED (not PASS: the mailbox test and the private reporting check were not recorded)
+Recorded by: Dinesh (owner decision D-119)
+Date: 2026-11-08
 
-On PASS, the program moves `security_policy` from OPEN to ATTESTED and closes PD-017.
+The program closed PD-017 as waived (D-119) and removed KOS-COMMUNITY-M0-001 from the baseline. `security_policy` is not moved to ATTESTED by this record. If the owner later runs the test, fill in the table and record the result by pull request.

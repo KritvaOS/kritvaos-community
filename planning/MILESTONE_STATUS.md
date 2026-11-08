@@ -5,7 +5,7 @@
 | KOS-I2 | IMPLEMENTED / predecessor baseline |
 | KOS-I3 | IMPLEMENTED; audit and re-audit remediation complete; **HUMAN SAFETY REVIEW REQUIRED — OPEN** |
 | KOS-I4 | SOFTWARE IMPLEMENTATION COMPLETE (I4-001..I4-008, architect-accepted); **HUMAN SAFETY REVIEW — OPEN**; KOS-CI-001 deferred |
-| KOS-M0 | V2-M0 governance task KOS-COMMUNITY-M0-001 IN PROGRESS (baselined in program v11, D-117); PD-017 mailbox test pending; no credit until owner acceptance and central approval |
+| KOS-M0 | V2-M0 governance task KOS-COMMUNITY-M0-001 DESCOPED (owner waived the PD-017 mailbox test, program D-119; removed from baseline v12; not tested, no credit) |
 
 ## KOS-I2 Task Commits
 

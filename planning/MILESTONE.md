@@ -19,7 +19,7 @@ Authority (kritva-program D-011, D-093 to D-096):
 
 | Repository milestone | Program milestone | Outcome (as recorded by the program) | Status | Tasks |
 |---|---|---|---|---|
-| `V2-M0-COMMUNITY-001` | V2-M0 | Security reporting path working (SECURITY.md contact tested). | IN PROGRESS | `KOS-COMMUNITY-M0-001` (baselined in program v11, D-117; see `milestones/KOS-M0/TASKS.md`) |
+| `V2-M0-COMMUNITY-001` | V2-M0 | Security reporting path working (SECURITY.md contact tested). | DESCOPED (D-119) | `KOS-COMMUNITY-M0-001` (baselined in program v11, D-117; removed from baseline v12 by D-119; see `milestones/KOS-M0/TASKS.md`) |
 | `V2-M1-COMMUNITY-001` | V2-M1 | Public architecture description matches the approved capability contracts. | PROPOSED | None yet |
 | `V2-M3-COMMUNITY-001` | V2-M3 | Public integration guide matches the control-plane contract. | PROPOSED | None yet |
 | `V2-M7-COMMUNITY-001` | V2-M7 | Public documentation reflects the live and results interfaces. | PROPOSED | None yet |
@@ -27,7 +27,7 @@ Authority (kritva-program D-011, D-093 to D-096):
 
 Community has no planned repository milestone in V2-M2, V2-M4, V2-M5 or V2-M6. Do not add one here to fill the gap; that is a program decision.
 
-`V2-M0-COMMUNITY-001` is tied to the pending program decision PD-017 (test the Community security mailbox after the SECURITY.md contact patch merges). No test email is sent under this milestone before the owner decides.
+`V2-M0-COMMUNITY-001` was tied to program decision PD-017 (test the Community security mailbox). The owner waived that test in program decision D-119 (2026-11-08); the mailbox test was not performed or recorded, and the task earns no credit.
 
 ### Historical milestones
 
