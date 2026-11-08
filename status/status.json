@@ -4,7 +4,7 @@
   "repo": "KritvaOS/kritvaos-community",
   "source": {
     "branch": "main",
-    "commit": "bd9d84c4f5ec471418338499c34df38f95e56332",
+    "commit": "37c59c1ebef7e046f10cb72ce0292b98729d52d8",
     "tag": null
   },
   "tasks": [
@@ -553,24 +553,7 @@
           "result": "PASS"
         }
       ]
-    },
-    {
-      "task_id": "KOS-COMMUNITY-M0-001",
-      "execution": "IN_PROGRESS",
-      "git_sync": "NOT_COMMITTED",
-      "readiness": "IMPLEMENTABLE",
-      "evidence": [
-        {
-          "type": "software",
-          "uri": "planning/milestones/KOS-M0/KOS-COMMUNITY-M0-001/ACCEPTANCE_CRITERIA.md",
-          "description": "Criteria reference only (not completion proof); planning status text: 'In progress (SECURITY.md contact named; mailbox test not yet recorded, see `planning/PD-017-SECURITY-MAILBOX-TEST.md`)'",
-          "commit": null,
-          "ci_run": null,
-          "report_sha256": null,
-          "result": null
-        }
-      ]
     }
   ],
-  "updated_at": "2026-11-07T17:48:43Z"
+  "updated_at": "2026-11-08T11:57:31Z"
 }
