@@ -1,0 +1,83 @@
+{
+  "baseline_tasks": {
+    "accepted_tasks": 0,
+    "baseline_tasks": 0,
+    "rows": 30
+  },
+  "evidence_notes": [],
+  "execution": {
+    "complete": 21,
+    "tasks": 21
+  },
+  "foundation": {
+    "accepted_tasks": 21,
+    "accepted_weight": 71,
+    "tasks": 21,
+    "weight": 71
+  },
+  "milestones": {
+    "M1": {
+      "accepted": 0,
+      "baseline": 0,
+      "point": 12,
+      "rows": 3
+    },
+    "M2": {
+      "accepted": 0,
+      "baseline": 0,
+      "point": 26,
+      "rows": 6
+    },
+    "M3": {
+      "accepted": 0,
+      "baseline": 0,
+      "point": 43,
+      "rows": 9
+    },
+    "M4": {
+      "accepted": 0,
+      "baseline": 0,
+      "point": 18,
+      "rows": 4
+    },
+    "M5": {
+      "accepted": 0,
+      "baseline": 0,
+      "point": 19,
+      "rows": 4
+    },
+    "M7": {
+      "accepted": 0,
+      "baseline": 0,
+      "point": 13,
+      "rows": 3
+    },
+    "M8": {
+      "accepted": 0,
+      "baseline": 0,
+      "point": 6,
+      "rows": 1
+    }
+  },
+  "program": {
+    "baseline_approved": true,
+    "baseline_version": 12,
+    "generated_at": "2026-11-08T12:16:37Z",
+    "release_state": "NOT_READY",
+    "view": "https://github.com/KritvaOS/kritva-program/blob/main/v2/tracking/STATUS_VIEW.md"
+  },
+  "repo": "Community",
+  "repository": "KritvaOS/kritvaos-community",
+  "schema_version": 1,
+  "titles": {
+    "M0": "Foundation",
+    "M1": "Studio",
+    "M2": "Build & Artifact",
+    "M3": "Control Plane",
+    "M4": "Booking & Commercial",
+    "M5": "Execution",
+    "M6": "Lab & Robot",
+    "M7": "Live & Results",
+    "M8": "Production"
+  }
+}
