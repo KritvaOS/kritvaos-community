@@ -31,6 +31,71 @@ Accepted weight over total weight, where total covers completed Foundation work,
 
 Milestone dates are owner-approved planning dates in the program, not delivery commitments.
 
+## Baselined tasks
+
+Tasks in the approved program baseline. Weight is the baseline weight. Acceptance is decided by kritva-program; execution is this repository's own report.
+
+| Task | Title | Milestone | Weight | Execution | Acceptance |
+|---|---|---|---|---|---|
+| `I2-001` | Runtime Host | Foundation | 4 | COMPLETE | ACCEPTED |
+| `I2-002` | Component Composition | Foundation | 3 | COMPLETE | ACCEPTED |
+| `I2-003` | Configuration | Foundation | 3 | COMPLETE | ACCEPTED |
+| `I2-004` | Runtime Observation | Foundation | 3 | COMPLETE | ACCEPTED |
+| `I2-005` | Failure Handling | Foundation | 3 | COMPLETE | ACCEPTED |
+| `I2-006` | Reference Demo | Foundation | 2 | COMPLETE | ACCEPTED |
+| `I3-001` | Device / Endpoint architecture and contracts | Foundation | 4 | COMPLETE | ACCEPTED |
+| `I3-002` | Device and Endpoint registry | Foundation | 3 | COMPLETE | ACCEPTED |
+| `I3-003` | Endpoint lifecycle and Runtime integration | Foundation | 4 | COMPLETE | ACCEPTED |
+| `I3-004` | Typed sensor / actuator data interfaces | Foundation | 3 | COMPLETE | ACCEPTED |
+| `I3-005` | Mock Device / Endpoint implementation | Foundation | 3 | COMPLETE | ACCEPTED |
+| `I3-006` | Observation, diagnostics and fault handling | Foundation | 4 | COMPLETE | ACCEPTED |
+| `I3-007` | Reference Device/Endpoint demo | Foundation | 2 | COMPLETE | ACCEPTED |
+| `I4-001` | Architecture, Node Identity & Protocol Contract | Foundation | 4 | COMPLETE | ACCEPTED |
+| `I4-002` | Frame Format & Protocol Codec | Foundation | 4 | COMPLETE | ACCEPTED |
+| `I4-003` | Deterministic Simulated Transport | Foundation | 3 | COMPLETE | ACCEPTED |
+| `I4-004` | EdgeHost & Remote Service | Foundation | 4 | COMPLETE | ACCEPTED |
+| `I4-005` | RemoteDevice & RemoteEndpoint | Foundation | 4 | COMPLETE | ACCEPTED |
+| `I4-006` | Distributed Failure & Actuator Safety | Foundation | 5 | COMPLETE | ACCEPTED |
+| `I4-007` | Runtime Integration & Diagnostics | Foundation | 4 | COMPLETE | ACCEPTED |
+| `I4-008` | Nexus-Edge Reference Demo | Foundation | 2 | COMPLETE | ACCEPTED |
+
+## Planned tasks (not baselined)
+
+Owner-approved V2 planning scope that is not in the baseline yet. Weights are estimates (point value). These earn no credit until they are baselined and accepted.
+
+| Task | Title | Milestone | Estimated weight | Execution | Acceptance |
+|---|---|---|---|---|---|
+| `PROPOSED-NEW-COMMUNITY-002` | Cross-capability architecture documentation | M1 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-018-01` | Capability contract inventory and compatibility matrix | M1 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-018-02` | Automated version and pin compatibility checks | M1 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-003-01` | Build artifact handoff specification and metadata | M2 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-003-02` | Reproducible integration build and artifact hash | M2 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-004-01` | Simulator artifact interface and manifest | M2 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-004-02` | Deterministic simulator artifact handoff tests | M2 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-005-01` | SDK package and build manifest | M2 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-005-02` | Clean-environment SDK installation and import tests | M2 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-006` | Control Plane service conformance | M3 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-007-01` | Control Plane API resource model and versioning | M3 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-007-02` | API schema validation and compatibility fixtures | M3 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-008-01` | Job and run lifecycle model | M3 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-008-02` | Deterministic lifecycle transition tests | M3 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-009-01` | Authorization principals, permissions and resource scope | M3 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-009-02` | Authorization allow/deny conformance tests | M3 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-010-01` | Control Plane service conformance harness and traceability | M3 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-010-02` | API, lifecycle and authorization integration tests | M3 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-011-01` | Studio workflow model | M4 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-011-02` | Demonstrable Studio sample-project workflow | M4 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-012-01` | SDK developer API and CLI | M4 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-012-02` | SDK examples, documentation and clean-environment tests | M4 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-013-01` | Simulator job execution orchestration | M5 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-013-02` | Deterministic execution and result handoff | M5 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-014-01` | SDK job submit, status and cancel integration | M5 | 4 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-014-02` | SDK result retrieval and error handling | M5 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-015` | Live and results public documentation | M7 | 3 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-016-01` | Telemetry and results ingestion using Sense stream contract | M7 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-016-02` | Correlation, query and export end-to-end traceability | M7 | 5 | NOT_STARTED | NOT BASELINED |
+| `PROPOSED-NEW-COMMUNITY-017` | Community release and security review | M8 | 6 | NOT_STARTED | NOT BASELINED |
+
 ## Four states, kept apart
 
 | State | This repository | Decided by |
