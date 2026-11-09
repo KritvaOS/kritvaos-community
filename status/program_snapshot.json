@@ -68,7 +68,468 @@
   },
   "repo": "Community",
   "repository": "KritvaOS/kritvaos-community",
-  "schema_version": 1,
+  "schema_version": 2,
+  "tasks": [
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I2-001",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Runtime Host",
+      "weight": 4
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I2-002",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Component Composition",
+      "weight": 3
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I2-003",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Configuration",
+      "weight": 3
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I2-004",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Runtime Observation",
+      "weight": 3
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I2-005",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Failure Handling",
+      "weight": 3
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I2-006",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Reference Demo",
+      "weight": 2
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I3-001",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Device / Endpoint architecture and contracts",
+      "weight": 4
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I3-002",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Device and Endpoint registry",
+      "weight": 3
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I3-003",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Endpoint lifecycle and Runtime integration",
+      "weight": 4
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I3-004",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Typed sensor / actuator data interfaces",
+      "weight": 3
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I3-005",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Mock Device / Endpoint implementation",
+      "weight": 3
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I3-006",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Observation, diagnostics and fault handling",
+      "weight": 4
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I3-007",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Reference Device/Endpoint demo",
+      "weight": 2
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I4-001",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Architecture, Node Identity & Protocol Contract",
+      "weight": 4
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I4-002",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Frame Format & Protocol Codec",
+      "weight": 4
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I4-003",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Deterministic Simulated Transport",
+      "weight": 3
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I4-004",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "EdgeHost & Remote Service",
+      "weight": 4
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I4-005",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "RemoteDevice & RemoteEndpoint",
+      "weight": 4
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I4-006",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Distributed Failure & Actuator Safety",
+      "weight": 5
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I4-007",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Runtime Integration & Diagnostics",
+      "weight": 4
+    },
+    {
+      "accepted": true,
+      "execution": "COMPLETE",
+      "id": "I4-008",
+      "kind": "baselined",
+      "milestone": "Foundation",
+      "title": "Nexus-Edge Reference Demo",
+      "weight": 2
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-002",
+      "kind": "planned",
+      "milestone": "M1",
+      "title": "Cross-capability architecture documentation",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-006",
+      "kind": "planned",
+      "milestone": "M3",
+      "title": "Control Plane service conformance",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-015",
+      "kind": "planned",
+      "milestone": "M7",
+      "title": "Live and results public documentation",
+      "weight": 3
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-017",
+      "kind": "planned",
+      "milestone": "M8",
+      "title": "Community release and security review",
+      "weight": 6
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-018-01",
+      "kind": "planned",
+      "milestone": "M1",
+      "title": "Capability contract inventory and compatibility matrix",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-018-02",
+      "kind": "planned",
+      "milestone": "M1",
+      "title": "Automated version and pin compatibility checks",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-003-01",
+      "kind": "planned",
+      "milestone": "M2",
+      "title": "Build artifact handoff specification and metadata",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-003-02",
+      "kind": "planned",
+      "milestone": "M2",
+      "title": "Reproducible integration build and artifact hash",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-004-01",
+      "kind": "planned",
+      "milestone": "M2",
+      "title": "Simulator artifact interface and manifest",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-004-02",
+      "kind": "planned",
+      "milestone": "M2",
+      "title": "Deterministic simulator artifact handoff tests",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-005-01",
+      "kind": "planned",
+      "milestone": "M2",
+      "title": "SDK package and build manifest",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-005-02",
+      "kind": "planned",
+      "milestone": "M2",
+      "title": "Clean-environment SDK installation and import tests",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-007-01",
+      "kind": "planned",
+      "milestone": "M3",
+      "title": "Control Plane API resource model and versioning",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-007-02",
+      "kind": "planned",
+      "milestone": "M3",
+      "title": "API schema validation and compatibility fixtures",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-008-01",
+      "kind": "planned",
+      "milestone": "M3",
+      "title": "Job and run lifecycle model",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-008-02",
+      "kind": "planned",
+      "milestone": "M3",
+      "title": "Deterministic lifecycle transition tests",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-009-01",
+      "kind": "planned",
+      "milestone": "M3",
+      "title": "Authorization principals, permissions and resource scope",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-009-02",
+      "kind": "planned",
+      "milestone": "M3",
+      "title": "Authorization allow/deny conformance tests",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-010-01",
+      "kind": "planned",
+      "milestone": "M3",
+      "title": "Control Plane service conformance harness and traceability",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-010-02",
+      "kind": "planned",
+      "milestone": "M3",
+      "title": "API, lifecycle and authorization integration tests",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-011-01",
+      "kind": "planned",
+      "milestone": "M4",
+      "title": "Studio workflow model",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-011-02",
+      "kind": "planned",
+      "milestone": "M4",
+      "title": "Demonstrable Studio sample-project workflow",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-012-01",
+      "kind": "planned",
+      "milestone": "M4",
+      "title": "SDK developer API and CLI",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-012-02",
+      "kind": "planned",
+      "milestone": "M4",
+      "title": "SDK examples, documentation and clean-environment tests",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-013-01",
+      "kind": "planned",
+      "milestone": "M5",
+      "title": "Simulator job execution orchestration",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-013-02",
+      "kind": "planned",
+      "milestone": "M5",
+      "title": "Deterministic execution and result handoff",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-014-01",
+      "kind": "planned",
+      "milestone": "M5",
+      "title": "SDK job submit, status and cancel integration",
+      "weight": 4
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-014-02",
+      "kind": "planned",
+      "milestone": "M5",
+      "title": "SDK result retrieval and error handling",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-016-01",
+      "kind": "planned",
+      "milestone": "M7",
+      "title": "Telemetry and results ingestion using Sense stream contract",
+      "weight": 5
+    },
+    {
+      "accepted": false,
+      "execution": "NOT_STARTED",
+      "id": "PROPOSED-NEW-COMMUNITY-016-02",
+      "kind": "planned",
+      "milestone": "M7",
+      "title": "Correlation, query and export end-to-end traceability",
+      "weight": 5
+    }
+  ],
   "titles": {
     "M0": "Foundation",
     "M1": "Studio",
