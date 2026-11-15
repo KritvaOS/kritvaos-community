@@ -19,6 +19,8 @@
 
 """Reject commit messages that carry AI-session metadata.
 
+Security control from kritva-program decision D-032 (follow-up).
+
 Forbidden in any commit message: a 'Claude-Session:' trailer and any claude.ai/code/session link.
 Modes:
   --range BASE..HEAD   check every commit in the range (used by CI on pull requests)
