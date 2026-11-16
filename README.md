@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2026 KritvaOS
+Copyright (c) 2026 Kritva Robotics Private Limited.
 SPDX-License-Identifier: Apache-2.0
 
 File        : README.md
@@ -232,4 +232,4 @@ The build version is set in [CMakeLists.txt](CMakeLists.txt) (0.1.0) and the rel
 
 ## 17. License
 
-Apache License 2.0 for the code in this repository. Copyright (c) 2026 KritvaOS. See [LICENSE](LICENSE) and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and licensing terms. The owner confirmed Apache-2.0 as the licence of this repository (program decision D-064). The documents say the same without the word "permanently": [.github/README.md](.github/README.md) and [CONTRIBUTING.md](CONTRIBUTING.md) state the Apache-2.0 licence, and [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md) (REFERENCE) says that future components outside this repository may be licensed differently. That is a statement of intent, not a licence term; only the licence file governs.
+Apache License 2.0 for the code in this repository. Copyright (c) 2026 Kritva Robotics Private Limited. See [LICENSE](LICENSE) and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and licensing terms. The owner confirmed Apache-2.0 as the licence of this repository (program decision D-064). The documents say the same without the word "permanently": [.github/README.md](.github/README.md) and [CONTRIBUTING.md](CONTRIBUTING.md) state the Apache-2.0 licence, and [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md) (REFERENCE) says that future components outside this repository may be licensed differently. That is a statement of intent, not a licence term; only the licence file governs.
