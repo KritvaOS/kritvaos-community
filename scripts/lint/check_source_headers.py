@@ -31,7 +31,12 @@ REQUIRED_FIELDS = (
     "Requirements", "API", "Author", "Created",
 )
 SPDX_MARKER = "SPDX-License-Identifier: Apache-2.0"
-COPYRIGHT_MARKER = "Copyright (c) 2026 KritvaOS"
+# Transition (kritva-standard decision D-1): the old and the new holder wording are both accepted
+# until every header in this repository is changed; then the old wording is removed.
+COPYRIGHT_MARKERS = (
+    "Copyright (c) 2026 KritvaOS",
+    "Copyright (c) 2026 Kritva Robotics Private Limited",
+)
 
 EXCLUDED_DIRS = {
     ".git", "build", "out", "third_party", "vendor",
@@ -162,9 +167,9 @@ def validate_file(path: Path, repo: Path) -> list[dict]:
     if SPDX_MARKER not in text:
         errors.append({"file": str(path), "code": "HEADER-001",
                        "message": "missing SPDX-License-Identifier: Apache-2.0"})
-    if COPYRIGHT_MARKER not in text:
+    if not any(marker in text for marker in COPYRIGHT_MARKERS):
         errors.append({"file": str(path), "code": "HEADER-003",
-                       "message": "missing Copyright (c) 2026 KritvaOS"})
+                       "message": "missing copyright line (" + " or ".join(COPYRIGHT_MARKERS) + ")"})
 
     for field in REQUIRED_FIELDS:
         if field == "Created":
