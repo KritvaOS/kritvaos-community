@@ -16,7 +16,7 @@ Example:
 
 Use:
 
-`Copyright (c) 2026 KritvaOS`
+`Copyright (c) 2026 Kritva Robotics Private Limited.`
 
 The copyright holder may be updated when the legal structure of the project is finalized.
 

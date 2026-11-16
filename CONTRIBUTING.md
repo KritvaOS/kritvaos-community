@@ -219,7 +219,7 @@ KritvaOS Community source files should use the standard header:
 
 ```cpp
 //==============================================================================
-// Copyright (c) 2026 KritvaOS
+// Copyright (c) 2026 Kritva Robotics Private Limited.
 // SPDX-License-Identifier: Apache-2.0
 //
 // File        : example.hpp

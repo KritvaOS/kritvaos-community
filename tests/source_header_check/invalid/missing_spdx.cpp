@@ -1,5 +1,5 @@
 //==============================================================================
-// Copyright (c) 2026 KritvaOS
+// Copyright (c) 2026 Kritva Robotics Private Limited.
 //
 // File        : sample.cpp
 // Description : Valid C++ fixture
