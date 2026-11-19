@@ -95,7 +95,7 @@ Labels: INPUT is edited by hand and read by a tool or review; GENERATED is writt
 | [planning/](planning/) | Milestone plans, tasks, acceptance criteria, review checklists, change logs | MIXED: planning records and views | Governs execution and acceptance of milestones |
 | [project/](project/) | Roadmap, release checklist and matrix, tracking registers | REFERENCE; status per file | May lag the planning records |
 | [scripts/](scripts/) | Toolchain check, status generator, source-header lint, commit checkers | INPUT; IMPLEMENTED | |
-| [status/](status/) | Status report, schema, curated evidence file | GENERATED (`status.json`); INPUT (`evidence.json`, owner-curated) | Never hand-edit `status.json` |
+| [status/](status/) | Status report, generated progress view ([status/STATUS.md](status/STATUS.md)), pinned program snapshot, schema, curated evidence file | GENERATED (`status.json`, `STATUS.md`); INPUT (`program_snapshot.json`, pinned from kritva-program; `evidence.json`, owner-curated) | Never hand-edit `status.json` or `STATUS.md`; see section 10 |
 | [toolchain/](toolchain/), [config/](config/), [.devcontainer/](.devcontainer/), [.githooks/](.githooks/) | Toolchain definition, header-lint configuration, development container, Git hooks | INPUT | |
 | [CMakeLists.txt](CMakeLists.txt), [CMakePresets.json](CMakePresets.json), [Makefile](Makefile) | Build, presets and local commands | INPUT; IMPLEMENTED | `make help` lists the commands |
 | `sense/`, `mind/`, `motion/`, `skill/`, `sim/`, `sdk/`, `drivers/`, `soc/`, `tools/` | Directories the build would add if present | NOT YET IMPLEMENTED (absent) | Named in [docs/architecture/REPOSITORY_ARCHITECTURE.md](docs/architecture/REPOSITORY_ARCHITECTURE.md) as intended |
