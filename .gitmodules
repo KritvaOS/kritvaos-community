@@ -1,3 +1,15 @@
 [submodule "kritva-core"]
 	path = core
 	url = https://github.com/KritvaOS/kritva-core
+[submodule "kritva-skill"]
+	path = skill
+	url = https://github.com/KritvaOS/kritva-skill
+[submodule "kritva-mind"]
+	path = mind
+	url = https://github.com/KritvaOS/kritva-mind
+[submodule "kritva-motion"]
+	path = motion
+	url = https://github.com/KritvaOS/kritva-motion
+[submodule "kritva-sense"]
+	path = sense
+	url = https://github.com/KritvaOS/kritva-sense

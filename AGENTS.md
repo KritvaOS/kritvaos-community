@@ -744,7 +744,11 @@ submodule layout. It MUST be kept synchronized with `.gitmodules`.
 
 | Path | Component | Repository | Status |
 |---|---|---|---|
-| `<actual-submodule-path>` | `<component>` | `<repository>` | Git submodule |
+| `core` | Kritva Core | `KritvaOS/kritva-core` | Git submodule |
+| `sense` | Kritva Sense | `KritvaOS/kritva-sense` | Git submodule (registered, not integrated) |
+| `mind` | Kritva Mind | `KritvaOS/kritva-mind` | Git submodule (registered, not integrated) |
+| `motion` | Kritva Motion | `KritvaOS/kritva-motion` | Git submodule (registered, not integrated) |
+| `skill` | Kritva Skill | `KritvaOS/kritva-skill` | Git submodule (registered, not integrated) |
 
 If no submodules are currently configured, this table MUST explicitly state:
 
