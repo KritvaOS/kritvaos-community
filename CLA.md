@@ -1,6 +1,6 @@
 # KritvaOS Community Contributor License Agreement
 
-**Status:** PROPOSED — KritvaOS Community v0.1  
+**Status:** DEFERRED — draft v0.1, not in force. No CLA is required of contributors; contributions are accepted under the DCO (see CONTRIBUTING.md section 4)  
 **Project:** KritvaOS Community  
 **Repository:** `kritvaos-community`  
 **Project License:** Apache License 2.0
