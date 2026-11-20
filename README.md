@@ -21,7 +21,7 @@ Created     : 19-10-2026
 |---|---|
 | Project | KritvaOS |
 | Repository | `KritvaOS/kritvaos-community` |
-| Repository Type | Platform integration (application runtime, hardware abstraction and remote layer; parent of the `core` submodule) |
+| Repository Type | Platform integration (application runtime, hardware abstraction and remote layer; parent of the `core` submodule and of four registered submodules) |
 | Visibility Class | PUBLIC (owner decision D-063 in kritva-program; it is an exception to the D-039 recommendation of PRIVATE, and no release review is recorded) |
 | GitHub Setting | PUBLIC, the same as the class (D-063 in kritva-program keeps this repository public and takes it out of the return-to-private plan); OWNER-ATTESTED, UNVERIFIED: no independent check of the setting and no verification date is recorded here |
 | Lifecycle Status | ACTIVE (pre-alpha) |
@@ -87,6 +87,10 @@ Labels: INPUT is edited by hand and read by a tool or review; GENERATED is writt
 | Path | Content | Label, status | Notes |
 |---|---|---|---|
 | [core/](core/) | Git submodule `kritva-core` (pointer recorded in the repository; checked out only with `--recurse-submodules` or `make submodules`) | INPUT; IMPLEMENTED upstream | This repository never changes Core; the pointer is changed only by an explicit decision |
+| [sense/](sense/) | Git submodule `kritva-sense` (pointer recorded in the repository; checked out only with `--recurse-submodules` or `make submodules`) | REGISTERED; not integrated | No source, build or runtime link exists here; the pointer is changed only by an explicit decision |
+| [mind/](mind/) | Git submodule `kritva-mind` (pointer recorded in the repository; checked out only with `--recurse-submodules` or `make submodules`) | REGISTERED; not integrated | No source, build or runtime link exists here; the pointer is changed only by an explicit decision |
+| [motion/](motion/) | Git submodule `kritva-motion` (pointer recorded in the repository; checked out only with `--recurse-submodules` or `make submodules`) | REGISTERED; not integrated | No source, build or runtime link exists here; the pointer is changed only by an explicit decision |
+| [skill/](skill/) | Git submodule `kritva-skill` (pointer recorded in the repository; checked out only with `--recurse-submodules` or `make submodules`) | REGISTERED; not integrated | No source, build or runtime link exists here; the pointer is changed only by an explicit decision |
 | [runtime/](runtime/) | KOS-I2 application runtime host, configuration and observation | INPUT; IMPLEMENTED (host software) | |
 | [hardware/](hardware/) | `abstraction/`, `mock/`, `transport/` and `remote/` (KOS-I3 and KOS-I4) | INPUT; IMPLEMENTED (host software, mock devices and simulated transport only) | No real hardware driver or physical transport |
 | [examples/](examples/) | `kritva_demo`, `device_demo` and `nexus_edge_demo` | INPUT; IMPLEMENTED | Demos run in one process; they are not hardware demonstrations |
@@ -132,6 +136,7 @@ If the clone was made without submodules, run `make submodules` (or `git submodu
 | Platform contracts of Core | upstream | Core defines the platform contracts; this repository supplies the runtime and mock and simulated implementations | `core/include/kritva/core/platform/` | Contracts exist upstream; only simulated and mock implementations exist here; no real platform adapter is verified here |
 | Third-party libraries | upstream | see [toolchain/VERSIONS.yaml](toolchain/VERSIONS.yaml) | The toolchain definition | Not listed individually here |
 | kritva-program | upstream | governance and status | status schema 2.0 ([status/README.md](status/README.md)) | planning-only reporting; no program credit |
+| kritva-sense, kritva-mind, kritva-motion, kritva-skill | peers | Git submodules (`sense`, `mind`, `motion`, `skill`) only | none | Registered in `.gitmodules` with a recorded pointer; no source, build or runtime link exists here, and none of them has a top-level `CMakeLists.txt`; the conditional `add_subdirectory` hooks in [CMakeLists.txt](CMakeLists.txt) would build one only if it gained one |
 | kritva-actuator family and other Kritva repositories | peers or downstream | none attached | none | PLANNED or PROPOSED in the program's repository plan; no source or runtime link exists here |
 
 Five kinds of relationship are kept apart: program ordering, Git submodule, source or build dependency, runtime integration, and governance or status reporting. A PROPOSED or PLANNED dependency is not an integration that exists.
@@ -192,7 +197,7 @@ The planning record says Release, ASan and UBSan results were local evidence onl
 | `make check` | check | runs `header-check` only; it does not build or test |
 | `make check-readme` | check | structural check of this README only (metadata, topics, relative links, placeholders); a PASS does not show the content is accurate; not part of `make check` or CI |
 | `make pre-pr` | check | runs `make check` and `make status` |
-| `make submodules` | modify (fetches the `core` submodule) | needs network |
+| `make submodules` | modify (fetches every registered submodule: `core`, `sense`, `mind`, `motion`, `skill`) | needs network |
 | `make clean` | modify (deletes local generated artefacts) | local only |
 
 There is no `make build` or `make test`: build and test use the CMake presets shown in section 6. A passing `make check` confirms only that the source-header check passed: it does not build or test the code, run the status checks or run any other CI workflow. Passing CI shows that the workflows' own commands passed on that commit. It does not show that the design is right, that a gate is closed, that the runtime meets a real-time requirement or that a robot using it is safe. No hardware, real-time or physical test exists here.
@@ -230,6 +235,10 @@ The build version is set in [CMakeLists.txt](CMakeLists.txt) (0.1.0) and the rel
 |---|---|
 | [kritva-program](https://github.com/KritvaOS/kritva-program) | Program plan, baseline, decisions, approvals, status consolidation, README standard |
 | [kritva-core](https://github.com/KritvaOS/kritva-core) | The `core` submodule: the platform-independent runtime foundation library |
+| [kritva-sense](https://github.com/KritvaOS/kritva-sense) | The `sense` submodule: registered, not integrated |
+| [kritva-mind](https://github.com/KritvaOS/kritva-mind) | The `mind` submodule: registered, not integrated |
+| [kritva-motion](https://github.com/KritvaOS/kritva-motion) | The `motion` submodule: registered, not integrated |
+| [kritva-skill](https://github.com/KritvaOS/kritva-skill) | The `skill` submodule: registered, not integrated |
 
 ## 17. License
 
