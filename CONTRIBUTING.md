@@ -38,22 +38,22 @@ Contributors generally retain copyright ownership of their original contribution
 
 By submitting a contribution, the contributor grants the project the rights necessary to review, maintain, reproduce, modify, integrate, test, distribute, and otherwise use the contribution under the applicable project and contribution terms.
 
-A formal Contributor License Agreement may be required.
+No Contributor License Agreement is required today. Contributions are accepted under the Developer Certificate of Origin (section 4). A CLA is deferred; see [CLA.md](CLA.md).
 
-## 4. Contributor License Agreement
+## 4. Developer Certificate of Origin (DCO)
 
-KritvaOS may require contributors to complete a CLA.
+KritvaOS Community accepts contributions under the Developer Certificate of Origin, version 1.1 (<https://developercertificate.org>). No Contributor License Agreement is required today.
 
-The CLA is intended to establish that:
+By adding a `Signed-off-by:` line to a commit, the contributor certifies the DCO for that commit. In short, the contributor confirms that they wrote the contribution or otherwise have the right to submit it under the project license (Apache-2.0), and that they understand the contribution and the sign-off are public and kept with the project.
 
-- the contributor has the right to submit the contribution;
-- required employer or organizational authorization has been obtained;
-- the contribution may be used by the KritvaOS project;
-- the contribution may be distributed under the Community license;
-- applicable copyright rights are granted;
-- applicable patent rights are addressed.
+- Sign off each commit with `git commit -s`, which appends `Signed-off-by: Your Name <you@example.com>` using your Git name and email. Use your real name.
+- Contributors keep the copyright in their contributions. Contributions are licensed to the project and its users under Apache-2.0, the same licence as the rest of KritvaOS Community. No copyright assignment is requested.
+- Contributions made for an employer or organisation need that employer's or organisation's authorisation before they are signed off.
+- The `Signed-off-by:` line goes beside the `Task:` footer described in section 20 and does not replace it.
 
-The CLA is not intended to change the permanent Apache-2.0 status of KritvaOS Community.
+Enforcement status: the DCO sign-off is required by this policy, but no automated check for it exists yet. Maintainers check sign-offs during review until an automated check is added.
+
+A CLA is deferred, not rejected. [CLA.md](CLA.md) is kept as an unadopted draft. Adopting a CLA would be a separate owner decision, after legal review, and would be recorded in kritva-program. It would not change the permanent Apache-2.0 status of KritvaOS Community.
 
 ## 5. Who Can Contribute?
 
@@ -110,7 +110,7 @@ Contributors must not knowingly submit technology they do not have the right to 
 
 Known patent or intellectual-property concerns relevant to a contribution should be disclosed.
 
-The final treatment of copyright and patent rights is governed by the applicable project license and, where required, the KritvaOS CLA.
+The final treatment of copyright and patent rights is governed by the applicable project license and the Developer Certificate of Origin sign-off described in section 4.
 
 ## 11. What Makes a Good Contribution?
 
@@ -281,6 +281,7 @@ Commit messages follow the Kritva commit standard (kritva-program decision D-053
 
 - Header: `type(scope): summary`, at most 90 characters. Types: feat, fix, docs, refactor, test, build, ci, chore, perf, revert, security.
 - One footer line: `Task: <ID>` or `Tasks: <ID>, <ID>`. A docs or chore commit that implements no task uses `Tasks: None (reason)`.
+- Sign off every commit with `git commit -s`, which adds a `Signed-off-by:` line (section 4). The commit-format check accepts it beside the `Task:` footer.
 - Do not add a `Claude-Session:` trailer or a claude.ai session link. A `Co-Authored-By:` line is allowed.
 - Check your commits with `python3 scripts/security/check_commit_format.py --range origin/main..HEAD`; the `commit-message-check` workflow runs the same check.
 
