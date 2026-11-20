@@ -117,6 +117,15 @@ public:
     /// Handles every frame that is receivable now and returns how many it took from the transport.
     std::size_t poll();
 
+    /// Edge-side safety policy: the largest heartbeat timeout, in milliseconds, this Edge accepts in a HELLO. A HELLO
+    /// that asks for more is rejected like any other invalid timing (INVALID_ARGUMENT) and changes nothing in the
+    /// current session. Protocol 1.0 allows timeouts up to 600000 ms, and a silent peer keeps an actuator at its last
+    /// command for that long, so an integrator of a physical system sets a ceiling here. 0, the default, adds no
+    /// limit beyond the protocol's own range. The value must be 0 or at least 20 (the protocol minimum); it applies to
+    /// the next HELLO and never ends or alters a session that is already running.
+    core::Result<void> set_max_heartbeat_timeout_ms(std::uint32_t max_ms);
+    [[nodiscard]] std::uint32_t max_heartbeat_timeout_ms() const noexcept { return max_heartbeat_timeout_ms_; }
+
     [[nodiscard]] NodeId node() const noexcept { return node_; }
     /// The current session, or an invalid id when there is none.
     [[nodiscard]] SessionId session() const noexcept { return SessionId{session_}; }
@@ -176,6 +185,7 @@ private:
     std::uint64_t unsessioned_sequence_{0};  // counter for frames sent outside a session (rejected HELLO)
     std::uint64_t last_valid_frame_ns_{0};
     transport::LinkTiming timing_{0, 0, 0, 0};
+    std::uint32_t max_heartbeat_timeout_ms_{0};   // 0: no Edge policy ceiling
     std::map<LedgerKey, Ledger> ledgers_;
     std::uint64_t next_heartbeat_ns_{0};
     // The fault listeners installed on the served endpoints reach this host only through the token, which the destructor

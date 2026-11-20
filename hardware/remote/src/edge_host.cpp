@@ -78,6 +78,14 @@ core::Result<std::unique_ptr<EdgeHost>> EdgeHost::create(NodeId node, DeviceRegi
 
 EdgeHost::~EdgeHost() { *self_ = nullptr; }
 
+core::Result<void> EdgeHost::set_max_heartbeat_timeout_ms(std::uint32_t max_ms) {
+    if (max_ms != 0 && max_ms < 20) {                   // 20 ms is the smallest timeout protocol 1.0 accepts: a lower ceiling would reject every HELLO
+        return core::Result<void>::failure(make_error(ErrorCode::INVALID_ARGUMENT, "the heartbeat timeout ceiling must be 0 (none) or at least 20 ms"));
+    }
+    max_heartbeat_timeout_ms_ = max_ms;
+    return core::Result<void>::success();
+}
+
 std::size_t EdgeHost::poll() {
     std::size_t taken = 0;
     while (auto frame = link_.receive()) {              // frames that are due now are handled first, so they count before supervision
@@ -188,6 +196,10 @@ void EdgeHost::handle_hello(const FrameHeader& header, ByteSpan payload) {
     timing.heartbeat_period_ms = hello.value.heartbeat_period_ms;
     timing.heartbeat_timeout_ms = hello.value.heartbeat_timeout_ms;
     if (!is_valid(timing)) { reject_hello(header, ErrorCode::INVALID_ARGUMENT, "heartbeat timing out of range"); return; }
+    if (max_heartbeat_timeout_ms_ != 0 && timing.heartbeat_timeout_ms > max_heartbeat_timeout_ms_) {
+        reject_hello(header, ErrorCode::INVALID_ARGUMENT, "heartbeat timeout above the limit of this Edge");   // Edge safety policy
+        return;
+    }
 
     // Accepted: from here on the session changes. Order of spec section 9.
     const bool replacing = session_ != 0;
