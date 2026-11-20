@@ -51,7 +51,7 @@ By adding a `Signed-off-by:` line to a commit, the contributor certifies the DCO
 - Contributions made for an employer or organisation need that employer's or organisation's authorisation before they are signed off.
 - The `Signed-off-by:` line goes beside the `Task:` footer described in section 20 and does not replace it.
 
-Enforcement status: the DCO sign-off is required by this policy, but no automated check for it exists yet. Maintainers check sign-offs during review until an automated check is added.
+Enforcement: the `commit-message-check` workflow runs `scripts/security/check_dco_signoff.py` on every pull request. Each new commit needs a `Signed-off-by: Name <email>` line whose email matches the commit author or committer, and commits by GitHub bot accounts are exempt. Existing history is not checked. To fix a missing sign-off, run `git commit --amend -s` for the last commit, or `git rebase --signoff origin/main` for several, then force-push your branch. You can check locally with `python3 scripts/security/check_dco_signoff.py --range origin/main..HEAD`.
 
 A CLA is deferred, not rejected. [CLA.md](CLA.md) is kept as an unadopted draft. Adopting a CLA would be a separate owner decision, after legal review, and would be recorded in kritva-program. It would not change the permanent Apache-2.0 status of KritvaOS Community.
 
