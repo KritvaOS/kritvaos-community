@@ -61,9 +61,9 @@
   },
   "program": {
     "baseline_approved": true,
-    "baseline_version": 12,
-    "generated_at": "2026-11-08T12:16:37Z",
-    "release_state": "NOT_READY",
+    "baseline_version": 15,
+    "generated_at": "2026-11-20T16:12:49Z",
+    "release_state": "READY",
     "view": "https://github.com/KritvaOS/kritva-program/blob/main/v2/tracking/STATUS_VIEW.md"
   },
   "repo": "Community",
