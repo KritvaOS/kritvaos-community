@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # File        : commit-message-check.yml
-# Description : GitHub Actions check of commit messages: no AI session trailers, and the D-053 commit format
+# Description : GitHub Actions check of commit messages: no AI session trailers, the D-053 commit format, and the DCO sign-off (D-141)
 #
 # Component   : Infrastructure
 # Module      : Repository Security Controls
@@ -41,3 +41,5 @@ jobs:
         run: python3 scripts/security/check_commit_messages.py --range "origin/${{ github.base_ref }}..HEAD"
       - name: Check the commit format (D-053, adopted under D-061)
         run: python3 scripts/security/check_commit_format.py --range "origin/${{ github.base_ref }}..HEAD"
+      - name: Check the DCO sign-off (D-140, enforced under D-141)
+        run: python3 scripts/security/check_dco_signoff.py --range "origin/${{ github.base_ref }}..HEAD"
