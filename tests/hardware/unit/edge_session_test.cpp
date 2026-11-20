@@ -377,6 +377,37 @@ static void test_discovery_refuses_an_unsupported_topology() {           // spec
     KRITVA_CHECK(rig.lifecycle(MessageType::INITIALIZE_REQUEST, kImu, kAccel).status.ok());
 }
 
+static void test_the_edge_can_cap_the_heartbeat_timeout() {              // Edge safety policy, I4 review concern
+    EdgeRig rig;
+    KRITVA_CHECK(rig.edge->max_heartbeat_timeout_ms() == 0);                // default: no limit beyond the protocol range
+    KRITVA_CHECK(!rig.edge->set_max_heartbeat_timeout_ms(19).has_value());  // below the protocol minimum: refused, policy unchanged
+    KRITVA_CHECK(rig.edge->max_heartbeat_timeout_ms() == 0);
+    KRITVA_CHECK(rig.hello(1, 0, 100, 600000).status.ok());                 // without a policy the protocol maximum is still accepted
+
+    KRITVA_CHECK(rig.edge->set_max_heartbeat_timeout_ms(2000).has_value());
+    rig.bring_up_all();
+    KRITVA_CHECK(rig.write(kMotor, kCommand, 0.5).status.ok());
+    const std::uint64_t session_before = rig.edge->session().value();
+    const std::uint64_t rejected_before = rig.stats().hellos_rejected;
+
+    // A HELLO above the ceiling is rejected and changes nothing: not the session, the actuator or the stop counters.
+    rig.send_raw(EdgeRig::frame(MessageType::HELLO, must(encode(HelloPayload{kNexusNode, 1, 0, 100, 2001})), 1, 0));
+    const auto replies = rig.poll();
+    KRITVA_CHECK(replies.size() == 1 && replies[0].header.type == MessageType::HELLO_ACK && replies[0].header.session_id == 0);
+    const auto ack = decode<HelloAckPayload>(replies[0].payload).value;
+    KRITVA_CHECK(!ack.status.ok() && ack.status.code == ErrorCode::INVALID_ARGUMENT && ack.session_id == 0);
+    KRITVA_CHECK(rig.stats().hellos_rejected == rejected_before + 1 && rig.stats().actuators_stopped_on_new_session == 0);
+    KRITVA_CHECK(rig.edge->session().value() == session_before && rig.motor.model().velocity_rad_s == 0.5);
+
+    // The ceiling itself is allowed, and the accepted session carries that timeout.
+    KRITVA_CHECK(rig.hello(1, 0, 100, 2000).status.ok() && rig.edge->timing().heartbeat_timeout_ms == 2000);
+    KRITVA_CHECK(rig.stats().hellos_accepted == 2);
+
+    // Lifting the policy restores the protocol range for the next HELLO.
+    KRITVA_CHECK(rig.edge->set_max_heartbeat_timeout_ms(0).has_value());
+    KRITVA_CHECK(rig.hello(1, 0, 100, 600000).status.ok());
+}
+
 int main() {
     test_create_requires_a_node_id();
     test_no_session_before_hello();
@@ -398,6 +429,7 @@ int main() {
     test_discovery_snapshot();
     test_discovery_of_an_empty_registry();
     test_discovery_refuses_an_unsupported_topology();
+    test_the_edge_can_cap_the_heartbeat_timeout();
     std::printf("edge_session_test: PASS\n");
     return 0;
 }
