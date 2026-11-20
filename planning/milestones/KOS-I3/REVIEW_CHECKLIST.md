@@ -55,4 +55,4 @@
 
 Completed by: the implementing agent's pre-commit reviews of every task diff; an independent read-only audit of `d8cd315` and a targeted re-audit of `40a6940` (all findings fixed, see `docs/verification/KOS-I3_VERIFICATION.md`); and the external architecture reviews of the milestone through `ecc0ca3`. Commits: I3-001 `39780cc`, I3-002 `a7e08e5`, I3-003 `97ab518`, I3-004 `f980675`, I3-005 `cd1a35c`, I3-006 `46b91fa`, I3-007 `d8cd315`; remediation `40a6940`; re-audit follow-up `9912e3c`; planning closure `e61814e`, `ecc0ca3`.
 
-This checklist covers the software and architecture review only. The **human safety review of the actuator contract is a separate gate and remains OPEN** (`ACCEPTANCE_CRITERIA.md`, "Open gate").
+This checklist covers the software and architecture review only. The **human safety review of the actuator contract is a separate gate and is now CLOSED** (`ACCEPTANCE_CRITERIA.md`, "Safety gate"; kritva-program gate record C014).

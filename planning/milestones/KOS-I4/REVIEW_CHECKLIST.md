@@ -12,8 +12,8 @@
 - [x] Edge is safety authority; limit validation is before apply.
 - [x] Session-scoped replay ledger prevents duplicate/replay application.
 - [x] Heartbeat loss stops affected actuators.
-- [ ] HUMAN SAFETY REVIEW — OPEN. This is an independent human-owned gate. It is not completed by software implementation or automated verification. It blocks formal KOS-I4 closure and physical actuator deployment, but does not block subsequent software tasks.
-- [ ] I3 safety review remains OPEN independently.
+- [x] HUMAN SAFETY REVIEW — CLOSED (kritva-program gate record C015, Community commit b62cc2e, 2026-11-20). Independent human-owned gate, closed by the owner's review; software contract only.
+- [x] I3 safety review: CLOSED independently (kritva-program gate record C014).
 - [x] Unit/integration/regression/ASan/UBSan/mutation/fresh-clone evidence complete.
 
-Software review items closed by architect review through 79f4daf. The two safety items remain OPEN and unchecked; KOS-CI-001 remains deferred.
+Software review items closed by architect review through 79f4daf. The two safety items are closed by the owner's review (C015, C014); KOS-CI-001 is CLOSED (kritva-program gate record C011).

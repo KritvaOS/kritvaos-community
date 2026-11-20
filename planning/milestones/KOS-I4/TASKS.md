@@ -13,7 +13,7 @@
 
 Strictly sequential; one atomic commit per task.
 
-**Safety flag (I4-004 to I4-008):** actuator/safety-relevant path. Software acceptance may complete on evidence. Human safety review remains an independent OPEN gate and is required before formal KOS-I4 closure or physical actuator deployment; it does not block the next software task. The KOS-I3 human safety review is a separate OPEN gate that I4 must not close or inherit.
+**Safety flag (I4-004 to I4-008):** actuator/safety-relevant path. Software acceptance may complete on evidence. The human safety review is an independent gate; it is now CLOSED by the owner's review (kritva-program gate record C015). The KOS-I3 human safety review is a separate gate (C014) that I4 does not close or inherit.
 
 **I4-001 gate:** I4-002 does not start until `docs/architecture/KOS-I4_PROTOCOL.md` and the I4-001 contract headers are review-clean (architect review).
 
@@ -26,10 +26,10 @@ Strictly sequential; one atomic commit per task.
 | I4-001 | Done; architect review APPROVED (d2f8936) |
 | I4-002 | Done (software); architect PASS (52218f4) |
 | I4-003 | Done (software); architect PASS (c40fbb2) |
-| I4-004 | Done (software); architect PASS (3c535b6); HUMAN SAFETY REVIEW OPEN |
-| I4-005 | Done (software); architect PASS (a690520); HUMAN SAFETY REVIEW OPEN |
-| I4-006 | Done (software); architect PASS (94aa01d); HUMAN SAFETY REVIEW OPEN |
-| I4-007 | Done (software); architect PASS (cd51be8); HUMAN SAFETY REVIEW OPEN |
-| I4-008 | Done (software); architect PASS (79f4daf); HUMAN SAFETY REVIEW OPEN |
+| I4-004 | Done (software); architect PASS (3c535b6); human safety review CLOSED (C015) |
+| I4-005 | Done (software); architect PASS (a690520); human safety review CLOSED (C015) |
+| I4-006 | Done (software); architect PASS (94aa01d); human safety review CLOSED (C015) |
+| I4-007 | Done (software); architect PASS (cd51be8); human safety review CLOSED (C015) |
+| I4-008 | Done (software); architect PASS (79f4daf); human safety review CLOSED (C015) |
 
-**KOS-I4 software implementation complete.** The human safety review is OPEN, as is the independent KOS-I3 review. KOS-CI-001 (Release/ASan/UBSan CI) is deferred.
+**KOS-I4 software implementation complete.** The human safety review is CLOSED (C015), as is the independent KOS-I3 review (C014). KOS-CI-001 (Release/ASan/UBSan CI) is CLOSED (kritva-program gate record C011).

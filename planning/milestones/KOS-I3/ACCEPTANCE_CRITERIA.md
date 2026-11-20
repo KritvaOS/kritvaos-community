@@ -63,6 +63,6 @@
 - Regression: 115/115 tests (76 Core + 18 KOS-I2 + 21 KOS-I3) in Debug and Release from a clean build, and in a fresh clone built in the project container; `make check` and `git diff --check` clean. Details in `docs/verification/KOS-I3_VERIFICATION.md`.
 - Core: `git diff` of `core/` and of the KOS-I2 `runtime/` and `examples/kritva_demo/` is empty across the milestone.
 
-## Open gate (not part of the checked items above)
+## Safety gate (separate from the checked items above)
 
-- [ ] **Human safety review: OPEN.** `MotorCommand`, motor limits, fault-to-zero behavior, velocity command semantics, the motor mock's safety behavior and any future mapping to physical actuator control (AGENTS.md section 32). The software acceptance above does not close this gate; KOS-I3 is formally closed only when the owner signs it off.
+- [x] **Human safety review: CLOSED** (owner review recorded in the program ledger, kritva-program gate record C014, Community commit b62cc2e, 2026-11-20; earlier closure C009 at 8256ba3; software contract only). `MotorCommand`, motor limits, fault-to-zero behavior, velocity command semantics, the motor mock's safety behavior and any future mapping to physical actuator control (AGENTS.md section 32). The software acceptance above does not close this gate; the owner's review did. The closure does not approve a physical actuator deployment.
