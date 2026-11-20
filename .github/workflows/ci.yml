@@ -77,10 +77,14 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Checkout repository (with kritva-core submodule)
+      - name: Checkout repository
         uses: actions/checkout@v5
-        with:
-          submodules: recursive
+
+      # Only core is built. sense, mind, motion and skill are registered but have no
+      # CMakeLists.txt, so fetching them is wasted time. If one gains a top-level
+      # CMakeLists.txt and is added to the build, add its path to this command (D-142).
+      - name: Fetch the core submodule
+        run: git submodule update --init --recursive -- core
 
       - name: Build KritvaOS development container
         run: |
@@ -127,10 +131,14 @@ jobs:
         preset: [release, asan, ubsan]
 
     steps:
-      - name: Checkout repository (with kritva-core submodule)
+      - name: Checkout repository
         uses: actions/checkout@v5
-        with:
-          submodules: recursive
+
+      # Only core is built. sense, mind, motion and skill are registered but have no
+      # CMakeLists.txt, so fetching them is wasted time. If one gains a top-level
+      # CMakeLists.txt and is added to the build, add its path to this command (D-142).
+      - name: Fetch the core submodule
+        run: git submodule update --init --recursive -- core
 
       - name: Build KritvaOS development container
         run: |
