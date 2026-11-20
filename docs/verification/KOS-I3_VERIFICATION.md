@@ -1,7 +1,7 @@
 # KOS-I3 Verification Report
 
 **Milestone:** KOS-I3 Device & Endpoint Integration
-**Status:** IMPLEMENTED; independent audit findings remediated; **HUMAN SAFETY REVIEW REQUIRED — OPEN**
+**Status:** IMPLEMENTED; independent audit findings remediated; human safety review CLOSED (kritva-program gate record C014, Community commit b62cc2e, 2026-11-20)
 **Dependency:** `kritva-core` R1.0 (`4acce3b`, unmodified)
 
 ## Evidence
@@ -81,12 +81,12 @@ Single `DeviceManager` Component (no `add_device`), Core `Lifecycle` reuse, one-
 
 ## Known limitations and review items
 
-- **HUMAN REVIEW REQUIRED — OPEN (AGENTS.md section 32, physical actuator control):** the `MotorCommand` contract (I3-004), motor limits, fault-to-zero behavior, velocity command semantics, the motor mock's safety behavior (I3-005) and any future mapping of this contract to physical actuator control. Not reviewed by a human; the software audit remediation does not close this gate.
+- **HUMAN REVIEW — CLOSED (AGENTS.md section 32, physical actuator control; owner review recorded as kritva-program gate record C014, software contract only):** the `MotorCommand` contract (I3-004), motor limits, fault-to-zero behavior, velocity command semantics, the motor mock's safety behavior (I3-005) and any future mapping of this contract to physical actuator control. The software audit remediation did not close this gate; the owner's review did.
 - Mock settings are integers (rad/s limits via configuration; fractional limits through `set_limits()`), because the I2 configuration loader parses only bool, integer and string values.
 - The demo's own defensive checks (no recovery, error-event count) fire only if the library misbehaves, so removing them is not detected by the demo tests; the underlying behavior is covered by the library tests.
 - Fault listeners are owner-scoped; a registrant must clear its own before it is destroyed. A faulting endpoint is reported to the manager as a single ERROR event without endpoint identity (Core `Event` has no payload); the identity is in `diagnostics()`.
 - `DeviceManager` requires registered Devices to outlive it (documented; the destructor clears the listeners it installed).
-- No sanitizer, clang-tidy or Clang matrix stage in CI yet (deferred).
+- At I3 closure there was no sanitizer, clang-tidy or Clang matrix stage in CI. The Release, ASan and UBSan variants have since been added to `ci.yml` (KOS-CI-001, CLOSED: kritva-program gate record C011); clang-tidy and a Clang matrix are still absent.
 - `docs/api/` does not exist yet; AGENTS.md section 23 submodule table still has its placeholder row.
 
 ## Acceptance rule

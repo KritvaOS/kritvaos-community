@@ -6,7 +6,7 @@ Required matrices: malformed frame; bounds; version; identity collisions; reques
 
 Run from a fresh clone/container before milestone closure. Any I2/I3 regression blocks I4 closure.
 
-**HUMAN SAFETY REVIEW — OPEN (independent human-owned gate):** I4-005 to I4-008 and every actuator write path. It is not completed by software verification, blocks formal KOS-I4 closure and physical actuator deployment, and does not block subsequent software tasks. The I3 human safety review remains OPEN independently.
+**HUMAN SAFETY REVIEW — CLOSED (independent human-owned gate):** I4-005 to I4-008 and every actuator write path. It was not completed by software verification; the owner's review closed it (kritva-program gate record C015, Community commit b62cc2e, 2026-11-20; software contract only). The I3 human safety review is closed independently (C014). A closure does not approve a physical actuator deployment: see `docs/architecture/hardware/DRIVER_SAFETY_CONTRACT.md`.
 
 ## Task evidence
 

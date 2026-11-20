@@ -3,8 +3,8 @@
 | Milestone | Status |
 |---|---|
 | KOS-I2 | IMPLEMENTED / predecessor baseline |
-| KOS-I3 | IMPLEMENTED; audit and re-audit remediation complete; **HUMAN SAFETY REVIEW REQUIRED — OPEN** |
-| KOS-I4 | SOFTWARE IMPLEMENTATION COMPLETE (I4-001..I4-008, architect-accepted); **HUMAN SAFETY REVIEW — OPEN**; KOS-CI-001 deferred |
+| KOS-I3 | IMPLEMENTED; audit and re-audit remediation complete; human safety review CLOSED (kritva-program gate record C014, Community commit b62cc2e, 2026-11-20) |
+| KOS-I4 | SOFTWARE IMPLEMENTATION COMPLETE (I4-001..I4-008, architect-accepted); human safety review CLOSED (kritva-program gate record C015, Community commit b62cc2e, 2026-11-20); KOS-CI-001 CLOSED (kritva-program gate record C011) |
 | KOS-M0 | V2-M0 governance task KOS-COMMUNITY-M0-001 DESCOPED (owner waived the PD-017 mailbox test, program D-119; removed from baseline v12; not tested, no credit) |
 
 ## KOS-I2 Task Commits
@@ -42,9 +42,9 @@
 | Independent audit and remediation | PASS: all findings fixed; targeted re-audit found no blockers or majors; its minor items are fixed |
 | Documentation closure (plan aligned to the as-built architecture, commit hashes recorded, execution order, milestone acceptance, review checklist) | PASS (e61814e, ecc0ca3 and the review-checklist closure commit) |
 | CI | The `build-and-test` job is implemented and its commands were verified locally and in the project container; an external GitHub run for the final commit was not independently confirmed in the external review |
-| Human safety review: `MotorCommand`, motor limits, fault-to-zero behavior, velocity command semantics, mock safety behavior, any future mapping to physical actuator control | **OPEN: not reviewed by a human** |
+| Human safety review: `MotorCommand`, motor limits, fault-to-zero behavior, velocity command semantics, mock safety behavior, any future mapping to physical actuator control | **CLOSED**: owner review recorded in the program ledger (kritva-program gate record C014, Community commit b62cc2e, 2026-11-20; earlier closure C009 at 8256ba3). Covers the software contract only |
 
-KOS-I3 is not fully closed until the owner signs off the safety review.
+KOS-I3's safety gate is closed by the owner's review. That closure does not approve a physical actuator deployment.
 
 ## KOS-I4 Task Commits
 
@@ -65,7 +65,7 @@ KOS-I3 is not fully closed until the owner signs off the safety review.
 |---|---|
 | Software acceptance (8 tasks, architect review) | PASS |
 | Milestone acceptance record (`planning/milestones/KOS-I4/ACCEPTANCE_CRITERIA.md`) | Software items checked with evidence; the safety gate is listed separately and left unchecked |
-| CI | `ci.yml` (Debug build and full test suite) and the source-header check pass on every I4 commit; Release, ASan and UBSan are local evidence only; **KOS-CI-001 (Release/ASan/UBSan CI) remains deferred** |
-| Human safety review: the I4 actuator write paths (Edge limit validation, duplicate/replay protection, heartbeat-timeout stop, fault-to-safe-state) | **OPEN: not reviewed by a human** |
+| CI | `ci.yml` (Debug build and full test suite) and the source-header check pass on every I4 commit; the Release, ASan and UBSan variants ran green in CI on 8256ba3 (Community run #34); **KOS-CI-001 CLOSED** (kritva-program gate record C011) |
+| Human safety review: the I4 actuator write paths (Edge limit validation, duplicate/replay protection, heartbeat-timeout stop, fault-to-safe-state) | **CLOSED**: owner review recorded in the program ledger (kritva-program gate record C015, Community commit b62cc2e, 2026-11-20; earlier closure C010 at 8256ba3). Covers the software contract only |
 
-KOS-I4 is not formally closed until the owner signs off the safety review. Physical actuator deployment remains blocked by that gate and by the independent, still OPEN KOS-I3 safety review.
+Both safety gates (KOS-I3 and KOS-I4) are closed by the owner's review. A closure does not approve a physical actuator deployment: see `docs/architecture/hardware/DRIVER_SAFETY_CONTRACT.md`.

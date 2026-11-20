@@ -1,8 +1,8 @@
 # Active Milestone
 
-Current milestone: **KOS-I4 — Nexus↔Edge Integration** (software implementation complete; human safety review OPEN).
+Current milestone: **KOS-I4 — Nexus↔Edge Integration** (software implementation complete; human safety review CLOSED, kritva-program gate record C015).
 
-See `milestones/KOS-I4/` and `MILESTONE_STATUS.md`. The predecessor KOS-I3 (`milestones/KOS-I3/MILESTONE.md`) keeps its own, independent OPEN human safety review.
+See `milestones/KOS-I4/` and `MILESTONE_STATUS.md`. The predecessor KOS-I3 (`milestones/KOS-I3/MILESTONE.md`) had its own, independent human safety review, now CLOSED (kritva-program gate record C014).
 
 ## V2 Program Milestone Alignment
 

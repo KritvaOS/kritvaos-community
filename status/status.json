@@ -433,7 +433,7 @@
         {
           "type": "software",
           "uri": "planning/milestones/KOS-I4/I4-004/ACCEPTANCE_CRITERIA.md",
-          "description": "Criteria reference only (not completion proof); planning status text: 'Done (software); architect PASS (3c535b6); HUMAN SAFETY REVIEW OPEN'",
+          "description": "Criteria reference only (not completion proof); planning status text: 'Done (software); architect PASS (3c535b6); human safety review CLOSED (C015)'",
           "commit": null,
           "ci_run": null,
           "report_sha256": null,
@@ -459,7 +459,7 @@
         {
           "type": "software",
           "uri": "planning/milestones/KOS-I4/I4-005/ACCEPTANCE_CRITERIA.md",
-          "description": "Criteria reference only (not completion proof); planning status text: 'Done (software); architect PASS (a690520); HUMAN SAFETY REVIEW OPEN'",
+          "description": "Criteria reference only (not completion proof); planning status text: 'Done (software); architect PASS (a690520); human safety review CLOSED (C015)'",
           "commit": null,
           "ci_run": null,
           "report_sha256": null,
@@ -485,7 +485,7 @@
         {
           "type": "software",
           "uri": "planning/milestones/KOS-I4/I4-006/ACCEPTANCE_CRITERIA.md",
-          "description": "Criteria reference only (not completion proof); planning status text: 'Done (software); architect PASS (94aa01d); HUMAN SAFETY REVIEW OPEN'",
+          "description": "Criteria reference only (not completion proof); planning status text: 'Done (software); architect PASS (94aa01d); human safety review CLOSED (C015)'",
           "commit": null,
           "ci_run": null,
           "report_sha256": null,
@@ -511,7 +511,7 @@
         {
           "type": "software",
           "uri": "planning/milestones/KOS-I4/I4-007/ACCEPTANCE_CRITERIA.md",
-          "description": "Criteria reference only (not completion proof); planning status text: 'Done (software); architect PASS (cd51be8); HUMAN SAFETY REVIEW OPEN'",
+          "description": "Criteria reference only (not completion proof); planning status text: 'Done (software); architect PASS (cd51be8); human safety review CLOSED (C015)'",
           "commit": null,
           "ci_run": null,
           "report_sha256": null,
@@ -537,7 +537,7 @@
         {
           "type": "software",
           "uri": "planning/milestones/KOS-I4/I4-008/ACCEPTANCE_CRITERIA.md",
-          "description": "Criteria reference only (not completion proof); planning status text: 'Done (software); architect PASS (79f4daf); HUMAN SAFETY REVIEW OPEN'",
+          "description": "Criteria reference only (not completion proof); planning status text: 'Done (software); architect PASS (79f4daf); human safety review CLOSED (C015)'",
           "commit": null,
           "ci_run": null,
           "report_sha256": null,
