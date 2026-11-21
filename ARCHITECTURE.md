@@ -249,10 +249,11 @@ The platform must support both software-only development and complete hardware-i
                          Customer Applications
                                   │
                                   ▼
-                           ┌─────────────┐
-                           │ Kritva SDK  │
-                           └──────┬──────┘
-                                  │
+ ┌──────────────┐          ┌─────────────┐             ┌──────────────────────┐
+ │ Kritva Studio│─────────►│ Kritva SDK  │- - - - - - ►│ Kritva Control Plane │
+ │  (planned)   │   uses   │  (planned)  │versioned API│ (planned; separate   │
+ └──────────────┘          └──────┬──────┘             │ repository)          │
+                                  │                    └──────────────────────┘
                                   ▼
                            ┌─────────────┐
                            │ Kritva Skill│
@@ -301,6 +302,8 @@ The platform must support both software-only development and complete hardware-i
 ```
 
 Kritva Sim and developer tooling operate across these layers.
+
+Planned components are marked "(planned)". Under decision D-144 in kritva-program, the Kritva SDK and Kritva Studio are planned in-tree components of this repository (`sdk/` and `studio/`, neither present yet), and the Kritva Control Plane is a planned separate repository (proposed name `kritva-control-plane`, not created). Kritva Sim placement is still open. The Control Plane is drawn beside the stack, with a dashed link to the SDK only; how its API responsibilities and its integration with the capability layers work is left to the architecture task and the Control Plane API contract. The arrows show intended interfaces, not integrations that exist. D-144 settles placement only: it does not move any planned task or authorize creating a repository.
 
 ---
 
