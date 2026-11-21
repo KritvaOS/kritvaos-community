@@ -284,6 +284,7 @@ Commit messages follow the Kritva commit standard (kritva-program decision D-053
 - Sign off every commit with `git commit -s`, which adds a `Signed-off-by:` line (section 4). The commit-format check accepts it beside the `Task:` footer.
 - Do not add a `Claude-Session:` trailer or a claude.ai session link. A `Co-Authored-By:` line is allowed.
 - Check your commits with `python3 scripts/security/check_commit_format.py --range origin/main..HEAD`; the `commit-message-check` workflow runs the same check.
+- Before you push, run `git fetch origin` and `make preflight`. It runs the CI checks that can run on your machine (header and README checks, commit message, format and DCO sign-off checks, status checks, and the debug build with tests) and lists every failure instead of stopping at the first. `make hooks-install` makes `git push` run it for you, and `git push --no-verify` skips it once. It does not run `secret-scan` or the Release, ASan and UBSan builds, so CI can still fail on those. [README.md](README.md) lists the exact steps.
 
 Examples:
 
