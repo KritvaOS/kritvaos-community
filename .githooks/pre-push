@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#==============================================================================
+# Copyright (c) 2026 Kritva Robotics Private Limited.
+# SPDX-License-Identifier: Apache-2.0
+#
+# File        : pre-push
+# Description : Runs "make preflight" before a push (on by default)
+#
+# Component   : Infrastructure
+# Module      : Preflight
+# Layer       : Development Infrastructure
+#
+# Requirements: Git, Python 3, Make
+# API         : Git pre-push hook
+#
+# Author      : KritvaOS
+# Created     : 21-11-2026
+#==============================================================================
+
+# On by default once "make hooks-install" has run. Turn it off in a clone with
+# "make preflight-hook-off". Skip it once with: git push --no-verify
+# The build and test step is left out when every file in the push is documentation,
+# planning, status, script or hook content; if that cannot be determined, it runs.
+set -e
+
+if [ "$(git config --get --bool kritva.preflightOnPush || echo true)" = "false" ]; then
+  exit 0
+fi
+
+zero=0000000000000000000000000000000000000000
+pushing=0
+build=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue
+  pushing=1
+  if [ "$remote_sha" = "$zero" ]; then
+    base="$(git merge-base "$local_sha" origin/main 2>/dev/null || true)"
+    if [ -z "$base" ]; then build=1; continue; fi
+    range="$base..$local_sha"
+  else
+    range="$remote_sha..$local_sha"
+  fi
+  files="$(git diff --name-only "$range" 2>/dev/null)" || { build=1; continue; }
+  if [ -z "$files" ]; then build=1; continue; fi
+  if printf '%s\n' "$files" | grep -Evq '^(docs/|planning/|status/|scripts/|\.githooks/|\.github/|[^/]*\.md$)'; then
+    build=1
+  fi
+done
+
+[ "$pushing" = 1 ] || exit 0
+
+echo "[pre-push] Running make preflight (turn off: make preflight-hook-off; skip once: --no-verify)..."
+if [ "$build" = 1 ]; then
+  make preflight
+else
+  make preflight PREFLIGHT_SKIP_BUILD=1
+fi
