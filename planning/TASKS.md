@@ -1,6 +1,6 @@
 # Active Tasks
 
-See `milestones/KOS-I3/TASKS.md`.
+See `milestones/KOS-I4/TASKS.md` (the active milestone, KOS-I4). The KOS-I3 tasks are in `milestones/KOS-I3/TASKS.md`.
 
 KOS-I2 remains the accepted regression baseline.
 

@@ -34,7 +34,7 @@ Created     : 19-10-2026
 | Status Reporting | [status/README.md](status/README.md) and [status/status.json](status/status.json) (generated) Generated progress view: [status/STATUS.md](status/STATUS.md) (see section 10). |
 | License | [LICENSE](LICENSE) (Apache License 2.0) |
 
-This README follows the Kritva README standard (`v2/planning/standards/README_STANDARD.md` in [kritva-program](https://github.com/KritvaOS/kritva-program)). It is a navigation map; the documents it links own the detail. The long vision text that used to be the README is kept as [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md); it describes intent, not implemented state.
+This README follows the Kritva README standard ([`common/readme/README_STANDARD.md`](https://github.com/KritvaOS/kritva-standard/blob/main/common/readme/README_STANDARD.md) in [kritva-standard](https://github.com/KritvaOS/kritva-standard)). It is a navigation map; the documents it links own the detail. The long vision text that used to be the README is kept as [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md); it describes intent, not implemented state.
 
 ## Community Overview Video
 
@@ -50,11 +50,11 @@ Kritva is intended to be an open, hardware-aware robotic computing platform that
 
 **This repository does not own** the Core library (it lives in `kritva-core` and is included as the `core` submodule), the program plan, baseline and approvals (kritva-program), real hardware drivers, any robot algorithm, or actuator hardware, firmware and mechanics (the kritva-actuator repositories).
 
-**Implementation state.** IMPLEMENTED (as host software): the KOS-I2 runtime host, component composition, configuration, observation and failure handling; the KOS-I3 device and endpoint abstraction, registry, typed sensor and actuator endpoints, mock IMU, motor and endpoint, and diagnostics; the KOS-I4 frame format, protocol codec, deterministic simulated transport, `EdgeHost`, remote device and endpoint, failure handling for the remote link, and a Nexus to Edge reference demo that runs in one process. PLANNED or PROPOSED only: Sense, Mind, Motion, Skill, Sim, SDK, Studio, the Control Plane, SoC, drivers, real transports and real hardware, and the later phases described in [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md); the top-level build adds those directories only if they exist, and none of them exists in this repository today. NOT YET IMPLEMENTED: any physical device, real network transport or real-time behaviour. Two human safety reviews (KOS-I3 and KOS-I4) are OPEN; see section 13. The planning records' words "Done", "IMPLEMENTED" and "SOFTWARE IMPLEMENTATION COMPLETE" are this repository's own statements; they are not central acceptance by kritva-program and do not mean safe, released or fit for any robot.
+**Implementation state.** IMPLEMENTED (as host software): the KOS-I2 runtime host, component composition, configuration, observation and failure handling; the KOS-I3 device and endpoint abstraction, registry, typed sensor and actuator endpoints, mock IMU, motor and endpoint, and diagnostics; the KOS-I4 frame format, protocol codec, deterministic simulated transport, `EdgeHost`, remote device and endpoint, failure handling for the remote link, and a Nexus to Edge reference demo that runs in one process. PLANNED or PROPOSED only: Sense, Mind, Motion, Skill, Sim, SDK, Studio, the Control Plane, SoC, drivers, real transports and real hardware, and the later phases described in [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md); the top-level build adds those directories only if they exist, and none of them exists in this repository today. NOT YET IMPLEMENTED: any physical device, real network transport or real-time behaviour. The KOS-I3 and KOS-I4 human safety reviews are CLOSED for the software contract only (kritva-program gate records C014 and C015, 2026-11-20); see section 13. The planning records' words "Done", "IMPLEMENTED" and "SOFTWARE IMPLEMENTATION COMPLETE" are this repository's own statements; they are not central acceptance by kritva-program and do not mean safe, released or fit for any robot.
 
 ## 2. Position in the KritvaOS Ecosystem
 
-This repository is the parent of the `core` submodule (`kritva-core`) and integrates it with the runtime and hardware layers. Its documented layering is in [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/architecture/REPOSITORY_ARCHITECTURE.md](docs/architecture/REPOSITORY_ARCHITECTURE.md). The other Kritva repositories (sense, motion, mind, skill, raas and the actuator family) are separate repositories; whether and how they are attached here is decided in kritva-program, and none is attached today. The roster and order of repositories are owned by kritva-program (`v2/planning/repo-pipeline.json`), not by this README. Platform component placement follows decision D-144 in kritva-program: the SDK and Studio are planned in-tree components of this repository (`sdk/` and `studio/`, neither present yet), the Control Plane is a planned separate repository (proposed name `kritva-control-plane`, not created, no pipeline entry), and the placement of Sim is still open. D-144 settles placement only: it does not move any planned task or authorize creating a repository, and the Control Plane API responsibilities and its integration with the capability layers remain subject to the architecture and API-contract work.
+This repository is the parent of the `core` submodule (`kritva-core`) and integrates it with the runtime and hardware layers. Its documented layering is in [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/architecture/REPOSITORY_ARCHITECTURE.md](docs/architecture/REPOSITORY_ARCHITECTURE.md). Sense, Mind, Motion and Skill are attached as registered Git submodules (`sense/`, `mind/`, `motion/`, `skill/`) with no source, build or runtime link here (section 7). The other Kritva repositories (raas and the actuator family) are separate repositories; whether and how they are attached here is decided in kritva-program, and none of them is attached today. The roster and order of repositories are owned by kritva-program (`v2/planning/repo-pipeline.json`), not by this README. Platform component placement follows decision D-144 in kritva-program: the SDK and Studio are planned in-tree components of this repository (`sdk/` and `studio/`, neither present yet), the Control Plane is a planned separate repository (proposed name `kritva-control-plane`, not created, no pipeline entry), and the placement of Sim is still open. D-144 settles placement only: it does not move any planned task or authorize creating a repository, and the Control Plane API responsibilities and its integration with the capability layers remain subject to the architecture and API-contract work.
 
 ## 3. Architecture
 
@@ -74,11 +74,15 @@ Role first, then the status the document declares. A label is a role, not an app
 | 6 | [toolchain/VERSIONS.yaml](toolchain/VERSIONS.yaml) | AUTHORITATIVE for supported tool versions (pre-alpha definition) | Which tools and versions are supported |
 | 7 | [planning/README.md](planning/README.md) | AUTHORITATIVE for planning and execution control | How milestones and tasks are run |
 | 8 | [planning/MILESTONE_STATUS.md](planning/MILESTONE_STATUS.md) | REFERENCE: a consolidated view of milestone status and closure gates | Where each milestone and its open reviews stand |
-| 9 | [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md) | CONTRIBUTING.md is AUTHORITATIVE for contribution rules: contributions are accepted under the DCO (`git commit -s`) and contributors keep their copyright. CLA.md is a DEFERRED draft, not in force (kritva-program D-140, D-141) | Licence, contribution and review rules; the `commit-message-check` workflow checks the DCO sign-off on pull requests (D-141); a CLA would need a separate owner decision after legal review |
-| 10 | [SECURITY.md](SECURITY.md) | AUTHORITATIVE for vulnerability reporting (route tested 18 October 2026, owner-attested; independent test waived, D-119) | How to report a vulnerability |
-| 11 | [status/README.md](status/README.md) | REFERENCE | How the status report is generated and what it does not mean |
-| 12 | [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md) | REFERENCE: vision and target narrative, not implemented state | The long-term intent that the old README described |
-| 13 | [CHANGELOG.md](CHANGELOG.md) | REFERENCE | What changed |
+| 9 | [planning/MILESTONE.md](planning/MILESTONE.md) | REFERENCE: the active milestone and the V2 program milestone alignment; follows kritva-program, which wins on any disagreement | Which milestones the program records for Community |
+| 10 | [planning/TASKS.md](planning/TASKS.md) | REFERENCE: a pointer to the active task list; each milestone's `TASKS.md` under [planning/milestones/](planning/milestones/) is the task list | Where tasks live |
+| 11 | [planning/REVIEW_CHECKLIST.md](planning/REVIEW_CHECKLIST.md) | REFERENCE: the general planning review list; each milestone folder holds its own review checklist | What a planning reviewer checks |
+| 12 | [planning/GIT_COMMIT_STEP.md](planning/GIT_COMMIT_STEP.md) | REFERENCE | The task commit standard and where the milestone convention is documented |
+| 13 | [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md) | CONTRIBUTING.md is AUTHORITATIVE for contribution rules: contributions are accepted under the DCO (`git commit -s`) and contributors keep their copyright. CLA.md is a DEFERRED draft, not in force (kritva-program D-140, D-141) | Licence, contribution and review rules; the `commit-message-check` workflow checks the DCO sign-off on pull requests (D-141); a CLA would need a separate owner decision after legal review |
+| 14 | [SECURITY.md](SECURITY.md) | AUTHORITATIVE for vulnerability reporting (route tested 18 October 2026, owner-attested; independent test waived, D-119) | How to report a vulnerability |
+| 15 | [status/README.md](status/README.md) | REFERENCE | How the status report is generated and what it does not mean |
+| 16 | [docs/architecture/KRITVA_VISION.md](docs/architecture/KRITVA_VISION.md) | REFERENCE: vision and target narrative, not implemented state | The long-term intent that the old README described |
+| 17 | [CHANGELOG.md](CHANGELOG.md) | REFERENCE | What changed |
 
 ## 5. Repository Structure and File Responsibilities
 
@@ -149,9 +153,21 @@ Work is organised in milestones, each with a folder under [planning/milestones/]
 | Milestone | Subject | Repository-declared status |
 |---|---|---|
 | KOS-I2 | Application runtime (host, composition, configuration, observation, failure handling, reference demo) | IMPLEMENTED; predecessor baseline |
-| KOS-I3 | Device and endpoint integration | IMPLEMENTED; **human safety review OPEN** |
-| KOS-I4 | Remote layer: protocol, transport, Edge host, remote endpoint, distributed failure handling, Nexus to Edge demo | Software implementation complete; **human safety review OPEN**; KOS-CI-001 (Release, ASan and UBSan in CI) deferred |
+| KOS-I3 | Device and endpoint integration | IMPLEMENTED; human safety review CLOSED (kritva-program gate record C014, 2026-11-20); software contract only |
+| KOS-I4 | Remote layer: protocol, transport, Edge host, remote endpoint, distributed failure handling, Nexus to Edge demo | Software implementation complete; human safety review CLOSED (kritva-program gate record C015, 2026-11-20); KOS-CI-001 (Release, ASan and UBSan in CI) CLOSED (gate record C011); software contract only |
 | KOS-M0 | V2-M0 governance task KOS-COMMUNITY-M0-001 (security mailbox verification) | DESCOPED by the owner (kritva-program D-119); not tested, not accepted, no credit |
+
+V2 program milestones. The repository milestones the program records for Community, from [planning/MILESTONE.md](planning/MILESTONE.md) (which follows kritva-program `v2/planning/milestones.json`; the program record wins on any disagreement):
+
+| ID | Program milestone | Status recorded here | Outcome (proposed) |
+|---|---|---|---|
+| V2-M0-COMMUNITY-001 | V2-M0 FOUNDATION | DESCOPED (D-119); no credit | Security reporting path working (SECURITY.md contact tested). |
+| V2-M1-COMMUNITY-001 | V2-M1 STUDIO | PROPOSED; no tasks yet | Public architecture description matches the approved capability contracts. |
+| V2-M3-COMMUNITY-001 | V2-M3 CONTROL PLANE | PROPOSED; no tasks yet | Public integration guide matches the control-plane contract. |
+| V2-M7-COMMUNITY-001 | V2-M7 LIVE & RESULTS | PROPOSED; no tasks yet | Public documentation reflects the live and results interfaces. |
+| V2-M8-COMMUNITY-001 | V2-M8 PRODUCTION | PROPOSED; no tasks yet | Release, security disposition and licence review complete. |
+
+The approved seven-repository plan register in kritva-program (D-109) also lists planning rows for Community in V2-M2, V2-M4 and V2-M5 (SDK, simulator and Studio work). Community has no repository milestone in those phases yet, and the rows are not tasks here. Where the SDK, Studio, Control Plane and Sim live is decided in kritva-program D-144 (see section 2). The target dates are in the program record and are proposed planning dates, not delivery commitments.
 
 The current milestone pointer is [planning/README.md](planning/README.md), which names KOS-I4 as current, the same as [planning/MILESTONE.md](planning/MILESTONE.md) and [planning/MILESTONE_STATUS.md](planning/MILESTONE_STATUS.md); if they ever disagree, treat the status document as the later record and check all three. Planned V2 work is not listed as repository tasks: [planning/MILESTONE.md](planning/MILESTONE.md) records proposed Community milestones that hold no tasks until kritva-program baselines them. Those are this repository's own planning records: central acceptance and baseline membership are decided in kritva-program, and dates are planning information, not delivery commitments. [project/roadmap/ROADMAP.md](project/roadmap/ROADMAP.md) holds the longer roadmap and is a plan, not a commitment.
 
@@ -172,7 +188,7 @@ The current milestone pointer is [planning/README.md](planning/README.md), which
 | Execution | the milestone `TASKS.md` files, reported in `status/status.json` (`COMPLETE` means the task's status says Done) | The task owner records it |
 | Evidence | each task's `ACCEPTANCE_CRITERIA.md` (a criteria reference, never proof) and the owner-curated [status/evidence.json](status/evidence.json) (commit-bound CI runs) | The author records it; a reviewer other than the author checks it |
 | Acceptance | the milestone acceptance criteria, the architect review, and the central approvals in kritva-program | The independent reviewer and the owner, never a status report |
-| Release readiness | the release checklist ([project/releases/RELEASE_CHECKLIST.md](project/releases/RELEASE_CHECKLIST.md)) and the open safety gates | The owner, through the central gates |
+| Release readiness | the release checklist ([project/releases/RELEASE_CHECKLIST.md](project/releases/RELEASE_CHECKLIST.md)) and the safety gates (closed for the software contract only; see section 13) | The owner, through the central gates |
 
 A run recorded in the evidence file is a fact about a commit, not acceptance. A generated view is a snapshot that can lag its inputs, cannot approve its own work and does not establish program credit; `readiness` in the report is a fixed default and is not safety clearance.
 
@@ -189,7 +205,7 @@ CI runs six workflows. `make check` is a local command and is not the same as CI
 | `readme-check` | pull requests; push to `main` | the README checker's unit tests, then `python3 scripts/check_readme.py README.md` (structure, metadata and local links only; not a required check yet, D-067) |
 | `secret-scan` | push; pull requests; manual dispatch | gitleaks |
 
-The planning record says Release, ASan and UBSan results were local evidence only and that KOS-CI-001 (Release, ASan and UBSan in CI) is deferred. `ci.yml` now defines that matrix, but a workflow definition is not a passing run and not an accepted gate: whether the jobs pass is reported by CI, and whether KOS-CI-001 is closed is a planning-record and owner decision. Until the planning record is updated, treat KOS-CI-001 as deferred.
+The planning record once said Release, ASan and UBSan results were local evidence only. KOS-CI-001 (Release, ASan and UBSan in CI) is now CLOSED (kritva-program gate record C011), and the `protect-main` ruleset requires those jobs (kritva-program D-143, an owner statement read back from the settings page and not independently verified). A CI run is a fact about a commit, not acceptance.
 
 | Command | Effect | Notes |
 |---|---|---|
@@ -211,7 +227,7 @@ Controlling statement: [AGENTS.md](AGENTS.md), section 48, "Program Governance R
 
 ## 13. Safety and Security
 
-This repository contains software for robotic devices, including an actuator write path (motor commands, limits, a heartbeat-timeout stop and fault-to-safe-state behaviour) that is exercised only against mock devices and a simulated transport. It is not a safety-certified component and no safety case is made for it. Two human safety reviews are OPEN and are recorded as such in [planning/MILESTONE_STATUS.md](planning/MILESTONE_STATUS.md): the KOS-I3 review (`MotorCommand`, motor limits, fault-to-zero behaviour, velocity command semantics, mock safety behaviour, any future mapping to physical actuator control) and the KOS-I4 review (the actuator write paths: Edge limit validation, duplicate and replay protection, heartbeat-timeout stop, fault-to-safe-state). **Connecting this software to a physical actuator is blocked while these gates are open.** Software tests, mock devices and simulation do not establish physical safety, and nothing here should be called validated or safe on that evidence. The open human safety reviews are tracked centrally in kritva-program, not only here.
+This repository contains software for robotic devices, including an actuator write path (motor commands, limits, a heartbeat-timeout stop and fault-to-safe-state behaviour) that is exercised only against mock devices and a simulated transport. It is not a safety-certified component and no safety case is made for it. The KOS-I3 and KOS-I4 human safety reviews are CLOSED (kritva-program gate records C014 and C015, 2026-11-20; recorded in [planning/MILESTONE_STATUS.md](planning/MILESTONE_STATUS.md)): the KOS-I3 review (`MotorCommand`, motor limits, fault-to-zero behaviour, velocity command semantics, mock safety behaviour, any future mapping to physical actuator control) and the KOS-I4 review (the actuator write paths: Edge limit validation, duplicate and replay protection, heartbeat-timeout stop, fault-to-safe-state). **The closures cover the software contract only and do not approve a physical actuator deployment** (see [docs/architecture/hardware/DRIVER_SAFETY_CONTRACT.md](docs/architecture/hardware/DRIVER_SAFETY_CONTRACT.md)). Software tests, mock devices and simulation do not establish physical safety, and nothing here should be called validated or safe on that evidence. The safety gate records are kept centrally in kritva-program, not only here.
 
 **Reporting a vulnerability:** follow [SECURITY.md](SECURITY.md). It names GitHub private vulnerability reporting as the first route and gives a direct-contact fallback. The Security Owner reports having tested the reporting route on 18 October 2026 (D-068); that is ATTESTED, not independently verified: the independent mailbox test (PD-017) was waived by the owner (D-119) and not performed. Nothing here promises a response time. Never put details of an unfixed vulnerability in a public issue, pull request or commit message.
 
@@ -229,7 +245,7 @@ The build version is set in [CMakeLists.txt](CMakeLists.txt) (0.1.0) and the rel
 | Repository owner (Dinesh; `.github/CODEOWNERS`) | Directs the work, decides, approves and merges |
 | Security Owner | Handles vulnerability reports and committed secrets |
 | Independent reviewer (architect) | Reviews and accepts tasks against the milestone acceptance criteria |
-| Human safety reviewer | Signs off the open KOS-I3 and KOS-I4 safety reviews |
+| Human safety reviewer | Signed off the KOS-I3 and KOS-I4 safety reviews (closed 2026-11-20; software contract only) |
 | Implementers (people and agents) | Implement approved scope, write tests, record evidence and follow `AGENTS.md` |
 
 ## 16. Related Repositories and References
