@@ -197,6 +197,8 @@ The planning record says Release, ASan and UBSan results were local evidence onl
 | `make check` | check | runs `header-check` only; it does not build or test |
 | `make check-readme` | check | structural check of this README only (metadata, topics, relative links, placeholders); a PASS does not show the content is accurate; not part of `make check` or CI |
 | `make pre-pr` | check | runs `make check` and `make status` |
+| `make preflight` | generate (writes `build/debug`) | the CI checks that run on this machine, locally: the header check (`make check`), the README check and its tests, the commit checker tests and the commit checks (including the DCO sign-off) over your branch commits, the progress report check, the status generator tests, the status facts check, the status schema check and the CMake debug build with CTest (`make build-test`, which needs `cmake` and the `core` submodule); lists every failure; run `git fetch origin` first; it does not run `secret-scan` or the toolchain validation and does not replace CI |
+| `make hooks-install`, `make preflight-hook-off` | modify | `hooks-install` makes `git push` run `make preflight` in this clone; `preflight-hook-off` turns that off (`git push --no-verify` skips it once) |
 | `make submodules` | modify (fetches every registered submodule: `core`, `sense`, `mind`, `motion`, `skill`) | needs network |
 | `make clean` | modify (deletes local generated artefacts) | local only |
 

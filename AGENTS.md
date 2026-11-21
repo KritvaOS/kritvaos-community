@@ -617,6 +617,8 @@ make ci
 
 for the standard CI validation path.
 
+Before you push, run `git fetch origin` and `make preflight`. It runs the header check (`make check`), the README check and its tests, the commit checker tests and the commit checks (including the DCO sign-off) over your branch commits, the progress report check, the status generator tests, the status facts check, the status schema check and the CMake debug build with CTest (`make build-test`, which needs `cmake` and the `core` submodule). It keeps going after a failure and lists every failed step. `make hooks-install` (once per clone) makes `git push` run it; `make preflight-hook-off` turns that off in a clone and `git push --no-verify` skips it once. The hook leaves out the build and test step when the push changes only documentation, planning, status, scripts or hooks. It does not run `secret-scan`, it uses your local compiler, and it does not replace CI. Do not claim a check passed unless you ran it.
+
 The development environment is:
 
 ```text
